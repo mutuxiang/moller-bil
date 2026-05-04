@@ -346,25 +346,25 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 const DEEPSEEK_API_KEY = 'sk-014c7c0d0b8a48d19db2ace18c9b0cce';
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
 
-const SYSTEM_PROMPT = `You are a warm, patient car advisor at Möller Bil. Your goal is to help anyone — especially people who know nothing about cars — feel comfortable and find the right car.
+const SYSTEM_PROMPT = `You are a friendly car advisor at Möller Bil. Help users find the right car through natural conversation.
 
-Conversation rules:
-1. NEVER start by asking about car preferences. First build trust — acknowledge who they are, make them feel welcome, ask about their life situation naturally.
-2. Ask ONE question at a time. Never list multiple questions.
-3. Gradually learn: lifestyle → family/passengers → typical journeys → budget → fuel type → must-haves. Only move to the next topic after the user has answered.
-4. If the user says they don't know much about cars, be extra warm, use plain language, and reassure them that's completely fine.
-5. Only recommend specific cars after you have at least: lifestyle context + rough budget. Do not recommend too early.
-6. Always validate what the user said before moving on ("That makes sense", "Good to know", etc.)
-7. Keep replies short — 2 to 4 sentences max — unless you are presenting car recommendations.
-8. Always respond in English regardless of what language the user writes in.
+Rules:
+- Ask ONE question at a time, keep replies short (2-3 sentences max unless recommending)
+- Start by asking something open and easy — like what's prompting them to look for a car, or what their current situation is. Do NOT ask about car usage scenarios first.
+- Gather info gradually: situation/motivation → passengers → budget → fuel type → must-haves
+- Validate briefly before moving on ("Got it.", "That helps.", etc.)
+- Always respond in English
 
-When you have enough info, present recommendations in this exact format:
+IMPORTANT: End every reply (except recommendations) with a JSON block of 3-4 short suggested replies the user could tap, directly relevant to your question. Format:
+SUGGESTIONS:["option 1","option 2","option 3","option 4"]
+
+When recommending, use this format (no SUGGESTIONS block needed):
 RECOMMENDATIONS:
 Model: [Brand Model Year]
 Type: [e.g. Hybrid SUV]
 Seats: [number]
 Price: [e.g. $35k]
-Why: [1 sentence tied to their specific situation]
+Why: [1 sentence tied to their situation]
 ---
 (max 3 cars)`;
 
@@ -678,8 +678,9 @@ async function sendMessage() {
       const msgEl = appendAIMessage(intro || 'Here are my top picks for you:', ['Compare these', 'Tell me more', 'Different budget', 'What about EVs?']);
       renderRecs(recs, msgEl);
     } else {
-      // extract quick suggestions from AI text heuristically
-      appendAIMessage(aiText, getSuggestions(aiText));
+      // extract AI-generated suggestions and clean text
+      const { cleanText, suggestions } = parseSuggestions(aiText);
+      appendAIMessage(cleanText, suggestions);
     }
 
   } catch (err) {
@@ -693,15 +694,16 @@ async function sendMessage() {
   }
 }
 
-function getSuggestions(text) {
-  const t = text.toLowerCase();
-  if (/seat|passenger|people|family|kids|children/.test(t)) return ['Just myself', 'Me and a partner', 'We have young kids', 'I often carry elderly parents'];
-  if (/budget|price|spend|cost|afford|range/.test(t))       return ['Under $25k', '$25–40k', '$40–60k', 'Over $60k'];
-  if (/fuel|electric|hybrid|petrol|energy|power/.test(t))   return ['Electric', 'Hybrid', 'Petrol', "Not sure — advise me"];
-  if (/know|experience|familiar|background|car/.test(t))    return ['Total beginner', 'Know a little', 'Fairly knowledgeable'];
-  if (/feel|matter|important|care|priority/.test(t))        return ['Safety above all', 'Space & comfort', 'Low running costs', 'Latest tech'];
-  if (/commut|drive|journey|trip|use/.test(t))              return ['Daily commuting', 'School runs', 'Long road trips', 'Mix of everything'];
-  return [];
+function parseSuggestions(text) {
+  const match = text.match(/SUGGESTIONS:\s*(\[.*?\])/s);
+  if (match) {
+    try {
+      const suggestions = JSON.parse(match[1]);
+      const cleanText = text.replace(/SUGGESTIONS:\s*\[.*?\]/s, '').trim();
+      return { cleanText, suggestions };
+    } catch(e) {}
+  }
+  return { cleanText: text, suggestions: [] };
 }
 
 // ── onboarding spotlight tour ─────────────────────────────────────────────
@@ -730,6 +732,10 @@ let onboardingStep = 0;
 
 function showOnboarding() {
   onboardingStep = 0;
+  // show the greeting in chat first, then overlay the tour on top
+  const greeting = "Hi! I'm your car advisor at Möller Bil — no car knowledge needed. **What's got you thinking about a new car?**";
+  appendAIMessage(greeting, ["My current car needs replacing", "It's my first car", "I want something different", "Just exploring options"]);
+  messages.push({ role: 'assistant', content: greeting });
   renderOnboardingStep();
 }
 
@@ -874,11 +880,6 @@ function finishOnboarding() {
     el.style.opacity = '0';
     setTimeout(() => el.remove(), 260);
   });
-  setTimeout(() => {
-    const greeting = "Hey there! I'm your car advisor at Möller Bil. Whether you're a total car novice or just looking for a second opinion — I'm here for any question, big or small. \n\nTo start, what's on your mind?";
-    appendAIMessage(greeting, ["I have no idea where to begin", "I don't know much about cars", "I have a specific question"]);
-    messages.push({ role: 'assistant', content: greeting });
-  }, 280);
 }
 
 function startChat() { finishOnboarding(); }
