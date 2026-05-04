@@ -317,7 +317,6 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
               onkeydown="handleKey(event)" oninput="updateSend()">
           </div>
           <div class="cfoot">
-            <span class="cfoot-meta"><span id="tokenCount">0</span> filters added</span>
             <button class="btn-send" id="btnSend" disabled onclick="sendMessage()">Send →</button>
           </div>
         </div>
@@ -504,9 +503,10 @@ function appendAIMessage(text, suggestions = []) {
       btn.className = 'chip';
       btn.textContent = label;
       btn.onclick = () => {
-        document.getElementById('inputField').value = label;
+        const input = document.getElementById('inputField');
+        input.value = label;
+        input.focus();
         updateSend();
-        sendMessage();
       };
       chipsDiv.appendChild(btn);
     });
