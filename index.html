@@ -346,23 +346,27 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 const DEEPSEEK_API_KEY = 'sk-014c7c0d0b8a48d19db2ace18c9b0cce';
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
 
-const SYSTEM_PROMPT = `You are an expert car advisor. Your job is to help users find the perfect car through natural, friendly conversation.
+const SYSTEM_PROMPT = `You are a warm, patient car advisor at Möller Bil. Your goal is to help anyone — especially people who know nothing about cars — feel comfortable and find the right car.
 
-Guidelines:
-- Ask focused questions one at a time: usage, seats needed, fuel preference, budget, any must-have features
-- Keep responses concise and conversational (2-4 sentences max unless recommending)
-- When you have enough info (usage + budget at minimum), provide 2-3 specific car recommendations
-- Format recommendations like this when you have them:
-  RECOMMENDATIONS:
-  Model: [Brand Model Year]
-  Type: [e.g. Hybrid SUV]
-  Seats: [number]
-  Price: [e.g. $35k]
-  Why: [1 sentence]
-  ---
-  (repeat for each)
-- Speak in the same language as the user (Chinese or English)
-- Be warm and professional, not salesy`;
+Conversation rules:
+1. NEVER start by asking about car preferences. First build trust — acknowledge who they are, make them feel welcome, ask about their life situation naturally.
+2. Ask ONE question at a time. Never list multiple questions.
+3. Gradually learn: lifestyle → family/passengers → typical journeys → budget → fuel type → must-haves. Only move to the next topic after the user has answered.
+4. If the user says they don't know much about cars, be extra warm, use plain language, and reassure them that's completely fine.
+5. Only recommend specific cars after you have at least: lifestyle context + rough budget. Do not recommend too early.
+6. Always validate what the user said before moving on ("That makes sense", "Good to know", etc.)
+7. Keep replies short — 2 to 4 sentences max — unless you are presenting car recommendations.
+8. Always respond in English regardless of what language the user writes in.
+
+When you have enough info, present recommendations in this exact format:
+RECOMMENDATIONS:
+Model: [Brand Model Year]
+Type: [e.g. Hybrid SUV]
+Seats: [number]
+Price: [e.g. $35k]
+Why: [1 sentence tied to their specific situation]
+---
+(max 3 cars)`;
 
 // ── state ────────────────────────────────────────────────────────────────
 let messages = [];   // { role, content } for API
@@ -386,9 +390,7 @@ function tokenLabel(key, opt) {
 // ── init ─────────────────────────────────────────────────────────────────
 function init() {
   buildSidebar();
-  const greeting = "Hi — I'm your car-finding assistant. I'll ask a few quick questions and recommend models that fit. To start, **how do you plan to use the car most often?**";
-  appendAIMessage(greeting, ['Daily commute', 'Family trips', 'City driving', 'Weekend adventure']);
-  messages.push({ role: 'assistant', content: greeting.replace(/\*\*/g, '') });
+  showOnboarding();
 }
 
 // ── sidebar ───────────────────────────────────────────────────────────────
@@ -476,7 +478,8 @@ function renderTokens() {
     span.innerHTML = `${label}<button onclick="removeToken('${label}')">×</button>`;
     row.insertBefore(span, input);
   });
-  document.getElementById('tokenCount').textContent = activeTokens.length;
+  const tc = document.getElementById('tokenCount');
+  if (tc) tc.textContent = activeTokens.length;
 }
 
 // ── chat UI helpers ───────────────────────────────────────────────────────
@@ -646,6 +649,7 @@ async function sendMessage() {
       body: JSON.stringify({
         model: 'deepseek-chat',
         max_tokens: 800,
+        stream: false,
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           ...messages,
@@ -654,12 +658,15 @@ async function sendMessage() {
     });
 
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+      const errBody = await resp.text();
+      let errMsg = `HTTP ${resp.status}`;
+      try { errMsg = JSON.parse(errBody).error?.message || errMsg; } catch(e) {}
+      throw new Error(errMsg);
     }
 
     const data = await resp.json();
     const aiText = data.choices?.[0]?.message?.content || '';
+    if (!aiText) throw new Error('Empty response from API');
     messages.push({ role: 'assistant', content: aiText });
 
     removeTypingIndicator();
@@ -687,14 +694,194 @@ async function sendMessage() {
 }
 
 function getSuggestions(text) {
-  // return contextual quick replies based on AI question
-  if (/seat|passenger|people/i.test(text)) return ['Just me','2 people','4–5 people','7+ people'];
-  if (/budget|price|spend|cost/i.test(text)) return ['Under $25k','$25–40k','$40–60k','$60k+'];
-  if (/fuel|electric|hybrid|petrol/i.test(text)) return ['Electric','Hybrid','Petrol','Diesel'];
-  if (/feature|must|important/i.test(text)) return ['Safety first','Cargo space','Tech/infotainment','Low running cost'];
-  if (/size|type|suv|sedan/i.test(text)) return ['Compact','SUV','Sedan','Minivan'];
+  const t = text.toLowerCase();
+  if (/seat|passenger|people|family|kids|children/.test(t)) return ['Just myself', 'Me and a partner', 'We have young kids', 'I often carry elderly parents'];
+  if (/budget|price|spend|cost|afford|range/.test(t))       return ['Under $25k', '$25–40k', '$40–60k', 'Over $60k'];
+  if (/fuel|electric|hybrid|petrol|energy|power/.test(t))   return ['Electric', 'Hybrid', 'Petrol', "Not sure — advise me"];
+  if (/know|experience|familiar|background|car/.test(t))    return ['Total beginner', 'Know a little', 'Fairly knowledgeable'];
+  if (/feel|matter|important|care|priority/.test(t))        return ['Safety above all', 'Space & comfort', 'Low running costs', 'Latest tech'];
+  if (/commut|drive|journey|trip|use/.test(t))              return ['Daily commuting', 'School runs', 'Long road trips', 'Mix of everything'];
   return [];
 }
+
+// ── onboarding spotlight tour ─────────────────────────────────────────────
+const ONBOARDING_STEPS = [
+  {
+    target: '.chat',
+    title: 'Chat with your advisor',
+    body: "No car knowledge needed. Just talk naturally — about your life, your needs, your budget. The AI will guide you step by step.",
+    pos: 'right',
+  },
+  {
+    target: '.side',
+    title: 'Refine with filters',
+    body: "Use these chips to quickly narrow things down by seat count, fuel type, or vehicle size. Your choices are sent straight to the conversation.",
+    pos: 'left',
+  },
+  {
+    target: '.stream',
+    title: 'Get matched cars',
+    body: "Once the advisor understands your situation, it'll recommend specific models — with reasons tailored to you. You can keep asking questions anytime.",
+    pos: 'right',
+  },
+];
+
+let onboardingStep = 0;
+
+function showOnboarding() {
+  onboardingStep = 0;
+  renderOnboardingStep();
+}
+
+function renderOnboardingStep() {
+  // remove previous overlay pieces
+  document.querySelectorAll('.ob-overlay, .ob-card').forEach(el => el.remove());
+
+  const step = ONBOARDING_STEPS[onboardingStep];
+  const targetEl = document.querySelector(step.target);
+
+  // full-screen dim overlay with a "hole" cut via box-shadow
+  const overlay = document.createElement('div');
+  overlay.className = 'ob-overlay';
+  overlay.style.cssText = `
+    position:fixed; inset:0; z-index:300; pointer-events:none;
+  `;
+
+  // individual pane dims
+  // dim everything except the target by overlaying semi-transparent divs
+  const dimAll = document.createElement('div');
+  dimAll.style.cssText = `
+    position:fixed; inset:0; background:rgba(10,10,10,0.55);
+    z-index:300; pointer-events:all;
+    transition: opacity .35s;
+  `;
+
+  // cut a hole by clipping around the target
+  if (targetEl) {
+    const r = targetEl.getBoundingClientRect();
+    dimAll.style.background = 'transparent';
+    dimAll.style.pointerEvents = 'none';
+
+    // four dim rects around the target
+    const rects = [
+      { top:0, left:0, width:'100%', height: r.top+'px' },
+      { top: r.bottom+'px', left:0, width:'100%', bottom:0 },
+      { top: r.top+'px', left:0, width: r.left+'px', height: r.height+'px' },
+      { top: r.top+'px', left: r.right+'px', right:0, height: r.height+'px' },
+    ];
+    rects.forEach(s => {
+      const d = document.createElement('div');
+      d.style.cssText = `position:fixed; background:rgba(10,10,10,0.60); z-index:300; pointer-events:all;`;
+      Object.assign(d.style, s);
+      overlay.appendChild(d);
+    });
+
+    // subtle highlight border on target
+    const highlight = document.createElement('div');
+    highlight.style.cssText = `
+      position:fixed;
+      top:${r.top}px; left:${r.left}px;
+      width:${r.width}px; height:${r.height}px;
+      border:2px solid rgba(124,92,255,0.7);
+      border-radius:8px; z-index:301;
+      pointer-events:none;
+      box-shadow: 0 0 0 4px rgba(124,92,255,0.12);
+      transition: all .35s;
+    `;
+    overlay.appendChild(highlight);
+  }
+
+  document.body.appendChild(overlay);
+
+  // floating card
+  const card = document.createElement('div');
+  card.className = 'ob-card';
+  card.style.cssText = `
+    position:fixed; z-index:400;
+    background:#fff; border:1px solid rgba(31,29,27,0.14);
+    border-radius:16px; padding:22px 24px; width:280px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.18);
+    font-family:"Geist","Inter",system-ui,sans-serif;
+    animation: ob-fadein .28s ease;
+  `;
+
+  const isLast = onboardingStep === ONBOARDING_STEPS.length - 1;
+  const stepNum = onboardingStep + 1;
+  const total   = ONBOARDING_STEPS.length;
+
+  card.innerHTML = `
+    <style>
+      @keyframes ob-fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+      .ob-dots { display:flex; gap:5px; margin-bottom:14px; }
+      .ob-dot { width:6px; height:6px; border-radius:50%; background:rgba(31,29,27,0.18); }
+      .ob-dot.active { background:#7c5cff; }
+      .ob-step-label { font-family:"JetBrains Mono",monospace; font-size:10px; color:rgba(31,29,27,0.45); letter-spacing:.07em; text-transform:uppercase; margin-bottom:6px; }
+      .ob-title { font-size:15px; font-weight:600; color:#1f1d1b; margin-bottom:8px; line-height:1.3; }
+      .ob-body { font-size:13px; color:rgba(31,29,27,0.6); line-height:1.6; margin-bottom:18px; }
+      .ob-actions { display:flex; justify-content:space-between; align-items:center; }
+      .ob-skip { font-size:11.5px; color:rgba(31,29,27,0.4); cursor:pointer; background:none; border:none; font-family:inherit; }
+      .ob-skip:hover { color:rgba(31,29,27,0.7); }
+      .ob-next { appearance:none; background:#7c5cff; color:#fff; border:1.5px solid #4a32c4;
+        padding:8px 18px; border-radius:999px; font:600 12px/1 "Geist",sans-serif; cursor:pointer;
+        box-shadow:2px 2px 0 #4a32c4; transition:transform .08s, box-shadow .08s; }
+      .ob-next:hover { transform:translate(-1px,-1px); box-shadow:3px 3px 0 #4a32c4; }
+    </style>
+    <div class="ob-dots">
+      ${Array.from({length:total}, (_,i) => `<div class="ob-dot${i===onboardingStep?' active':''}"></div>`).join('')}
+    </div>
+    <div class="ob-step-label">${stepNum} of ${total}</div>
+    <div class="ob-title">${step.title}</div>
+    <div class="ob-body">${step.body}</div>
+    <div class="ob-actions">
+      <button class="ob-skip" onclick="finishOnboarding()">Skip tour</button>
+      <button class="ob-next" onclick="${isLast ? 'finishOnboarding()' : 'nextOnboardingStep()'}">${isLast ? 'Get started →' : 'Next →'}</button>
+    </div>
+  `;
+
+  // position card next to target
+  if (targetEl) {
+    const r = targetEl.getBoundingClientRect();
+    if (step.pos === 'right') {
+      card.style.left  = (r.right + 16) + 'px';
+      card.style.top   = (r.top + r.height/2 - 120) + 'px';
+    } else {
+      card.style.right = (window.innerWidth - r.left + 16) + 'px';
+      card.style.top   = (r.top + r.height/2 - 120) + 'px';
+    }
+    // clamp vertically
+    const cardH = 260;
+    const top = parseFloat(card.style.top);
+    if (top < 12) card.style.top = '12px';
+    if (top + cardH > window.innerHeight - 12) card.style.top = (window.innerHeight - cardH - 12) + 'px';
+  } else {
+    card.style.top  = '50%';
+    card.style.left = '50%';
+    card.style.transform = 'translate(-50%,-50%)';
+  }
+
+  document.body.appendChild(card);
+}
+
+function nextOnboardingStep() {
+  onboardingStep++;
+  if (onboardingStep >= ONBOARDING_STEPS.length) { finishOnboarding(); return; }
+  renderOnboardingStep();
+}
+
+function finishOnboarding() {
+  document.querySelectorAll('.ob-overlay, .ob-card').forEach(el => {
+    el.style.transition = 'opacity .25s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 260);
+  });
+  setTimeout(() => {
+    const greeting = "Hey there! I'm your car advisor at Möller Bil. Whether you're a total car novice or just looking for a second opinion — I'm here for any question, big or small. \n\nTo start, what's on your mind?";
+    appendAIMessage(greeting, ["I have no idea where to begin", "I don't know much about cars", "I have a specific question"]);
+    messages.push({ role: 'assistant', content: greeting });
+  }, 280);
+}
+
+function startChat() { finishOnboarding(); }
 
 // ── utils ─────────────────────────────────────────────────────────────────
 function formatText(text) {
@@ -730,7 +917,7 @@ function resetAll() {
   renderTokens();
   buildSidebar();
   updateSend();
-  init();
+  showOnboarding();
 }
 
 function toggleDrawer() {
