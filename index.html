@@ -652,9 +652,12 @@ function syncFiltersFromText(text) {
   let changed = false;
 
   Object.entries(lookup).forEach(([word, { groupKey, opt }]) => {
-    // match whole word only to avoid false positives
-    const re = new RegExp(`\\b${word}\\b`);
-    if (re.test(lower)) {
+    // use includes() for multi-word options, \b for single words
+    const matched = word.includes(' ')
+      ? lower.includes(word)
+      : new RegExp(`\\b${word}\\b`).test(lower);
+
+    if (matched) {
       const key = `${groupKey}:${opt}`;
       if (!activeChips[key]) {
         activeChips[key] = true;
@@ -663,7 +666,42 @@ function syncFiltersFromText(text) {
     }
   });
 
-  if (changed) buildSidebar(); // re-render sidebar with new highlights
+  // also check common aliases that AI might use
+  const aliases = {
+    'commut': 'usage:Commuting',
+    'city driv': 'usage:City driving',
+    'family': 'usage:Family use',
+    'road trip': 'usage:Road trips',
+    'mountain': 'usage:Mountain trips',
+    'leisure': 'usage:Leisure',
+    'electric': 'fuel:Electric',
+    'hybrid': 'fuel:Hybrid',
+    'petrol': 'fuel:Petrol',
+    'diesel': 'fuel:Diesel',
+    'suv': 'size:SUV',
+    'compact': 'size:Compact',
+    'van': 'size:Van',
+    'just me': 'seats:2',
+    'just myself': 'seats:2',
+    'alone': 'seats:2',
+    'partner': 'seats:4',
+    'two people': 'seats:4',
+    'kids': 'seats:5',
+    'children': 'seats:5',
+    'seven': 'seats:7+',
+    '7 seat': 'seats:7+',
+  };
+
+  Object.entries(aliases).forEach(([alias, chipKey]) => {
+    if (lower.includes(alias)) {
+      if (!activeChips[chipKey]) {
+        activeChips[chipKey] = true;
+        changed = true;
+      }
+    }
+  });
+
+  if (changed) buildSidebar();
 }
 
 function resetFilters() {
@@ -894,8 +932,8 @@ async function sendMessage() {
   syncFiltersFromText(combined);
   input.value = '';
   activeTokens = [];
-  // keep activeChips that were synced from text — only remove the token pills
   renderTokens();
+  buildSidebar();
   updateSend();
 
   // push to history
