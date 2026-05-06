@@ -4,25 +4,30 @@
 <meta charset="utf-8">
 <title>AI Car Assistant</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+@font-face { font-family: "Moller"; src: url("fonts/Moller-Regular.otf") format("opentype"); font-weight: 400; font-style: normal; }
+@font-face { font-family: "Moller"; src: url("fonts/Moller-RegularItalic.otf") format("opentype"); font-weight: 400; font-style: italic; }
+@font-face { font-family: "Moller"; src: url("fonts/Moller-Book.otf") format("opentype"); font-weight: 450; font-style: normal; }
+@font-face { font-family: "Moller"; src: url("fonts/Moller-BookItalic.otf") format("opentype"); font-weight: 450; font-style: italic; }
+@font-face { font-family: "Moller"; src: url("fonts/Moller-Medium.otf") format("opentype"); font-weight: 500; font-style: normal; }
+@font-face { font-family: "Moller"; src: url("fonts/Moller-MediumItalic.otf") format("opentype"); font-weight: 500; font-style: italic; }
+</style>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --accent: #7c5cff;
-  --accent-soft: rgba(124,92,255,0.12);
-  --accent-ink: #4a32c4;
-  --bg: #fafaf7;
-  --ink: #1f1d1b;
-  --border: rgba(31,29,27,0.14);
-  --border-strong: rgba(31,29,27,0.55);
-  --muted: rgba(31,29,27,0.45);
-  --chip-bg: #f0eee8;
+  --accent: #0000FF;
+  --accent-soft: rgba(0,0,255,0.08);
+  --accent-ink: #0000CC;
+  --bg: #f8f8f8;
+  --ink: #0a0a0a;
+  --border: rgba(0,0,0,0.12);
+  --border-strong: rgba(0,0,0,0.50);
+  --muted: rgba(0,0,0,0.42);
+  --chip-bg: #ebebeb;
 }
 
-html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; color: var(--ink); background: var(--bg); }
+html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: var(--ink); background: var(--bg); }
 
 /* ── layout ── */
 .app { display: flex; flex-direction: column; height: 100vh; }
@@ -31,14 +36,14 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   height: 60px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; padding: 0 22px; gap: 12px; flex-shrink: 0;
 }
-.topbar-title { font-weight: 600; font-size: 16px; }
+.topbar-logo { height: 28px; width: auto; display: block; }
 .topbar-spacer { flex: 1; }
 
 .btn-reset-all,
 .btn-filter,
 .btn-collection {
   appearance: none; border: 1px solid rgba(31,29,27,0.3); background: transparent;
-  color: rgba(31,29,27,0.7); font: 500 13px/1 "Geist",sans-serif;
+  color: rgba(31,29,27,0.7); font: 500 13px/1 "Moller",sans-serif;
   height: 34px; padding: 0 14px;
   border-radius: 999px; cursor: pointer;
   display: inline-flex; align-items: center; gap: 7px;
@@ -55,7 +60,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   background: var(--accent-soft);
 }
 .btn-collection-count {
-  font-family: "Inter",sans-serif; font-size: 11.5px; font-weight: 600;
+  font-family: "Moller",sans-serif; font-size: 11.5px; font-weight: 500;
   min-width: 18px; height: 18px; padding: 0 5px;
   background: rgba(31,29,27,0.08); color: var(--ink);
   border-radius: 999px;
@@ -100,11 +105,11 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   display: flex; align-items: center; gap: 12px; flex-shrink: 0;
 }
 .info-banner-text { flex: 1; }
-.info-banner-text b { font-size: 15px; font-weight: 600; display: block; margin-bottom: 3px; }
+.info-banner-text b { font-size: 15px; font-weight: 500; display: block; margin-bottom: 3px; }
 .info-banner-text span { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
 .info-banner-link {
   appearance: none; border: 1px solid var(--border-strong); background: transparent;
-  color: var(--ink); font: 500 13.5px/1 "Geist",sans-serif; padding: 9px 16px;
+  color: var(--ink); font: 500 13.5px/1 "Moller",sans-serif; padding: 9px 16px;
   border-radius: 999px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
   text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
   transition: background .12s;
@@ -115,14 +120,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .msg { display: flex; gap: 10px; align-items: flex-start; max-width: 880px; }
 .msg.user { flex-direction: row-reverse; align-self: flex-end; }
 
-.av {
-  width: 30px; height: 30px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-family: "Inter",sans-serif; font-size: 11px; font-weight: 600;
-  border: 1.25px solid var(--border-strong);
-}
-.av.ai { border-radius: 8px; background: var(--accent-soft); color: var(--accent-ink); }
-.av.user { border-radius: 50%; background: var(--chip-bg); color: rgba(31,29,27,0.6); }
+.av { display: none; }
 
 .msg-content { display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1; }
 .msg.user .msg-content { align-items: flex-end; }
@@ -136,7 +134,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   max-width: 720px;
 }
 .msg.user .bub { border-radius: 14px 14px 4px 14px; background: var(--chip-bg); align-self: flex-end; }
-.bub b { font-weight: 600; }
+.bub b { font-weight: 500; }
 
 .bub-tokens { display: inline-flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-right: 6px; }
 .bub-token {
@@ -151,7 +149,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 12px; border-radius: 999px;
   background: var(--accent-soft); border: 1px solid rgba(124,92,255,0.25);
-  font-family: "Inter",sans-serif; font-size: 12.5px; font-weight: 500;
+  font-family: "Moller",sans-serif; font-size: 12.5px; font-weight: 500;
   color: var(--accent-ink);
   animation: tool-fade .3s cubic-bezier(.4,0,.2,1);
 }
@@ -172,7 +170,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 }
 .tool-step.done .tool-icon::before {
   content: '✓';
-  font-size: 11px; font-weight: 700; line-height: 1;
+  font-size: 11px; font-weight: 500; line-height: 1;
 }
 @keyframes tool-spin { to { transform: rotate(360deg); } }
 @keyframes tool-fade {
@@ -193,22 +191,22 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   40% { transform: translateY(-4px); opacity: 1; }
 }
 
-/* ── quick chips: under AI bubble (kept from attachment 1, ENLARGED) ── */
+/* ── quick chips: above input field, multi-select tags ── */
 .quick-chips {
-  margin-left: 40px;        /* aligned to AI bubble after avatar */
-  display: flex; flex-wrap: wrap; gap: 8px;
-  padding-bottom: 4px;
+  display: flex; flex-wrap: wrap; gap: 10px;
+  padding: 0 0 14px 0;
   animation: chips-slide .35s cubic-bezier(.4,0,.2,1);
 }
+.quick-chips:empty { display: none; }
 @keyframes chips-slide {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: none; }
 }
 .chip {
   appearance: none;
-  padding: 10px 16px;
+  padding: 12px 20px;
   border: 1px solid var(--border-strong); border-radius: 999px;
-  font: 500 14.5px/1.2 "Geist",sans-serif;
+  font: 500 16px/1.2 "Moller",sans-serif;
   color: var(--ink); background: #fff;
   cursor: pointer; user-select: none; transition: all .14s;
 }
@@ -233,8 +231,8 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   max-width: 720px;
 }
 .surprises-header {
-  font-family: "Inter",sans-serif;
-  font-size: 11px; font-weight: 600;
+  font-family: "Moller",sans-serif;
+  font-size: 11px; font-weight: 500;
   letter-spacing: .08em; text-transform: uppercase;
   color: var(--accent-ink);
   margin-bottom: 10px;
@@ -244,7 +242,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   font-size: 13.5px; line-height: 1.5;
   display: flex; flex-wrap: wrap; gap: 6px;
 }
-.surprise-title { font-weight: 600; color: var(--ink); }
+.surprise-title { font-weight: 500; color: var(--ink); }
 .surprise-sep { color: var(--muted); }
 .surprise-desc { color: rgba(31,29,27,0.7); flex: 1; min-width: 0; }
 
@@ -274,7 +272,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   background: repeating-linear-gradient(135deg,rgba(31,29,27,.05) 0 6px,rgba(0,0,0,0) 6px 12px), var(--bg);
   border: 1.25px dashed rgba(31,29,27,0.2); border-radius: 10px; height: 100px;
   display: flex; align-items: center; justify-content: center;
-  font-family: "Inter",sans-serif; font-size: 12px; color: var(--muted);
+  font-family: "Moller",sans-serif; font-size: 12px; color: var(--muted);
   letter-spacing: .04em;
 }
 
@@ -298,7 +296,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 
 .rec-badge {
   align-self: flex-start;
-  font-family: "Inter",sans-serif; font-size: 11.5px; font-weight: 600;
+  font-family: "Moller",sans-serif; font-size: 11.5px; font-weight: 500;
   padding: 4px 10px; border-radius: 999px;
   letter-spacing: .01em;
 }
@@ -310,8 +308,8 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .rec-badge.b-default { background: var(--chip-bg); color: var(--ink); }
 
 .rec-title { display: flex; flex-direction: column; gap: 3px; }
-.rec-name { font-size: 17px; font-weight: 600; line-height: 1.25; padding-right: 36px; }
-.rec-sub { font-family: "Inter",sans-serif; font-size: 13px; color: var(--muted); }
+.rec-name { font-size: 17px; font-weight: 500; line-height: 1.25; padding-right: 36px; }
+.rec-sub { font-family: "Moller",sans-serif; font-size: 13px; color: var(--muted); }
 
 .rec-specs {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
@@ -322,10 +320,10 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   display: flex; flex-direction: column; gap: 2px;
 }
 .rec-spec-label {
-  font-family: "Inter",sans-serif; font-size: 11.5px; color: var(--muted);
+  font-family: "Moller",sans-serif; font-size: 11.5px; color: var(--muted);
   font-weight: 500;
 }
-.rec-spec-value { font-size: 14px; font-weight: 600; color: var(--ink); }
+.rec-spec-value { font-size: 14px; font-weight: 500; color: var(--ink); }
 
 .rec-divider { height: 1px; background: var(--border); margin: 2px 0; }
 
@@ -337,8 +335,8 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .rec-highlight::before {
   content: '✓';
   flex-shrink: 0;
-  color: #16a34a; font-weight: 700;
-  font-family: "Inter",sans-serif;
+  color: #16a34a; font-weight: 500;
+  font-family: "Moller",sans-serif;
   font-size: 14px;
   line-height: 1.2;
   margin-top: 1px;
@@ -349,7 +347,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   appearance: none; width: 100%;
   border: 1px solid var(--border-strong); background: var(--bg);
   border-radius: 10px; padding: 11px 14px;
-  font: 600 13.5px/1 "Geist",sans-serif; color: var(--ink);
+  font: 500 13.5px/1 "Moller",sans-serif; color: var(--ink);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 6px;
   transition: background .12s, border-color .12s;
@@ -382,8 +380,11 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .token button:hover { opacity: 1; }
 
 .input-field {
-  flex: 1; min-width: 140px; appearance: none; border: 0; outline: 0; background: transparent;
-  font: inherit; font-size: 16px; color: var(--ink); padding: 4px 0;
+  flex: 1; min-width: 140px; width: 100%;
+  appearance: none; border: 0; outline: 0; background: transparent;
+  font-family: "Moller",sans-serif; font-size: 16px; color: var(--ink);
+  padding: 4px 0; resize: none; line-height: 1.5;
+  min-height: 24px; max-height: 200px; overflow-y: auto;
 }
 .input-field::placeholder { color: rgba(31,29,27,0.4); }
 
@@ -391,7 +392,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 
 .btn-send {
   appearance: none; border: 1.5px solid var(--accent-ink); background: var(--accent); color: #fff;
-  padding: 10px 22px; border-radius: 999px; font: 600 14px/1 "Geist",sans-serif; cursor: pointer;
+  padding: 10px 22px; border-radius: 999px; font: 500 14px/1 "Moller",sans-serif; cursor: pointer;
   box-shadow: 2px 2px 0 var(--accent-ink); transition: transform .08s, box-shadow .08s;
 }
 .btn-send:hover:not(:disabled) { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--accent-ink); }
@@ -399,25 +400,25 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 
 /* ── sidebar (filters) ── */
 .side {
-  width: 320px; border-left: 1px solid var(--border); background: var(--bg);
+  width: 480px; border-left: 1px solid var(--border); background: var(--bg);
   display: flex; flex-direction: column; flex-shrink: 0;
-  min-width: 260px; max-width: 520px;
+  min-width: 320px; max-width: 640px;
 }
 .side-head {
   padding: 16px 22px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
-.side-head b { font-size: 14px; font-weight: 600; }
+.side-head b { font-size: 14px; font-weight: 500; }
 .side-head-actions { display: flex; align-items: center; gap: 8px; }
 .side-reset {
-  font-family: "Inter",sans-serif; font-size: 11.5px; color: var(--muted);
+  font-family: "Moller",sans-serif; font-size: 11.5px; color: var(--muted);
   cursor: pointer; background: none; border: none;
 }
 .side-reset:hover { color: var(--ink); }
 .btn-apply {
   appearance: none; background: transparent; color: var(--muted);
   border: 1px solid rgba(31,29,27,0.2); border-radius: 999px;
-  font: 500 12px/1 "Geist",sans-serif; padding: 7px 14px; cursor: default;
+  font: 500 12px/1 "Moller",sans-serif; padding: 7px 14px; cursor: default;
   transition: all .2s;
 }
 .btn-apply.active {
@@ -432,7 +433,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 
 .filter-group { display: flex; flex-direction: column; gap: 9px; }
 .filter-label {
-  font-family: "Inter",sans-serif; font-size: 11px;
+  font-family: "Moller",sans-serif; font-size: 11px;
   color: var(--muted); letter-spacing: .08em; text-transform: uppercase;
   font-weight: 500;
 }
@@ -448,7 +449,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .budget-module { display: flex; flex-direction: column; gap: 10px; }
 .budget-vals {
   display: flex; justify-content: space-between;
-  font-family: "Inter",sans-serif; font-size: 11.5px; color: var(--muted);
+  font-family: "Moller",sans-serif; font-size: 11.5px; color: var(--muted);
 }
 .budget-input {
   width: 100%; appearance: none; height: 4px; border-radius: 2px;
@@ -461,7 +462,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   box-shadow: 0 1px 4px rgba(0,0,0,0.18); cursor: pointer;
 }
 .budget-selected {
-  font-family: "Inter",sans-serif; font-size: 13px; font-weight: 500;
+  font-family: "Moller",sans-serif; font-size: 13px; font-weight: 500;
   color: var(--ink);
 }
 
@@ -510,8 +511,8 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   padding: 18px 22px 14px; border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.collection-title { font-size: 15px; font-weight: 600; display: block; margin-bottom: 2px; }
-.collection-sub { font-family: "Inter",sans-serif; font-size: 12px; color: var(--muted); }
+.collection-title { font-size: 15px; font-weight: 500; display: block; margin-bottom: 2px; }
+.collection-sub { font-family: "Moller",sans-serif; font-size: 12px; color: var(--muted); }
 .collection-close {
   appearance: none; background: transparent; border: 1px solid var(--border);
   width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
@@ -538,10 +539,10 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   border: 1px dashed rgba(31,29,27,0.2); border-radius: 7px;
 }
 .coll-card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.coll-card-name { font-size: 13.5px; font-weight: 600; line-height: 1.25; padding-right: 24px; }
+.coll-card-name { font-size: 13.5px; font-weight: 500; line-height: 1.25; padding-right: 24px; }
 .coll-card-match {
   display: inline-flex; align-items: center; gap: 5px;
-  font-family: "Inter",sans-serif; font-size: 11.5px; font-weight: 500;
+  font-family: "Moller",sans-serif; font-size: 11.5px; font-weight: 500;
   color: var(--accent-ink); margin-top: 2px;
 }
 .coll-match-dot {
@@ -551,7 +552,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .coll-card-details {
   appearance: none; border: 1px solid var(--border-strong); background: var(--bg);
   border-radius: 8px; padding: 6px 12px; margin-top: 6px;
-  font: 500 12px/1 "Geist",sans-serif; color: var(--ink);
+  font: 500 12px/1 "Moller",sans-serif; color: var(--ink);
   cursor: pointer; transition: background .12s;
 }
 .coll-card-details:hover { background: var(--chip-bg); }
@@ -578,9 +579,9 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   color: var(--muted);
   margin-bottom: 4px;
 }
-.collection-empty-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.collection-empty-title { font-size: 14px; font-weight: 500; color: var(--ink); }
 .collection-empty-text {
-  font-family: "Inter",sans-serif; font-size: 12.5px; line-height: 1.5; max-width: 240px;
+  font-family: "Moller",sans-serif; font-size: 12.5px; line-height: 1.5; max-width: 240px;
 }
 
 /* ── onboarding ── */
@@ -588,13 +589,13 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .ob-card {
   position:fixed; z-index:400; background:#fff; border:1px solid rgba(31,29,27,0.14);
   border-radius:16px; padding:22px 24px; width:280px; box-shadow:0 8px 32px rgba(0,0,0,0.18);
-  font-family:"Geist","Inter",system-ui,sans-serif; animation: ob-fadein .28s ease;
+  font-family:"Moller",system-ui,sans-serif; animation: ob-fadein .28s ease;
 }
 @keyframes ob-fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
 .ob-dots { display:flex; gap:5px; margin-bottom:14px; }
 .ob-dot { width:6px; height:6px; border-radius:50%; background:rgba(31,29,27,0.18); }
 .ob-dot.active { background:var(--accent); }
-.ob-step-label { font-family:"Inter",sans-serif; font-size:10px; color:rgba(31,29,27,0.45); letter-spacing:.07em; text-transform:uppercase; margin-bottom:6px; }
+.ob-step-label { font-family:"Moller",sans-serif; font-size:10px; color:rgba(31,29,27,0.45); letter-spacing:.07em; text-transform:uppercase; margin-bottom:6px; }
 .ob-title { font-size:15px; font-weight:600; color:var(--ink); margin-bottom:8px; line-height:1.3; }
 .ob-body { font-size:13px; color:rgba(31,29,27,0.6); line-height:1.6; margin-bottom:18px; }
 .ob-actions { display:flex; justify-content:space-between; align-items:center; }
@@ -602,7 +603,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .ob-skip:hover { color:rgba(31,29,27,0.7); }
 .ob-next {
   appearance:none; background:var(--accent); color:#fff; border:1.5px solid var(--accent-ink);
-  padding:8px 18px; border-radius:999px; font:600 12px/1 "Geist",sans-serif; cursor:pointer;
+  padding:8px 18px; border-radius:999px; font:600 12px/1 "Moller",sans-serif; cursor:pointer;
   box-shadow:2px 2px 0 var(--accent-ink); transition:transform .08s, box-shadow .08s;
 }
 .ob-next:hover { transform:translate(-1px,-1px); box-shadow:3px 3px 0 var(--accent-ink); }
@@ -610,7 +611,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 /* ── responsive ── */
 @media (max-width: 1100px) {
   .col-spacer { display: none; }
-  .side { width: 280px; }
+  .side { width: 420px; }
 }
 @media (max-width: 900px) {
   .stream { padding: 18px 22px 12px; }
@@ -629,7 +630,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   .info-banner-text span { font-size: 12.5px; }
   .bub { font-size: 15px; }
   .chip { font-size: 13.5px; padding: 8px 13px; }
-  .quick-chips { margin-left: 36px; gap: 6px; }
+  .quick-chips { gap: 6px; }
   .topbar { padding: 0 14px; gap: 8px; }
   .topbar-title { font-size: 14px; }
   .btn-reset-all,
@@ -677,7 +678,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 <div class="app">
 
   <div class="topbar">
-    <b class="topbar-title">Möller Bil · Find a car</b>
+    <img class="topbar-logo" src="logo.svg" alt="Møller Bil">
     <div class="topbar-spacer"></div>
     <button class="btn-collection" id="btnCollection" onclick="toggleCollection()" title="Saved cars">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -706,11 +707,12 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
       <div class="stream" id="stream"></div>
 
       <div class="composer">
+        <div class="quick-chips" id="suggestionsBar"></div>
         <div class="cbox">
-          <div class="tokens-row" id="tokensRow">
-            <input class="input-field" id="inputField" placeholder="Tell the assistant what you need…"
-              onkeydown="handleKey(event)" oninput="updateSend()">
-          </div>
+          <div class="tokens-row" id="tokensRow"></div>
+          <textarea class="input-field" id="inputField" rows="1"
+            placeholder="Tell the assistant what you need…"
+            onkeydown="handleKey(event)" oninput="updateSend(); autoGrow(this)"></textarea>
           <div class="cfoot">
             <button class="btn-send" id="btnSend" disabled onclick="sendMessage()">Send →</button>
           </div>
@@ -912,7 +914,6 @@ function showOnboarding() {
     renderQuickChips(initialSuggestions, msgEl);
   });
   messages.push({ role: 'assistant', content: greeting });
-  renderOnboardingStep();
 }
 
 function renderOnboardingStep() {
@@ -1252,22 +1253,27 @@ function removeToken(label) {
 
 function renderTokens() {
   const row = document.getElementById('tokensRow');
-  const input = document.getElementById('inputField');
-  row.querySelectorAll('.token').forEach(el => el.remove());
+  row.innerHTML = '';
   activeTokens.forEach(label => {
     const span = document.createElement('span');
     span.className = 'token';
     const safeLabel = label.replace(/'/g, "\\'");
     span.innerHTML = `${escapeHtml(label)}<button onclick="removeToken('${safeLabel}')">×</button>`;
-    row.insertBefore(span, input);
+    row.appendChild(span);
   });
+  row.style.display = activeTokens.length ? 'flex' : 'none';
+}
+
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 200) + 'px';
 }
 
 // ── chat UI helpers ───────────────────────────────────────────────────────
 function appendAIMessage(text, onDone) {
   const stream = document.getElementById('stream');
   // remove old quick chips when a new AI reply arrives
-  stream.querySelectorAll('.quick-chips').forEach(el => el.remove());
+  const _bar = document.getElementById('suggestionsBar'); if (_bar) _bar.innerHTML = '';
 
   const msgDiv = document.createElement('div');
   msgDiv.className = 'msg ai';
@@ -1316,7 +1322,7 @@ function appendAIMessage(text, onDone) {
 function appendUserMessage(text, tokens) {
   const stream = document.getElementById('stream');
   // hide chips when user sends a message
-  stream.querySelectorAll('.quick-chips').forEach(el => el.remove());
+  const _bar = document.getElementById('suggestionsBar'); if (_bar) _bar.innerHTML = '';
 
   const msgDiv = document.createElement('div');
   msgDiv.className = 'msg user';
@@ -1358,27 +1364,21 @@ function removeTypingIndicator() {
 
 // ── quick chips (kept under AI bubble — enlarged from spec) ──────────────
 function renderQuickChips(suggestions, msgEl) {
+  const bar = document.getElementById('suggestionsBar');
+  bar.innerHTML = '';
   if (!suggestions || suggestions.length === 0) return;
-  const stream = document.getElementById('stream');
-  // remove any older chips
-  stream.querySelectorAll('.quick-chips').forEach(el => el.remove());
 
-  const chipsDiv = document.createElement('div');
-  chipsDiv.className = 'quick-chips';
   suggestions.forEach(label => {
     const btn = document.createElement('button');
     btn.className = 'chip';
     btn.textContent = label;
     btn.onclick = () => {
-      // tap = send immediately
-      const input = document.getElementById('inputField');
-      input.value = label;
-      sendMessage();
+      // tap = add as token (multi-select); user clicks Send to submit
+      addToken(label);
+      btn.remove();
     };
-    chipsDiv.appendChild(btn);
+    bar.appendChild(btn);
   });
-  stream.appendChild(chipsDiv);
-  stream.scrollTop = stream.scrollHeight;
 }
 
 // ── tool steps ────────────────────────────────────────────────────────────
@@ -1705,6 +1705,7 @@ async function sendMessage() {
 
   syncFiltersFromText(combined);
   input.value = '';
+  autoGrow(input);
   activeTokens = [];
   renderTokens();
   buildSidebar();
