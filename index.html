@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -29,37 +29,64 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 
 .topbar {
   height: 60px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; padding: 0 14px; gap: 14px; flex-shrink: 0;
+  display: flex; align-items: center; padding: 0 22px; gap: 12px; flex-shrink: 0;
 }
 .topbar-title { font-weight: 600; font-size: 16px; }
 .topbar-spacer { flex: 1; }
-.btn-reset-all {
+
+.btn-reset-all,
+.btn-filter,
+.btn-collection {
   appearance: none; border: 1px solid rgba(31,29,27,0.3); background: transparent;
-  color: rgba(31,29,27,0.65); font: 500 13px/1 "Geist",sans-serif;
+  color: rgba(31,29,27,0.7); font: 500 13px/1 "Geist",sans-serif;
   height: 34px; padding: 0 14px;
   border-radius: 999px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: all .12s;
 }
-.btn-reset-all:hover { color: var(--ink); border-color: rgba(31,29,27,0.6); }
+.btn-reset-all:hover,
+.btn-filter:hover,
+.btn-collection:hover { color: var(--ink); border-color: rgba(31,29,27,0.6); }
+
+.btn-collection { position: relative; }
+.btn-collection.has-items {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.btn-collection-count {
+  font-family: "Inter",sans-serif; font-size: 11.5px; font-weight: 600;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: rgba(31,29,27,0.08); color: var(--ink);
+  border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.btn-collection.has-items .btn-collection-count {
+  background: var(--accent); color: #fff;
+}
 
 .main { flex: 1; display: flex; min-height: 0; }
 
-/* outer spacer columns — the vertical strips flanking the chat */
+/* left & right empty spacer columns */
 .col-spacer {
-  flex: 1; max-width: 80px; background: var(--bg);
+  width: 80px; flex-shrink: 0; background: var(--bg);
+  border-right: 1px solid var(--border);
 }
-.col-spacer.left { }
-.col-spacer.right { }
+.col-spacer.right {
+  border-right: none; border-left: 1px solid var(--border);
+}
 
+/* centre content wrapper */
 .col-center {
-  flex: 1; max-width: 1200px; margin: 0 auto;
-  display: flex; flex-direction: column; min-height: 0;
+  flex: 1; display: flex; min-width: 0; min-height: 0;
 }
 
 /* ── chat ── */
 .chat { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 
 .stream {
-  flex: 1; overflow-y: auto; padding: 28px 18px 12px;
+  flex: 1; overflow-y: auto; padding: 28px 32px 16px;
   display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth;
 }
 .stream::-webkit-scrollbar { width: 8px; }
@@ -67,7 +94,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 
 /* ── info banner above stream ── */
 .info-banner {
-  margin: 18px 18px 0;
+  margin: 18px 32px 0;
   border: 1px solid var(--border); border-radius: 12px;
   padding: 14px 18px; background: #fff;
   display: flex; align-items: center; gap: 12px; flex-shrink: 0;
@@ -84,13 +111,21 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 }
 .info-banner-link:hover { background: var(--chip-bg); }
 
-.msg { display: flex; flex-direction: column; max-width: 100%; }
-.msg.ai { align-items: flex-start; }
-.msg.user { align-items: flex-end; }
+/* ── messages ── */
+.msg { display: flex; gap: 10px; align-items: flex-start; max-width: 880px; }
+.msg.user { flex-direction: row-reverse; align-self: flex-end; }
 
-/* AI side wraps bubble + tool indicators + cards together */
-.msg-content { display: flex; flex-direction: column; gap: 10px; max-width: 760px; min-width: 0; width: 100%; }
-.msg.user .msg-content { max-width: 620px; }
+.av {
+  width: 30px; height: 30px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Inter",sans-serif; font-size: 11px; font-weight: 600;
+  border: 1.25px solid var(--border-strong);
+}
+.av.ai { border-radius: 8px; background: var(--accent-soft); color: var(--accent-ink); }
+.av.user { border-radius: 50%; background: var(--chip-bg); color: rgba(31,29,27,0.6); }
+
+.msg-content { display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1; }
+.msg.user .msg-content { align-items: flex-end; }
 
 .bub {
   padding: 14px 18px; border: 1.25px solid var(--border-strong);
@@ -98,15 +133,23 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   font-size: 16px; line-height: 1.6;
   word-wrap: break-word;
   align-self: flex-start;
+  max-width: 720px;
 }
 .msg.user .bub { border-radius: 14px 14px 4px 14px; background: var(--chip-bg); align-self: flex-end; }
 .bub b { font-weight: 600; }
 
-/* tool indicators — shown above AI bubble while typing */
+.bub-tokens { display: inline-flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-right: 6px; }
+.bub-token {
+  padding: 3px 9px; border-radius: 5px;
+  background: var(--accent-soft); color: var(--accent-ink);
+  border: 1px solid var(--accent); font-size: 13px; font-weight: 500;
+}
+
+/* ── tool indicators (real-time tool steps from AI) ── */
 .tool-strip { display: flex; flex-direction: column; gap: 5px; align-self: flex-start; }
 .tool-step {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 11px; border-radius: 999px;
+  padding: 6px 12px; border-radius: 999px;
   background: var(--accent-soft); border: 1px solid rgba(124,92,255,0.25);
   font-family: "Inter",sans-serif; font-size: 12.5px; font-weight: 500;
   color: var(--accent-ink);
@@ -120,7 +163,6 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   width: 14px; height: 14px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
 }
-/* spinner for active tool steps */
 .tool-step:not(.done) .tool-icon::before {
   content: '';
   width: 11px; height: 11px;
@@ -151,11 +193,68 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   40% { transform: translateY(-4px); opacity: 1; }
 }
 
-/* car recommendation cards — richer layout matching reference design */
+/* ── quick chips: under AI bubble (kept from attachment 1, ENLARGED) ── */
+.quick-chips {
+  margin-left: 40px;        /* aligned to AI bubble after avatar */
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding-bottom: 4px;
+  animation: chips-slide .35s cubic-bezier(.4,0,.2,1);
+}
+@keyframes chips-slide {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+.chip {
+  appearance: none;
+  padding: 10px 16px;
+  border: 1px solid var(--border-strong); border-radius: 999px;
+  font: 500 14.5px/1.2 "Geist",sans-serif;
+  color: var(--ink); background: #fff;
+  cursor: pointer; user-select: none; transition: all .14s;
+}
+.chip:hover {
+  background: var(--accent-soft); color: var(--accent-ink);
+  border-color: var(--accent); transform: translateY(-1px);
+}
+.chip:active { transform: translateY(0); }
+.chip.on {
+  background: var(--accent-soft); color: var(--accent-ink);
+  border-color: var(--accent);
+}
+
+/* ── EV design surprises ── */
+.surprises {
+  margin-top: 2px;
+  padding: 14px 16px;
+  border-left: 2px solid var(--accent);
+  background: rgba(124,92,255,0.04);
+  border-radius: 0 8px 8px 0;
+  align-self: flex-start;
+  max-width: 720px;
+}
+.surprises-header {
+  font-family: "Inter",sans-serif;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--accent-ink);
+  margin-bottom: 10px;
+}
+.surprises-list { display: flex; flex-direction: column; gap: 8px; }
+.surprise-row {
+  font-size: 13.5px; line-height: 1.5;
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.surprise-title { font-weight: 600; color: var(--ink); }
+.surprise-sep { color: var(--muted); }
+.surprise-desc { color: rgba(31,29,27,0.7); flex: 1; min-width: 0; }
+
+/* ── recommendation cards (from attachment 2 — 2x2 grid, badges, specs, CTA, pin) ── */
 .recs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+  margin-top: 4px;
+  max-width: 720px;
 }
 .rec {
   border: 1.5px solid var(--border-strong); border-radius: 14px;
@@ -168,10 +267,9 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   border-color: var(--accent);
   border-width: 2px;
   box-shadow: 0 0 0 4px var(--accent-soft);
-  order: -1; /* pinned cards float to the top of the grid */
+  order: -1;
 }
 
-/* car image placeholder */
 .rec-ph {
   background: repeating-linear-gradient(135deg,rgba(31,29,27,.05) 0 6px,rgba(0,0,0,0) 6px 12px), var(--bg);
   border: 1.25px dashed rgba(31,29,27,0.2); border-radius: 10px; height: 100px;
@@ -180,7 +278,6 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   letter-spacing: .04em;
 }
 
-/* pin button (top-right) */
 .rec-pin {
   position: absolute; top: 10px; right: 10px;
   width: 32px; height: 32px;
@@ -199,7 +296,6 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 }
 .rec-pin svg { width: 16px; height: 16px; }
 
-/* badge */
 .rec-badge {
   align-self: flex-start;
   font-family: "Inter",sans-serif; font-size: 11.5px; font-weight: 600;
@@ -214,10 +310,9 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .rec-badge.b-default { background: var(--chip-bg); color: var(--ink); }
 
 .rec-title { display: flex; flex-direction: column; gap: 3px; }
-.rec-name { font-size: 17px; font-weight: 600; line-height: 1.25; padding-right: 36px; /* room for pin */ }
+.rec-name { font-size: 17px; font-weight: 600; line-height: 1.25; padding-right: 36px; }
 .rec-sub { font-family: "Inter",sans-serif; font-size: 13px; color: var(--muted); }
 
-/* 2x2 spec grid */
 .rec-specs {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
 }
@@ -232,10 +327,8 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 }
 .rec-spec-value { font-size: 14px; font-weight: 600; color: var(--ink); }
 
-/* horizontal divider before highlights */
 .rec-divider { height: 1px; background: var(--border); margin: 2px 0; }
 
-/* highlights list with green checkmarks */
 .rec-highlights { display: flex; flex-direction: column; gap: 7px; }
 .rec-highlight {
   display: flex; align-items: flex-start; gap: 9px;
@@ -251,7 +344,6 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   margin-top: 1px;
 }
 
-/* CTA button at the bottom */
 .rec-cta {
   margin-top: auto;
   appearance: none; width: 100%;
@@ -266,53 +358,28 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 
 /* ── composer ── */
 .composer {
-  border-top: 1px solid var(--border); padding: 16px 18px 22px;
+  border-top: 1px solid var(--border); padding: 16px 32px 22px;
   flex-shrink: 0; background: var(--bg);
 }
-
-/* AI-suggested replies, shown above the input box */
-.suggestions {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  margin-bottom: 12px;
-}
-.suggestions:empty { display: none; }
-
-.suggestions.animate-in {
-  animation: sug-slide .35s cubic-bezier(.4,0,.2,1);
-}
-
-@keyframes sug-slide {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: none; }
-}
-
-.suggestion-label {
-  width: 100%;
-  font-family: "Inter",sans-serif; font-size: 12px;
-  color: var(--muted); letter-spacing: .06em; text-transform: uppercase;
-  font-weight: 500;
-  margin-bottom: 2px;
-}
-
-.sug-chip {
-  appearance: none;
-  padding: 9px 14px; border: 1px solid var(--border-strong); border-radius: 999px;
-  font: 500 14px/1.2 "Geist",sans-serif; color: var(--ink); background: #fff;
-  cursor: pointer; user-select: none;
-  transition: all .12s;
-}
-.sug-chip:hover {
-  background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent);
-  transform: translateY(-1px);
-}
-.sug-chip:active { transform: translateY(0); }
-
 .cbox {
   border: 1.5px solid var(--border-strong); border-radius: 14px; padding: 12px 14px;
-  min-height: 70px; display: flex; flex-direction: column; gap: 8px; background: #fff;
+  min-height: 70px; display: flex; flex-direction: column; gap: 10px; background: #fff;
   transition: border-color .15s, box-shadow .15s;
 }
 .cbox:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.tokens-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.token {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 5px 4px 10px; border-radius: 6px;
+  background: var(--accent-soft); color: var(--accent-ink);
+  border: 1px solid var(--accent); font-size: 13px; font-weight: 500;
+}
+.token button {
+  appearance: none; border: 0; background: transparent; color: inherit;
+  cursor: pointer; opacity: .55; font-size: 13px; padding: 0 4px; line-height: 1;
+}
+.token button:hover { opacity: 1; }
 
 .input-field {
   flex: 1; min-width: 140px; appearance: none; border: 0; outline: 0; background: transparent;
@@ -330,63 +397,93 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .btn-send:hover:not(:disabled) { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--accent-ink); }
 .btn-send:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
 
-/* ── responsive ── */
-@media (max-width: 980px) {
-  .col-spacer { display: none; }
-  .col-center { width: 100%; }
+/* ── sidebar (filters) ── */
+.side {
+  width: 320px; border-left: 1px solid var(--border); background: var(--bg);
+  display: flex; flex-direction: column; flex-shrink: 0;
+  min-width: 260px; max-width: 520px;
 }
-@media (max-width: 720px) {
-  .recs { grid-template-columns: 1fr; }
+.side-head {
+  padding: 16px 22px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
-@media (max-width: 640px) {
-  .stream { padding: 14px 10px 8px; gap: 14px; }
-  .composer { padding: 10px 10px 14px; }
-  .info-banner { margin: 10px 10px 0; padding: 12px 14px; }
-  .info-banner-text b { font-size: 14px; }
-  .info-banner-text span { font-size: 12.5px; }
-  .bub { font-size: 15px; }
-  .topbar { padding: 0 18px; gap: 10px; }
-  .topbar-title { font-size: 14px; }
-  .sug-chip { font-size: 13.5px; padding: 8px 12px; }
+.side-head b { font-size: 14px; font-weight: 600; }
+.side-head-actions { display: flex; align-items: center; gap: 8px; }
+.side-reset {
+  font-family: "Inter",sans-serif; font-size: 11.5px; color: var(--muted);
+  cursor: pointer; background: none; border: none;
 }
-
-/* error toast */
-.toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  background: #ef4444; color: #fff; font-size: 13.5px; padding: 10px 18px;
-  border-radius: 8px; z-index: 999; opacity: 0; transition: opacity .3s;
-  pointer-events: none;
+.side-reset:hover { color: var(--ink); }
+.btn-apply {
+  appearance: none; background: transparent; color: var(--muted);
+  border: 1px solid rgba(31,29,27,0.2); border-radius: 999px;
+  font: 500 12px/1 "Geist",sans-serif; padding: 7px 14px; cursor: default;
+  transition: all .2s;
 }
-.toast.show { opacity: 1; }
-
-/* ── collection (saved cars) ── */
-.btn-collection {
-  appearance: none; border: 1px solid rgba(31,29,27,0.3); background: transparent;
-  color: rgba(31,29,27,0.7); font: 500 13px/1 "Geist",sans-serif;
-  height: 34px; padding: 0 12px; gap: 7px;
-  border-radius: 999px; cursor: pointer;
-  display: inline-flex; align-items: center;
-  position: relative;
-  transition: all .12s;
-}
-.btn-collection:hover { color: var(--ink); border-color: rgba(31,29,27,0.6); }
-.btn-collection.has-items {
-  border-color: var(--accent);
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-}
-.btn-collection-count {
-  font-family: "Inter",sans-serif; font-size: 11.5px; font-weight: 600;
-  min-width: 18px; height: 18px; padding: 0 5px;
-  background: rgba(31,29,27,0.08); color: var(--ink);
-  border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center;
-  line-height: 1;
-}
-.btn-collection.has-items .btn-collection-count {
+.btn-apply.active {
   background: var(--accent); color: #fff;
+  border-color: var(--accent-ink);
+  box-shadow: 2px 2px 0 var(--accent-ink);
+  cursor: pointer;
+}
+.btn-apply.active:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--accent-ink); }
+
+.side-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
+
+.filter-group { display: flex; flex-direction: column; gap: 9px; }
+.filter-label {
+  font-family: "Inter",sans-serif; font-size: 11px;
+  color: var(--muted); letter-spacing: .08em; text-transform: uppercase;
+  font-weight: 500;
+}
+.chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* sidebar filter chips are smaller than chat suggestion chips */
+.chips-row .chip {
+  padding: 6px 12px;
+  font-size: 13px;
 }
 
+/* budget slider */
+.budget-module { display: flex; flex-direction: column; gap: 10px; }
+.budget-vals {
+  display: flex; justify-content: space-between;
+  font-family: "Inter",sans-serif; font-size: 11.5px; color: var(--muted);
+}
+.budget-input {
+  width: 100%; appearance: none; height: 4px; border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) 0%, var(--accent) 50%, rgba(31,29,27,0.15) 50%);
+  outline: none; cursor: pointer;
+}
+.budget-input::-webkit-slider-thumb {
+  appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18); cursor: pointer;
+}
+.budget-selected {
+  font-family: "Inter",sans-serif; font-size: 13px; font-weight: 500;
+  color: var(--ink);
+}
+
+/* drag handle between chat and sidebar */
+.resize-handle {
+  width: 5px; flex-shrink: 0; cursor: col-resize;
+  background: transparent; position: relative;
+  transition: background .15s;
+}
+.resize-handle::after {
+  content: ''; position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 1px; height: 40px;
+  background: var(--border-strong); border-radius: 1px; opacity: 0.35;
+  transition: opacity .15s, height .15s;
+}
+.resize-handle:hover::after,
+.resize-handle.dragging::after { opacity: 0.8; height: 60px; }
+.resize-handle:hover,
+.resize-handle.dragging { background: var(--accent-soft); }
+
+/* ── collection (saved cars) drawer ── */
 .collection-backdrop {
   position: fixed; inset: 0;
   background: rgba(10,10,10,0.32);
@@ -410,7 +507,7 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .collection-drawer.open { transform: none; }
 .collection-head {
   display: flex; justify-content: space-between; align-items: flex-start;
-  padding: 18px 20px 14px; border-bottom: 1px solid var(--border);
+  padding: 18px 22px 14px; border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .collection-title { font-size: 15px; font-weight: 600; display: block; margin-bottom: 2px; }
@@ -425,12 +522,11 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .collection-close:hover { color: var(--ink); border-color: var(--ink); }
 
 .collection-body {
-  flex: 1; overflow-y: auto; padding: 14px 20px 20px;
+  flex: 1; overflow-y: auto; padding: 14px 22px 22px;
   display: flex; flex-direction: column; gap: 12px;
 }
 .collection-body:empty { display: none; }
 
-/* mini saved-car card */
 .coll-card {
   border: 1px solid var(--border-strong); border-radius: 12px;
   background: #fff; padding: 12px; display: flex; gap: 11px;
@@ -483,42 +579,103 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   margin-bottom: 4px;
 }
 .collection-empty-title { font-size: 14px; font-weight: 600; color: var(--ink); }
-.collection-empty-text { font-family: "Inter",sans-serif; font-size: 12.5px; line-height: 1.5; max-width: 240px; }
+.collection-empty-text {
+  font-family: "Inter",sans-serif; font-size: 12.5px; line-height: 1.5; max-width: 240px;
+}
 
+/* ── onboarding ── */
+.ob-overlay { position:fixed; inset:0; z-index:300; pointer-events:none; }
+.ob-card {
+  position:fixed; z-index:400; background:#fff; border:1px solid rgba(31,29,27,0.14);
+  border-radius:16px; padding:22px 24px; width:280px; box-shadow:0 8px 32px rgba(0,0,0,0.18);
+  font-family:"Geist","Inter",system-ui,sans-serif; animation: ob-fadein .28s ease;
+}
+@keyframes ob-fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+.ob-dots { display:flex; gap:5px; margin-bottom:14px; }
+.ob-dot { width:6px; height:6px; border-radius:50%; background:rgba(31,29,27,0.18); }
+.ob-dot.active { background:var(--accent); }
+.ob-step-label { font-family:"Inter",sans-serif; font-size:10px; color:rgba(31,29,27,0.45); letter-spacing:.07em; text-transform:uppercase; margin-bottom:6px; }
+.ob-title { font-size:15px; font-weight:600; color:var(--ink); margin-bottom:8px; line-height:1.3; }
+.ob-body { font-size:13px; color:rgba(31,29,27,0.6); line-height:1.6; margin-bottom:18px; }
+.ob-actions { display:flex; justify-content:space-between; align-items:center; }
+.ob-skip { font-size:11.5px; color:rgba(31,29,27,0.4); cursor:pointer; background:none; border:none; font-family:inherit; }
+.ob-skip:hover { color:rgba(31,29,27,0.7); }
+.ob-next {
+  appearance:none; background:var(--accent); color:#fff; border:1.5px solid var(--accent-ink);
+  padding:8px 18px; border-radius:999px; font:600 12px/1 "Geist",sans-serif; cursor:pointer;
+  box-shadow:2px 2px 0 var(--accent-ink); transition:transform .08s, box-shadow .08s;
+}
+.ob-next:hover { transform:translate(-1px,-1px); box-shadow:3px 3px 0 var(--accent-ink); }
+
+/* ── responsive ── */
+@media (max-width: 1100px) {
+  .col-spacer { display: none; }
+  .side { width: 280px; }
+}
+@media (max-width: 900px) {
+  .stream { padding: 18px 22px 12px; }
+  .composer { padding: 14px 22px 18px; }
+  .recs { grid-template-columns: 1fr; }
+}
 @media (max-width: 720px) {
   .recs { grid-template-columns: 1fr; }
 }
+@media (max-width: 640px) {
+  .main { flex-direction: column; position: relative; }
+  .stream { padding: 16px 14px; gap: 14px; }
+  .composer { padding: 12px 14px 16px; }
+  .info-banner { margin: 12px 14px 0; padding: 12px 14px; }
+  .info-banner-text b { font-size: 14px; }
+  .info-banner-text span { font-size: 12.5px; }
+  .bub { font-size: 15px; }
+  .chip { font-size: 13.5px; padding: 8px 13px; }
+  .quick-chips { margin-left: 36px; gap: 6px; }
+  .topbar { padding: 0 14px; gap: 8px; }
+  .topbar-title { font-size: 14px; }
+  .btn-reset-all,
+  .btn-collection { height: 32px; padding: 0 12px; font-size: 12.5px; }
+  .side {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    width: 100%; height: 72vh;
+    border-left: none; border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    transform: translateY(100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    z-index: 100;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.10);
+  }
+  .side.open { transform: translateY(0); }
+  .side-head { position: relative; }
+  .side-head::before {
+    content: ''; display: block; position: absolute;
+    top: 8px; left: 50%; transform: translateX(-50%);
+    width: 36px; height: 4px;
+    background: var(--border-strong); border-radius: 2px; opacity: .35;
+  }
+  .resize-handle { display: none; }
+  .btn-filter { display: inline-flex !important; }
+}
+.drawer-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.25); z-index: 99;
+}
+.drawer-backdrop.open { display: block; }
+.btn-filter { display: none; }
 
-/* ── EV design surprises — minimal text-list style ── */
-.surprises {
-  margin-top: 2px;
-  padding: 14px 16px;
-  border-left: 2px solid var(--accent);
-  background: rgba(124,92,255,0.04);
-  border-radius: 0 8px 8px 0;
+/* error toast */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #ef4444; color: #fff; font-size: 13.5px; padding: 10px 18px;
+  border-radius: 8px; z-index: 999; opacity: 0; transition: opacity .3s;
+  pointer-events: none;
 }
-.surprises-header {
-  font-family: "Inter",sans-serif;
-  font-size: 11px; font-weight: 600;
-  letter-spacing: .08em; text-transform: uppercase;
-  color: var(--accent-ink);
-  margin-bottom: 10px;
-}
-.surprises-list { display: flex; flex-direction: column; gap: 7px; }
-.surprise-row {
-  font-size: 13.5px; line-height: 1.5;
-  display: flex; flex-wrap: wrap; gap: 6px;
-}
-.surprise-title { font-weight: 600; color: var(--ink); }
-.surprise-sep { color: var(--muted); }
-.surprise-desc { color: rgba(31,29,27,0.7); flex: 1; min-width: 0; }
+.toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 
 <div class="app">
 
-  <!-- top bar -->
   <div class="topbar">
     <b class="topbar-title">Möller Bil · Find a car</b>
     <div class="topbar-spacer"></div>
@@ -529,50 +686,55 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
       <span class="btn-collection-count" id="collectionCount">0</span>
     </button>
     <button class="btn-reset-all" onclick="resetAll()">Reset chat</button>
+    <button class="btn-filter" onclick="toggleDrawer()">Filters ↑</button>
   </div>
 
-  <!-- main: [spacer] [chat] [spacer] -->
   <div class="main">
     <div class="col-spacer left"></div>
     <div class="col-center">
 
-      <!-- chat area -->
-      <div class="chat">
+    <div class="chat">
 
-        <!-- info banner -->
-        <div class="info-banner">
-          <div class="info-banner-text">
-            <b>More than just finding a car</b>
-            <span>Möller Bil offers insurance, service plans, financing, trade-ins and more.</span>
-          </div>
-          <a class="info-banner-link" href="#" target="_blank">Learn more →</a>
+      <div class="info-banner">
+        <div class="info-banner-text">
+          <b>More than just finding a car</b>
+          <span>Möller Bil offers insurance, service plans, financing, trade-ins and more.</span>
         </div>
-
-        <div class="stream" id="stream"></div>
-
-        <!-- composer -->
-        <div class="composer">
-
-          <!-- AI suggestions appear here, above input -->
-          <div class="suggestions" id="suggestions"></div>
-
-          <div class="cbox">
-            <input class="input-field" id="inputField" placeholder="Tell the assistant what you need…"
-              onkeydown="handleKey(event)" oninput="updateSend()">
-            <div class="cfoot">
-              <button class="btn-send" id="btnSend" disabled onclick="sendMessage()">Send →</button>
-            </div>
-          </div>
-        </div>
-
+        <a class="info-banner-link" href="#" target="_blank">Learn more →</a>
       </div>
 
-    </div><!-- /col-center -->
-    <div class="col-spacer right"></div>
+      <div class="stream" id="stream"></div>
+
+      <div class="composer">
+        <div class="cbox">
+          <div class="tokens-row" id="tokensRow">
+            <input class="input-field" id="inputField" placeholder="Tell the assistant what you need…"
+              onkeydown="handleKey(event)" oninput="updateSend()">
+          </div>
+          <div class="cfoot">
+            <button class="btn-send" id="btnSend" disabled onclick="sendMessage()">Send →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="resize-handle" id="resizeHandle" title="Drag to resize"></div>
+
+    <aside class="side" id="side">
+      <div class="side-head">
+        <b>Refine search</b>
+        <div class="side-head-actions">
+          <button class="side-reset" onclick="resetFilters()">reset</button>
+          <button class="btn-apply" id="btnApply" onclick="applyFilters()">Apply →</button>
+        </div>
+      </div>
+      <div class="side-body" id="sideBody"></div>
+    </aside>
+
+    </div><div class="col-spacer right"></div>
   </div>
 </div>
 
-<!-- collection (saved cars) drawer -->
 <div class="collection-backdrop" id="collectionBackdrop" onclick="closeCollection()"></div>
 <aside class="collection-drawer" id="collectionDrawer">
   <div class="collection-head">
@@ -599,17 +761,19 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 </aside>
 
 <div class="toast" id="toast"></div>
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="toggleDrawer()"></div>
 
 <script>
 // ── config ──────────────────────────────────────────────────────────────
 const DEEPSEEK_API_KEY = 'sk-014c7c0d0b8a48d19db2ace18c9b0cce';
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
 
+// Use the more sophisticated prompt from attachment 2
 const SYSTEM_PROMPT = `You are a friendly car advisor at Möller Bil. Help users find the right car through natural conversation.
 
 Rules:
-- STRICTLY ONE question per reply. Never ask two questions in the same message — not even casually ("Also, ...?" or "And one more thing..."). If you have multiple areas left to cover, pick the single most natural one and save the rest for later turns.
-- Keep replies short: 1-2 sentences of acknowledgment + 1 question. That's it.
+- Ask ONE question at a time, keep replies short (2-3 sentences max unless recommending)
+- Start by asking something open and easy — like what's prompting them to look for a car, or what their current situation is. Do NOT ask about car usage scenarios first.
 - Always respond in English
 - All prices and budgets are in Norwegian kroner (kr). Format like "350 000 kr" or "~450 000 kr". NEVER use $ or €.
 
@@ -683,169 +847,432 @@ Highlight4: [short benefit, max 8 words]
 (repeat block for each car, separated by ---)`;
 
 // ── state ────────────────────────────────────────────────────────────────
-let messages = [];   // { role, content } for API
+let messages = [];
+let activeTokens = [];
+let activeChips = {};
 let isStreaming = false;
-let pinnedCars = []; // { model, year, badge } objects
+let pinnedCars = []; // { model, year, badge }
 
-// ── collection (saved cars) ───────────────────────────────────────────────
-function pinCar(rec) {
-  const model = cleanField(rec.model);
-  if (pinnedCars.some(c => c.model === model)) return;
-  pinnedCars.push({
-    model: model,
-    year: cleanField(rec.year),
-    badge: cleanField(rec.badge),
-  });
-  renderCollection();
-}
+// ── filter taxonomy ──────────────────────────────────────────────────────
+const FILTERS = [
+  { key: 'usage',  title: 'Usage',           options: ['Commuting','City driving','Mountain trips','Family use','Road trips','Leisure'] },
+  { key: 'seats',  title: 'Number of seats', options: ['2','4','5','6','7+'] },
+  { key: 'fuel',   title: 'Fuel type',       options: ['Electric','Hybrid','Petrol','Diesel'] },
+  { key: 'size',   title: 'Vehicle size',    options: ['City','Compact','Mid-size','Family','SUV','Van'] },
+];
+const BRANDS = ['Audi','BMW','Mercedes','Volkswagen','Toyota','Volvo','Peugeot','Renault','Ford','Kia','Hyundai','Tesla'];
 
-function unpinCar(model) {
-  pinnedCars = pinnedCars.filter(c => c.model !== model);
-  renderCollection();
-  // also update any open rec cards in the stream that match this model
-  document.querySelectorAll('.rec').forEach(card => {
-    const nameEl = card.querySelector('.rec-name');
-    if (nameEl && nameEl.textContent === model) {
-      card.classList.remove('pinned');
-      const pinBtn = card.querySelector('.rec-pin');
-      if (pinBtn) {
-        pinBtn.classList.remove('on');
-        pinBtn.title = 'Pin this car';
-      }
-    }
-  });
-}
-
-function renderCollection() {
-  const body = document.getElementById('collectionBody');
-  const empty = document.getElementById('collectionEmpty');
-  const sub = document.getElementById('collectionSub');
-  const countEl = document.getElementById('collectionCount');
-  const btn = document.getElementById('btnCollection');
-
-  // update count badge
-  const n = pinnedCars.length;
-  countEl.textContent = n;
-  btn.classList.toggle('has-items', n > 0);
-
-  // update sub text
-  sub.textContent = n === 0
-    ? 'No cars saved yet'
-    : `${n} car${n > 1 ? 's' : ''} saved`;
-
-  // render or empty state
-  if (n === 0) {
-    body.innerHTML = '';
-    empty.classList.remove('hidden');
-    return;
-  }
-  empty.classList.add('hidden');
-
-  body.innerHTML = '';
-  pinnedCars.forEach(c => {
-    const card = document.createElement('div');
-    card.className = 'coll-card';
-
-    // derive a match score label from the badge
-    const matchLabel = c.badge || 'Matched';
-
-    card.innerHTML = `
-      <div class="coll-card-ph"></div>
-      <div class="coll-card-info">
-        <div class="coll-card-name">${escapeHtml(c.model)}</div>
-        <div class="coll-card-match">
-          <span class="coll-match-dot"></span>
-          ${escapeHtml(matchLabel)}
-        </div>
-        <button class="coll-card-details" onclick="showToast('Detail page — coming soon')">View details</button>
-      </div>
-      <button class="coll-card-remove" aria-label="Remove" title="Remove">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </button>
-    `;
-    card.querySelector('.coll-card-remove').addEventListener('click', () => {
-      unpinCar(c.model);
-    });
-    body.appendChild(card);
-  });
-}
-
-function toggleCollection() {
-  const drawer = document.getElementById('collectionDrawer');
-  const backdrop = document.getElementById('collectionBackdrop');
-  const isOpen = drawer.classList.toggle('open');
-  backdrop.classList.toggle('open', isOpen);
-}
-
-function closeCollection() {
-  document.getElementById('collectionDrawer').classList.remove('open');
-  document.getElementById('collectionBackdrop').classList.remove('open');
+function tokenLabel(key, opt) {
+  return key === 'seats' ? `${opt} seats` : opt;
 }
 
 // ── init ─────────────────────────────────────────────────────────────────
 function init() {
+  buildSidebar();
   renderCollection();
-  showGreeting();
+  showOnboarding();
 }
 
-function showGreeting() {
-  const greeting = "Hei! 👋 Looking for a new car can feel overwhelming — too many models, too many specs. **I'm here to make it easy.** Tell me a bit about yourself and I'll narrow it down to a few cars that actually fit your life. So, what's on your mind?";
+// ── onboarding spotlight tour ─────────────────────────────────────────────
+const ONBOARDING_STEPS = [
+  {
+    target: '.chat',
+    title: 'Chat with your advisor',
+    body: "No car knowledge needed. Just talk naturally — about your life, your needs, your budget. The AI will guide you step by step.",
+    pos: 'right',
+  },
+  {
+    target: '.side',
+    title: 'Refine with filters',
+    body: "Use these chips to quickly narrow things down by seat count, fuel type, or vehicle size. Your choices are sent straight to the conversation.",
+    pos: 'left',
+  },
+  {
+    target: '.stream',
+    title: 'Get matched cars',
+    body: "Once the advisor understands your situation, it'll recommend specific models — with reasons tailored to you. You can keep asking questions anytime.",
+    pos: 'right',
+  },
+];
+
+let onboardingStep = 0;
+
+function showOnboarding() {
+  onboardingStep = 0;
+  // Make sure we only ask ONE clear question in the greeting
+  const greeting = "Hei! 👋 Looking for a new car can feel overwhelming. I'm here to make it easy. **What's got you thinking about a new car?**";
   const initialSuggestions = [
     "My current car needs replacing",
     "Buying my first car",
     "Curious about going electric",
     "Just exploring my options"
   ];
-  appendAIMessage(greeting, () => {
-    setSuggestions(initialSuggestions);
+  
+  appendAIMessage(greeting, (msgEl) => {
+    renderQuickChips(initialSuggestions, msgEl);
   });
   messages.push({ role: 'assistant', content: greeting });
+  renderOnboardingStep();
 }
 
-// ── suggestions (above input) ─────────────────────────────────────────────
-function setSuggestions(list) {
-  const wrap = document.getElementById('suggestions');
-  wrap.innerHTML = '';
-  if (!list || list.length === 0) return;
+function renderOnboardingStep() {
+  // remove previous overlay pieces
+  document.querySelectorAll('.ob-overlay, .ob-card').forEach(el => el.remove());
 
-  // restart entrance animation
-  wrap.classList.remove('animate-in');
-  void wrap.offsetWidth; // force reflow
-  wrap.classList.add('animate-in');
+  const step = ONBOARDING_STEPS[onboardingStep];
+  const targetEl = document.querySelector(step.target);
 
-  const label = document.createElement('div');
-  label.className = 'suggestion-label';
-  label.textContent = 'Quick replies';
-  wrap.appendChild(label);
+  const overlay = document.createElement('div');
+  overlay.className = 'ob-overlay';
 
-  list.forEach(text => {
-    const btn = document.createElement('button');
-    btn.className = 'sug-chip';
-    btn.textContent = text;
-    btn.onclick = () => {
-      // tap = send immediately
-      const input = document.getElementById('inputField');
-      input.value = text;
-      sendMessage();
-    };
-    wrap.appendChild(btn);
+  const dimAll = document.createElement('div');
+  dimAll.style.cssText = `position:fixed; inset:0; background:rgba(10,10,10,0.55); z-index:300; pointer-events:all; transition: opacity .35s;`;
+
+  // cut a hole by clipping around the target
+  if (targetEl) {
+    const r = targetEl.getBoundingClientRect();
+    dimAll.style.background = 'transparent';
+    dimAll.style.pointerEvents = 'none';
+
+    // four dim rects around the target
+    const rects = [
+      { top:0, left:0, width:'100%', height: r.top+'px' },
+      { top: r.bottom+'px', left:0, width:'100%', bottom:0 },
+      { top: r.top+'px', left:0, width: r.left+'px', height: r.height+'px' },
+      { top: r.top+'px', left: r.right+'px', right:0, height: r.height+'px' },
+    ];
+    rects.forEach(s => {
+      const d = document.createElement('div');
+      d.style.cssText = `position:fixed; background:rgba(10,10,10,0.60); z-index:300; pointer-events:all;`;
+      Object.assign(d.style, s);
+      overlay.appendChild(d);
+    });
+
+    // subtle highlight border on target
+    const highlight = document.createElement('div');
+    highlight.style.cssText = `
+      position:fixed; top:${r.top}px; left:${r.left}px; width:${r.width}px; height:${r.height}px;
+      border:2px solid rgba(124,92,255,0.7); border-radius:8px; z-index:301; pointer-events:none;
+      box-shadow: 0 0 0 4px rgba(124,92,255,0.12); transition: all .35s;
+    `;
+    overlay.appendChild(highlight);
+  } else {
+    overlay.appendChild(dimAll);
+  }
+
+  document.body.appendChild(overlay);
+
+  // floating card
+  const card = document.createElement('div');
+  card.className = 'ob-card';
+
+  const isLast = onboardingStep === ONBOARDING_STEPS.length - 1;
+  const stepNum = onboardingStep + 1;
+  const total   = ONBOARDING_STEPS.length;
+
+  card.innerHTML = `
+    <div class="ob-dots">
+      ${Array.from({length:total}, (_,i) => `<div class="ob-dot${i===onboardingStep?' active':''}"></div>`).join('')}
+    </div>
+    <div class="ob-step-label">${stepNum} of ${total}</div>
+    <div class="ob-title">${step.title}</div>
+    <div class="ob-body">${step.body}</div>
+    <div class="ob-actions">
+      <button class="ob-skip" onclick="finishOnboarding()">Skip tour</button>
+      <button class="ob-next" onclick="${isLast ? 'finishOnboarding()' : 'nextOnboardingStep()'}">${isLast ? 'Get started →' : 'Next →'}</button>
+    </div>
+  `;
+
+  // position card next to target
+  if (targetEl) {
+    const r = targetEl.getBoundingClientRect();
+    if (step.pos === 'right') {
+      card.style.left  = (r.right + 16) + 'px';
+      card.style.top   = (r.top + r.height/2 - 120) + 'px';
+    } else {
+      card.style.right = (window.innerWidth - r.left + 16) + 'px';
+      card.style.top   = (r.top + r.height/2 - 120) + 'px';
+    }
+    // clamp vertically
+    const cardH = 260;
+    let top = parseFloat(card.style.top);
+    if (top < 12) card.style.top = '12px';
+    if (top + cardH > window.innerHeight - 12) card.style.top = (window.innerHeight - cardH - 12) + 'px';
+  } else {
+    card.style.top  = '50%';
+    card.style.left = '50%';
+    card.style.transform = 'translate(-50%,-50%)';
+  }
+
+  document.body.appendChild(card);
+}
+
+function nextOnboardingStep() {
+  onboardingStep++;
+  if (onboardingStep >= ONBOARDING_STEPS.length) { finishOnboarding(); return; }
+  renderOnboardingStep();
+}
+
+function finishOnboarding() {
+  document.querySelectorAll('.ob-overlay, .ob-card').forEach(el => {
+    el.style.transition = 'opacity .25s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 260);
   });
 }
 
-function clearSuggestions() {
-  const wrap = document.getElementById('suggestions');
-  wrap.innerHTML = '';
+// ── sidebar ───────────────────────────────────────────────────────────────
+function buildSidebar() {
+  const body = document.getElementById('sideBody');
+  body.innerHTML = '';
+
+  FILTERS.forEach(group => {
+    const div = document.createElement('div');
+    div.className = 'filter-group';
+    div.innerHTML = `<div class="filter-label">${group.title}</div><div class="chips-row" id="grp-${group.key}"></div>`;
+    body.appendChild(div);
+
+    const row = div.querySelector(`#grp-${group.key}`);
+    group.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.textContent = opt;
+      const key = `${group.key}:${opt}`;
+      if (activeChips[key]) btn.classList.add('on');
+      btn.onclick = () => toggleChip(group.key, opt, btn, key);
+      row.appendChild(btn);
+    });
+  });
+
+  // brands
+  const brandGroup = document.createElement('div');
+  brandGroup.className = 'filter-group';
+  brandGroup.innerHTML = `<div class="filter-label">Brand</div><div class="chips-row" id="grp-brand"></div>`;
+  body.appendChild(brandGroup);
+
+  const brandRow = brandGroup.querySelector('#grp-brand');
+  BRANDS.forEach(brand => {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.textContent = brand;
+    const key = `brand:${brand}`;
+    if (activeChips[key]) btn.classList.add('on');
+    btn.onclick = () => toggleChip('brand', brand, btn, key);
+    brandRow.appendChild(btn);
+  });
+
+  // budget slider
+  const budgetGroup = document.createElement('div');
+  budgetGroup.className = 'filter-group';
+  budgetGroup.innerHTML = `
+    <div class="filter-label">Budget</div>
+    <div class="budget-module">
+      <div class="budget-vals"><span>50 000 kr</span><span>1 500 000 kr</span></div>
+      <input class="budget-input" id="budgetSlider" type="range"
+        min="50000" max="1500000" step="25000" value="400000"
+        oninput="updateBudgetDisplay(this.value)">
+      <span class="budget-selected" id="budgetSelected">Up to 400 000 kr</span>
+    </div>
+  `;
+  body.appendChild(budgetGroup);
+  updateBudgetSliderTrack(400000);
+  setApplyVisible(pendingManualChange);
+}
+
+let pendingManualChange = false;
+
+function setApplyVisible(v) {
+  const btn = document.getElementById('btnApply');
+  if (btn) {
+    btn.classList.toggle('active', v);
+    btn.disabled = !v;
+  }
+}
+
+function toggleChip(groupKey, opt, btn, key) {
+  if (activeChips[key]) {
+    delete activeChips[key];
+    btn.classList.remove('on');
+  } else {
+    activeChips[key] = true;
+    btn.classList.add('on');
+  }
+  pendingManualChange = true;
+  setApplyVisible(true);
+}
+
+function applyFilters() {
+  const parts = [];
+  const grouped = {};
+  Object.keys(activeChips).forEach(key => {
+    const [groupKey, opt] = key.split(':');
+    if (!grouped[groupKey]) grouped[groupKey] = [];
+    grouped[groupKey].push(opt);
+  });
+
+  Object.entries(grouped).forEach(([groupKey, opts]) => {
+    if (groupKey === 'seats') {
+      parts.push(`${opts.join(' or ')} seat${opts.length > 1 ? 's' : ''}`);
+    } else {
+      parts.push(opts.join(' or '));
+    }
+  });
+
+  const slider = document.getElementById('budgetSlider');
+  const budgetEl = document.getElementById('budgetSelected');
+  if (slider && parseInt(slider.value) !== 400000 && budgetEl) {
+    parts.push(budgetEl.textContent.toLowerCase());
+  }
+
+  if (parts.length === 0) return;
+
+  const msg = `I'm looking for: ${parts.join(', ')}.`;
+  document.getElementById('inputField').value = msg;
+  updateSend();
+  sendMessage();
+
+  pendingManualChange = false;
+  setApplyVisible(false);
+}
+
+function updateBudgetDisplay(val) {
+  const n = parseInt(val);
+  const formatted = n.toLocaleString('nb-NO').replace(/,/g, ' ') + ' kr';
+  const el = document.getElementById('budgetSelected');
+  if (el) el.textContent = 'Up to ' + formatted;
+  updateBudgetSliderTrack(n);
+  pendingManualChange = true;
+  setApplyVisible(true);
+}
+
+function updateBudgetSliderTrack(val) {
+  const slider = document.getElementById('budgetSlider');
+  if (!slider) return;
+  const min = 50000, max = 1500000;
+  const pct = ((val - min) / (max - min)) * 100;
+  slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, rgba(31,29,27,0.15) ${pct}%)`;
+}
+
+// ── sync chat content → sidebar filters ──────────────────────────────────
+function buildFilterLookup() {
+  const map = {};
+  FILTERS.forEach(group => {
+    group.options.forEach(opt => {
+      map[opt.toLowerCase()] = { groupKey: group.key, opt };
+    });
+  });
+  BRANDS.forEach(b => { map[b.toLowerCase()] = { groupKey: 'brand', opt: b }; });
+  return map;
+}
+
+function syncFiltersFromText(text) {
+  const lookup = buildFilterLookup();
+  const lower = text.toLowerCase();
+  let changed = false;
+
+  Object.entries(lookup).forEach(([word, { groupKey, opt }]) => {
+    const matched = word.includes(' ')
+      ? lower.includes(word)
+      : new RegExp(`\\b${word}\\b`).test(lower);
+
+    if (matched) {
+      const key = `${groupKey}:${opt}`;
+      if (!activeChips[key]) {
+        activeChips[key] = true;
+        changed = true;
+      }
+    }
+  });
+
+  const aliases = {
+    'commut': 'usage:Commuting',
+    'city driv': 'usage:City driving',
+    'family': 'usage:Family use',
+    'road trip': 'usage:Road trips',
+    'mountain': 'usage:Mountain trips',
+    'leisure': 'usage:Leisure',
+    'electric': 'fuel:Electric',
+    'hybrid': 'fuel:Hybrid',
+    'petrol': 'fuel:Petrol',
+    'diesel': 'fuel:Diesel',
+    'suv': 'size:SUV',
+    'compact': 'size:Compact',
+    'van': 'size:Van',
+    'just me': 'seats:2',
+    'just myself': 'seats:2',
+    'alone': 'seats:2',
+    'partner': 'seats:4',
+    'two people': 'seats:4',
+    'kids': 'seats:5',
+    'children': 'seats:5',
+    'seven': 'seats:7+',
+    '7 seat': 'seats:7+',
+  };
+
+  Object.entries(aliases).forEach(([alias, chipKey]) => {
+    if (lower.includes(alias)) {
+      if (!activeChips[chipKey]) {
+        activeChips[chipKey] = true;
+        changed = true;
+      }
+    }
+  });
+
+  if (changed) buildSidebar();
+}
+
+function resetFilters() {
+  activeChips = {};
+  activeTokens = [];
+  pendingManualChange = false;
+  setApplyVisible(false);
+  renderTokens();
+  buildSidebar();
+}
+
+// ── tokens ────────────────────────────────────────────────────────────────
+function addToken(label) {
+  if (!activeTokens.includes(label)) {
+    activeTokens.push(label);
+    renderTokens();
+    updateSend();
+  }
+}
+
+function removeToken(label) {
+  activeTokens = activeTokens.filter(t => t !== label);
+  Object.keys(activeChips).forEach(key => {
+    const [groupKey, opt] = key.split(':');
+    if (tokenLabel(groupKey, opt) === label) delete activeChips[key];
+  });
+  renderTokens();
+  buildSidebar();
+  updateSend();
+}
+
+function renderTokens() {
+  const row = document.getElementById('tokensRow');
+  const input = document.getElementById('inputField');
+  row.querySelectorAll('.token').forEach(el => el.remove());
+  activeTokens.forEach(label => {
+    const span = document.createElement('span');
+    span.className = 'token';
+    const safeLabel = label.replace(/'/g, "\\'");
+    span.innerHTML = `${escapeHtml(label)}<button onclick="removeToken('${safeLabel}')">×</button>`;
+    row.insertBefore(span, input);
+  });
 }
 
 // ── chat UI helpers ───────────────────────────────────────────────────────
 function appendAIMessage(text, onDone) {
   const stream = document.getElementById('stream');
+  // remove old quick chips when a new AI reply arrives
+  stream.querySelectorAll('.quick-chips').forEach(el => el.remove());
 
   const msgDiv = document.createElement('div');
   msgDiv.className = 'msg ai';
   msgDiv.innerHTML = `
+    <div class="av ai">AI</div>
     <div class="msg-content">
       <div class="bub"></div>
     </div>
@@ -855,12 +1282,11 @@ function appendAIMessage(text, onDone) {
   const bub = msgDiv.querySelector('.bub');
   const full = formatText(text);
   const total = text.length;
-  let revealed = 0;
   const speed = 18;
+  let revealed = 0;
 
   function tick() {
     revealed = Math.min(revealed + 2, total);
-    const plainSoFar = revealed;
     let plainCount = 0;
     let htmlOut = '';
     let inTag = false;
@@ -868,7 +1294,7 @@ function appendAIMessage(text, onDone) {
       const ch = full[ci];
       if (ch === '<') { inTag = true; }
       if (inTag) { htmlOut += ch; if (ch === '>') inTag = false; continue; }
-      if (plainCount >= plainSoFar) break;
+      if (plainCount >= revealed) break;
       htmlOut += ch;
       plainCount++;
     }
@@ -887,13 +1313,21 @@ function appendAIMessage(text, onDone) {
   return msgDiv;
 }
 
-function appendUserMessage(text) {
+function appendUserMessage(text, tokens) {
   const stream = document.getElementById('stream');
+  // hide chips when user sends a message
+  stream.querySelectorAll('.quick-chips').forEach(el => el.remove());
+
   const msgDiv = document.createElement('div');
   msgDiv.className = 'msg user';
+  let tokenHtml = '';
+  if (tokens && tokens.length > 0) {
+    tokenHtml = `<span class="bub-tokens">${tokens.map(t => `<span class="bub-token">${escapeHtml(t)}</span>`).join('')}</span>`;
+  }
   msgDiv.innerHTML = `
+    <div class="av user">U</div>
     <div class="msg-content">
-      <div class="bub">${escapeHtml(text)}</div>
+      <div class="bub">${tokenHtml}${text ? escapeHtml(text) : ''}</div>
     </div>
   `;
   stream.appendChild(msgDiv);
@@ -906,6 +1340,7 @@ function appendTypingIndicator() {
   msgDiv.className = 'msg ai';
   msgDiv.id = 'typingMsg';
   msgDiv.innerHTML = `
+    <div class="av ai">AI</div>
     <div class="msg-content">
       <div class="tool-strip" id="toolStrip"></div>
       <div class="bub"><span class="typing"><span></span><span></span><span></span></span></div>
@@ -921,7 +1356,32 @@ function removeTypingIndicator() {
   if (el) el.remove();
 }
 
-// ── tool steps (real, from AI response) ────────────────────────────────────
+// ── quick chips (kept under AI bubble — enlarged from spec) ──────────────
+function renderQuickChips(suggestions, msgEl) {
+  if (!suggestions || suggestions.length === 0) return;
+  const stream = document.getElementById('stream');
+  // remove any older chips
+  stream.querySelectorAll('.quick-chips').forEach(el => el.remove());
+
+  const chipsDiv = document.createElement('div');
+  chipsDiv.className = 'quick-chips';
+  suggestions.forEach(label => {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.textContent = label;
+    btn.onclick = () => {
+      // tap = send immediately
+      const input = document.getElementById('inputField');
+      input.value = label;
+      sendMessage();
+    };
+    chipsDiv.appendChild(btn);
+  });
+  stream.appendChild(chipsDiv);
+  stream.scrollTop = stream.scrollHeight;
+}
+
+// ── tool steps ────────────────────────────────────────────────────────────
 function parseToolSteps(text) {
   const match = text.match(/^TOOLS:\s*(\[.*?\])/m);
   if (match) {
@@ -934,7 +1394,6 @@ function stripToolsBlock(text) {
   return text.replace(/^TOOLS:\s*\[.*?\]\s*/m, '').trim();
 }
 
-// Animate tool steps inside the typing indicator — returns a promise
 async function runToolStrip(steps) {
   const strip = document.getElementById('toolStrip');
   if (!strip || !steps.length) return;
@@ -944,14 +1403,14 @@ async function runToolStrip(steps) {
     stepEl.innerHTML = `<span class="tool-icon"></span><span>${escapeHtml(steps[i])}…</span>`;
     strip.appendChild(stepEl);
     document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
-    // stagger each step for natural feel
     await new Promise(r => setTimeout(r, 500 + Math.random() * 250));
     stepEl.classList.add('done');
-    stepEl.querySelector('span:last-child').textContent = steps[i];
+    const labelEl = stepEl.querySelector('span:last-child');
+    if (labelEl) labelEl.textContent = steps[i];
   }
 }
 
-// ── EV design surprises (shown with the must-haves question) ──────────────
+// ── EV surprises ─────────────────────────────────────────────────────────
 function parseEVSurprises(text) {
   if (!text.includes('EV_SURPRISES:')) return null;
   const after = text.split('EV_SURPRISES:')[1] || '';
@@ -1000,7 +1459,6 @@ function renderEVSurprises(items, msgEl) {
 // ── recommendation card parser & renderer ─────────────────────────────────
 function parseRecs(text) {
   if (!text.includes('RECOMMENDATIONS:')) return null;
-  // strip everything before RECOMMENDATIONS: marker
   const after = text.split('RECOMMENDATIONS:')[1] || '';
   const parts = after.split('---').map(s => s.trim()).filter(Boolean);
   return parts.map(part => {
@@ -1022,32 +1480,17 @@ function parseRecs(text) {
       if (h) highlights.push(h);
     }
 
-    // fallback for old-format responses (Type/Seats/Price/Why)
-    if (specs.length === 0) {
-      const type  = get('Type');
-      const seats = get('Seats');
-      const price = get('Price');
-      if (price) specs.push({ label: 'Price', value: price });
-      if (seats) specs.push({ label: 'Seating', value: seats + ' passengers' });
-      if (type)  specs.push({ label: 'Type',  value: type });
-    }
-    if (highlights.length === 0) {
-      const why = get('Why');
-      if (why) highlights.push(why);
-    }
-
     return {
-      badge:     get('Badge'),
-      model:     get('Model'),
-      year:      get('Year'),
-      subtitle:  get('Subtitle'),
+      badge:    get('Badge'),
+      model:    get('Model'),
+      year:     get('Year'),
+      subtitle: get('Subtitle'),
       specs,
       highlights,
     };
   }).filter(r => r.model);
 }
 
-// pick a badge color class based on the badge text
 function badgeClass(badge) {
   const b = (badge || '').toLowerCase();
   if (b.includes('overall') || b.includes('best pick') || b.includes('top')) return 'b-best';
@@ -1063,15 +1506,11 @@ const PIN_SVG = `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2
   <path d="M5.5 8L1.5 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
 </svg>`;
 
-// Clean AI-generated field text: strip outer quotes and parenthetical explanations
 function cleanField(str) {
   if (!str) return '';
   let s = str.trim();
-  // strip outer quotes (single or double)
   s = s.replace(/^["']+|["']+$/g, '');
-  // remove parenthesized content like "(within budget)" or "(pre-owned 2023)"
   s = s.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
-  // collapse double spaces
   s = s.replace(/\s{2,}/g, ' ');
   return s;
 }
@@ -1080,6 +1519,7 @@ function renderRecs(recs, msgEl) {
   const content = msgEl.querySelector('.msg-content');
   const recsDiv = document.createElement('div');
   recsDiv.className = 'recs';
+
   recs.forEach((r) => {
     const card = document.createElement('div');
     card.className = 'rec';
@@ -1089,9 +1529,9 @@ function renderRecs(recs, msgEl) {
     const year = cleanField(r.year);
     const subtitle = cleanField(r.subtitle);
 
-    const yearPart = year || '';
-    const subPart = subtitle || '';
-    const subline = (yearPart && subPart) ? `${escapeHtml(yearPart)} · ${escapeHtml(subPart)}` : escapeHtml(yearPart || subPart);
+    const subline = (year && subtitle)
+      ? `${escapeHtml(year)} · ${escapeHtml(subtitle)}`
+      : escapeHtml(year || subtitle);
 
     const specsHtml = r.specs.length
       ? `<div class="rec-specs">${r.specs.map(s => `
@@ -1126,7 +1566,7 @@ function renderRecs(recs, msgEl) {
       <button class="rec-cta">View details</button>
     `;
 
-    // wire pin button
+    // pin button wiring
     const pinBtn = card.querySelector('.rec-pin');
     if (pinnedCars.some(c => c.model === model)) {
       card.classList.add('pinned');
@@ -1139,25 +1579,114 @@ function renderRecs(recs, msgEl) {
       pinBtn.classList.toggle('on', wasPinned);
       pinBtn.title = wasPinned ? 'Unsave' : 'Save this car';
       if (wasPinned) {
-        pinCar({ ...r, model }); // pass cleaned model
+        pinCar({ ...r, model });
       } else {
         unpinCar(model);
       }
     });
 
-    // wire CTA
+    // cta wiring
     const cta = card.querySelector('.rec-cta');
     cta.addEventListener('click', () => {
-      // placeholder: in future, navigate to detail page
       showToast(`Detail page for ${model} — coming soon`);
     });
 
     recsDiv.appendChild(card);
   });
   content.appendChild(recsDiv);
-  // scroll into view after cards render
-  const stream = document.getElementById('stream');
-  stream.scrollTop = stream.scrollHeight;
+  document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
+}
+
+// ── pin / collection ─────────────────────────────────────────────────────
+function pinCar(rec) {
+  const model = cleanField(rec.model);
+  if (pinnedCars.some(c => c.model === model)) return;
+  pinnedCars.push({
+    model: model,
+    year: cleanField(rec.year),
+    badge: cleanField(rec.badge),
+  });
+  renderCollection();
+}
+
+function unpinCar(model) {
+  pinnedCars = pinnedCars.filter(c => c.model !== model);
+  renderCollection();
+  // also update any open rec cards in the stream that match this model
+  document.querySelectorAll('.rec').forEach(card => {
+    const nameEl = card.querySelector('.rec-name');
+    if (nameEl && nameEl.textContent === model) {
+      card.classList.remove('pinned');
+      const pinBtn = card.querySelector('.rec-pin');
+      if (pinBtn) {
+        pinBtn.classList.remove('on');
+        pinBtn.title = 'Save this car';
+      }
+    }
+  });
+}
+
+function renderCollection() {
+  const body = document.getElementById('collectionBody');
+  const empty = document.getElementById('collectionEmpty');
+  const sub = document.getElementById('collectionSub');
+  const countEl = document.getElementById('collectionCount');
+  const btn = document.getElementById('btnCollection');
+
+  const n = pinnedCars.length;
+  countEl.textContent = n;
+  btn.classList.toggle('has-items', n > 0);
+
+  sub.textContent = n === 0
+    ? 'No cars saved yet'
+    : `${n} car${n > 1 ? 's' : ''} saved`;
+
+  if (n === 0) {
+    body.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  body.innerHTML = '';
+  pinnedCars.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'coll-card';
+    const matchLabel = c.badge || 'Matched';
+
+    card.innerHTML = `
+      <div class="coll-card-ph"></div>
+      <div class="coll-card-info">
+        <div class="coll-card-name">${escapeHtml(c.model)}</div>
+        <div class="coll-card-match">
+          <span class="coll-match-dot"></span>
+          ${escapeHtml(matchLabel)}
+        </div>
+        <button class="coll-card-details" onclick="showToast('Detail page — coming soon')">View details</button>
+      </div>
+      <button class="coll-card-remove" aria-label="Remove" title="Remove">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    `;
+    card.querySelector('.coll-card-remove').addEventListener('click', () => {
+      unpinCar(c.model);
+    });
+    body.appendChild(card);
+  });
+}
+
+function toggleCollection() {
+  const drawer = document.getElementById('collectionDrawer');
+  const backdrop = document.getElementById('collectionBackdrop');
+  const isOpen = drawer.classList.toggle('open');
+  backdrop.classList.toggle('open', isOpen);
+}
+
+function closeCollection() {
+  document.getElementById('collectionDrawer').classList.remove('open');
+  document.getElementById('collectionBackdrop').classList.remove('open');
 }
 
 // ── send message ──────────────────────────────────────────────────────────
@@ -1165,20 +1694,24 @@ async function sendMessage() {
   if (isStreaming) return;
   const input = document.getElementById('inputField');
   const text = input.value.trim();
-  if (!text) return;
+  const tokens = [...activeTokens];
+  if (!text && tokens.length === 0) return;
 
-  // render user bubble
-  appendUserMessage(text);
+  const combined = tokens.length > 0
+    ? (tokens.join(', ') + (text ? '. ' + text : ''))
+    : text;
 
-  // clear input + suggestions
+  appendUserMessage(text, tokens);
+
+  syncFiltersFromText(combined);
   input.value = '';
-  clearSuggestions();
+  activeTokens = [];
+  renderTokens();
+  buildSidebar();
   updateSend();
 
-  // push to history
-  messages.push({ role: 'user', content: text });
+  messages.push({ role: 'user', content: combined });
 
-  // show typing indicator (tool steps will be added once we get the AI response)
   isStreaming = true;
   document.getElementById('btnSend').disabled = true;
   appendTypingIndicator();
@@ -1213,15 +1746,14 @@ async function sendMessage() {
     if (!aiRaw) throw new Error('Empty response from API');
     messages.push({ role: 'assistant', content: aiRaw });
 
-    // 1) Parse the TOOLS block from the AI response
+    // 1) parse TOOLS
     const toolSteps = parseToolSteps(aiRaw);
-    // Strip TOOLS block from the text so it doesn't show in the bubble
     const aiText = stripToolsBlock(aiRaw);
 
-    // 2) Animate the real tool steps into the typing indicator
+    // 2) animate tool steps inside typing indicator
     await runToolStrip(toolSteps);
 
-    // 3) Detach the strip element so it survives removeTypingIndicator
+    // 3) detach the strip element so it survives removeTypingIndicator
     const stripEl = document.getElementById('toolStrip');
     if (stripEl) {
       stripEl.removeAttribute('id');
@@ -1230,21 +1762,20 @@ async function sendMessage() {
 
     removeTypingIndicator();
 
-    // helper to inject the preserved strip at the top of a freshly-created AI msg
     const attachStripTo = (msgEl) => {
       if (!stripEl || !stripEl.children.length) return;
       const content = msgEl.querySelector('.msg-content');
       content.insertBefore(stripEl, content.firstChild);
     };
 
-    // check if it has recommendations
+    // 4) recommendations or normal reply?
     const recs = parseRecs(aiText);
     if (recs && recs.length > 0) {
       const intro = aiText.split('RECOMMENDATIONS:')[0].trim();
-      const introText = stripToolsBlock(intro) || 'Here are my top picks for you:';
+      const introText = intro || 'Here are my top picks for you:';
       const msgEl = appendAIMessage(introText, (el) => {
         renderRecs(recs, el);
-        setSuggestions(['Compare these cars', 'Adjust my budget', 'What about EVs?', 'Show more options']);
+        renderQuickChips(['Compare these cars', 'Adjust my budget', 'What about EVs?', 'Show more options'], el);
       });
       attachStripTo(msgEl);
     } else {
@@ -1254,7 +1785,7 @@ async function sendMessage() {
         if (surprises && surprises.length > 0) {
           renderEVSurprises(surprises, el);
         }
-        setSuggestions(suggestions);
+        renderQuickChips(suggestions, el);
       });
       attachStripTo(msgEl);
     }
@@ -1263,7 +1794,7 @@ async function sendMessage() {
     removeTypingIndicator();
     showToast('Error: ' + err.message);
     appendAIMessage('Sorry, something went wrong. Please try again.');
-    messages.pop(); // remove failed user message
+    messages.pop();
   } finally {
     isStreaming = false;
     updateSend();
@@ -1271,10 +1802,10 @@ async function sendMessage() {
 }
 
 function parseSuggestions(text) {
-  // strip TOOLS block from the displayed text
   let working = text;
+  // strip any stray TOOLS block (defensive)
   working = working.replace(/^TOOLS:\s*\[.*?\]\s*/m, '').trim();
-  // also strip EV_SURPRISES block (rendered separately)
+  // strip EV_SURPRISES block (rendered separately)
   working = working.replace(/EV_SURPRISES:[\s\S]*?(?=SUGGESTIONS:|$)/, '').trim();
 
   const match = working.match(/SUGGESTIONS:\s*(\[.*?\])/s);
@@ -1287,11 +1818,9 @@ function parseSuggestions(text) {
       }
     } catch(e) {}
   }
-  // FALLBACK: AI forgot to include SUGGESTIONS. Generate sensible defaults.
   return { cleanText: working, suggestions: defaultSuggestions(working) };
 }
 
-// Default suggestion fallback when AI omits the SUGGESTIONS block
 function defaultSuggestions(aiText) {
   const t = (aiText || '').toLowerCase();
   if (/budget|price|cost|kr|spend/i.test(t)) {
@@ -1309,7 +1838,6 @@ function defaultSuggestions(aiText) {
   if (/recommend|show|suggest|find/i.test(t)) {
     return ['Show me options', 'Need more info first', 'Different direction', 'Continue'];
   }
-  // generic catch-all
   return ['Tell me more', 'Continue', 'Skip this', 'Start over'];
 }
 
@@ -1330,7 +1858,6 @@ function handleKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
 
-// global Escape handler — close the collection drawer if open
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const drawer = document.getElementById('collectionDrawer');
@@ -1343,20 +1870,32 @@ document.addEventListener('keydown', (e) => {
 function updateSend() {
   const input = document.getElementById('inputField');
   const btn = document.getElementById('btnSend');
-  const hasContent = input.value.trim().length > 0;
+  const hasContent = input.value.trim().length > 0 || activeTokens.length > 0;
   btn.disabled = !hasContent || isStreaming;
 }
 
 function resetAll() {
   messages = [];
+  activeTokens = [];
+  activeChips = {};
   pinnedCars = [];
   document.getElementById('stream').innerHTML = '';
   document.getElementById('inputField').value = '';
-  clearSuggestions();
-  closeCollection();
+  renderTokens();
+  buildSidebar();
   renderCollection();
+  closeCollection();
   updateSend();
-  showGreeting();
+  showOnboarding();
+}
+
+function toggleDrawer() {
+  const side = document.querySelector('.side');
+  const backdrop = document.getElementById('drawerBackdrop');
+  const btn = document.querySelector('.btn-filter');
+  const isOpen = side.classList.toggle('open');
+  backdrop.classList.toggle('open', isOpen);
+  if (btn) btn.textContent = isOpen ? 'Filters ↓' : 'Filters ↑';
 }
 
 function showToast(msg) {
@@ -1365,6 +1904,39 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 4000);
 }
+
+// ── sidebar resize ────────────────────────────────────────────────────────
+(function() {
+  const handle = document.getElementById('resizeHandle');
+  const side   = document.getElementById('side');
+  if (!handle || !side) return;
+
+  let startX, startW;
+
+  handle.addEventListener('mousedown', e => {
+    startX = e.clientX;
+    startW = side.offsetWidth;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    function onMove(e) {
+      const delta = startX - e.clientX;
+      const newW = Math.min(520, Math.max(260, startW + delta));
+      side.style.width = newW + 'px';
+    }
+    function onUp() {
+      handle.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    e.preventDefault();
+  });
+})();
 
 // ── start ─────────────────────────────────────────────────────────────────
 init();
