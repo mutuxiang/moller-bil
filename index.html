@@ -28,101 +28,120 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 .app { display: flex; flex-direction: column; height: 100vh; }
 
 .topbar {
-  height: 52px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; padding: 0 22px; gap: 14px; flex-shrink: 0;
+  height: 60px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 14px; gap: 14px; flex-shrink: 0;
 }
-.topbar-logo {
-  width: 24px; height: 24px; border: 1.25px solid var(--border-strong);
-  border-radius: 6px; display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; color: var(--accent);
-}
-.topbar-title { font-weight: 600; font-size: 13px; }
-.topbar-sub { font-family: "Inter",sans-serif; font-size: 10.5px; color: var(--muted); }
+.topbar-title { font-weight: 600; font-size: 16px; }
 .topbar-spacer { flex: 1; }
 .btn-reset-all {
   appearance: none; border: 1px solid rgba(31,29,27,0.3); background: transparent;
-  color: rgba(31,29,27,0.65); font: 500 11px/1 "Geist",sans-serif; padding: 6px 11px;
+  color: rgba(31,29,27,0.65); font: 500 13px/1 "Geist",sans-serif;
+  height: 34px; padding: 0 14px;
   border-radius: 999px; cursor: pointer;
 }
 .btn-reset-all:hover { color: var(--ink); border-color: rgba(31,29,27,0.6); }
-.topbar-nav { font-family: "Inter",sans-serif; font-size: 10.5px; color: var(--muted); }
 
 .main { flex: 1; display: flex; min-height: 0; }
 
-/* left & right empty spacer columns */
+/* outer spacer columns — the vertical strips flanking the chat */
 .col-spacer {
-  width: 120px; flex-shrink: 0; background: var(--bg);
-  border-right: 1px solid var(--border);
+  flex: 1; max-width: 80px; background: var(--bg);
 }
-.col-spacer.right {
-  border-right: none; border-left: 1px solid var(--border);
-}
+.col-spacer.left { }
+.col-spacer.right { }
 
-/* centre content wrapper */
 .col-center {
-  flex: 1; display: flex; min-width: 0; min-height: 0;
+  flex: 1; max-width: 1200px; margin: 0 auto;
+  display: flex; flex-direction: column; min-height: 0;
 }
 
 /* ── chat ── */
-.chat { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.chat { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 
 .stream {
-  flex: 1; overflow-y: auto; padding: 24px 32px;
-  display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth;
+  flex: 1; overflow-y: auto; padding: 28px 18px 12px;
+  display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth;
 }
 .stream::-webkit-scrollbar { width: 8px; }
 .stream::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
 
 /* ── info banner above stream ── */
 .info-banner {
-  margin: 16px 32px 0;
+  margin: 18px 18px 0;
   border: 1px solid var(--border); border-radius: 12px;
-  padding: 12px 16px; background: #fff;
+  padding: 14px 18px; background: #fff;
   display: flex; align-items: center; gap: 12px; flex-shrink: 0;
 }
 .info-banner-text { flex: 1; }
-.info-banner-text b { font-size: 12.5px; font-weight: 600; display: block; margin-bottom: 2px; }
-.info-banner-text span { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+.info-banner-text b { font-size: 15px; font-weight: 600; display: block; margin-bottom: 3px; }
+.info-banner-text span { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
 .info-banner-link {
   appearance: none; border: 1px solid var(--border-strong); background: transparent;
-  color: var(--ink); font: 500 11.5px/1 "Geist",sans-serif; padding: 7px 14px;
+  color: var(--ink); font: 500 13.5px/1 "Geist",sans-serif; padding: 9px 16px;
   border-radius: 999px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
   text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
   transition: background .12s;
 }
 .info-banner-link:hover { background: var(--chip-bg); }
 
-.msg { display: flex; gap: 10px; align-items: flex-start; max-width: 760px; }
-.msg.user { flex-direction: row-reverse; align-self: flex-end; }
+.msg { display: flex; flex-direction: column; max-width: 100%; }
+.msg.ai { align-items: flex-start; }
+.msg.user { align-items: flex-end; }
 
-.av {
-  width: 26px; height: 26px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-family: "Inter",sans-serif; font-size: 10px; font-weight: 600;
-  border: 1.25px solid var(--border-strong);
-}
-.av.ai { border-radius: 7px; background: var(--accent-soft); color: var(--accent-ink); }
-.av.user { border-radius: 50%; background: var(--chip-bg); color: rgba(31,29,27,0.6); }
+/* AI side wraps bubble + tool indicators + cards together */
+.msg-content { display: flex; flex-direction: column; gap: 10px; max-width: 760px; min-width: 0; width: 100%; }
+.msg.user .msg-content { max-width: 620px; }
 
 .bub {
-  padding: 12px 14px; border: 1.25px solid var(--border-strong);
+  padding: 14px 18px; border: 1.25px solid var(--border-strong);
   border-radius: 14px 14px 14px 4px; background: var(--bg);
-  font-size: 13.5px; line-height: 1.55; max-width: 560px;
+  font-size: 16px; line-height: 1.6;
+  word-wrap: break-word;
+  align-self: flex-start;
 }
-.msg.user .bub { border-radius: 14px 14px 4px 14px; background: var(--chip-bg); }
+.msg.user .bub { border-radius: 14px 14px 4px 14px; background: var(--chip-bg); align-self: flex-end; }
 .bub b { font-weight: 600; }
 
-.bub-tokens { display: inline-flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-right: 6px; }
-.bub-token {
-  padding: 2px 8px; border-radius: 5px;
-  background: var(--accent-soft); color: var(--accent-ink);
-  border: 1px solid var(--accent); font-size: 11.5px; font-weight: 500;
+/* tool indicators — shown above AI bubble while typing */
+.tool-strip { display: flex; flex-direction: column; gap: 5px; align-self: flex-start; }
+.tool-step {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 11px; border-radius: 999px;
+  background: var(--accent-soft); border: 1px solid rgba(124,92,255,0.25);
+  font-family: "Inter",sans-serif; font-size: 12.5px; font-weight: 500;
+  color: var(--accent-ink);
+  animation: tool-fade .3s cubic-bezier(.4,0,.2,1);
+}
+.tool-step.done {
+  background: var(--bg); border-color: var(--border);
+  color: var(--muted);
+}
+.tool-step .tool-icon {
+  width: 14px; height: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+/* spinner for active tool steps */
+.tool-step:not(.done) .tool-icon::before {
+  content: '';
+  width: 11px; height: 11px;
+  border: 1.5px solid currentColor; border-right-color: transparent;
+  border-radius: 50%;
+  animation: tool-spin .8s linear infinite;
+}
+.tool-step.done .tool-icon::before {
+  content: '✓';
+  font-size: 11px; font-weight: 700; line-height: 1;
+}
+@keyframes tool-spin { to { transform: rotate(360deg); } }
+@keyframes tool-fade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
 }
 
 /* typing dots */
-.typing { display: inline-flex; gap: 3px; padding: 4px 0; }
+.typing { display: inline-flex; gap: 4px; padding: 4px 0; align-items: center; }
 .typing span {
-  width: 6px; height: 6px; border-radius: 50%; background: rgba(31,29,27,0.35);
+  width: 7px; height: 7px; border-radius: 50%; background: rgba(31,29,27,0.35);
   animation: bounce 1.2s infinite;
 }
 .typing span:nth-child(2) { animation-delay: .15s; }
@@ -132,230 +151,367 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
   40% { transform: translateY(-4px); opacity: 1; }
 }
 
-/* quick chips — rendered inside stream, below AI bubble */
-.quick-chips { margin-left: 36px; display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 4px; }
-
-/* car recommendation cards */
-.recs { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-.rec {
-  width: 200px; border: 1.25px solid var(--border-strong); border-radius: 10px;
-  background: var(--bg); padding: 10px; display: flex; flex-direction: column; gap: 8px;
+/* car recommendation cards — richer layout matching reference design */
+.recs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
+.rec {
+  border: 1.5px solid var(--border-strong); border-radius: 14px;
+  background: #fff; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  position: relative;
+  transition: border-color .18s, box-shadow .18s, transform .18s;
+}
+.rec.pinned {
+  border-color: var(--accent);
+  border-width: 2px;
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  order: -1; /* pinned cards float to the top of the grid */
+}
+
+/* car image placeholder */
 .rec-ph {
   background: repeating-linear-gradient(135deg,rgba(31,29,27,.05) 0 6px,rgba(0,0,0,0) 6px 12px), var(--bg);
-  border: 1.25px dashed rgba(31,29,27,0.18); border-radius: 8px; height: 78px;
+  border: 1.25px dashed rgba(31,29,27,0.2); border-radius: 10px; height: 100px;
   display: flex; align-items: center; justify-content: center;
-  font-family: "Inter",sans-serif; font-size: 10.5px; color: var(--muted);
+  font-family: "Inter",sans-serif; font-size: 12px; color: var(--muted);
+  letter-spacing: .04em;
 }
-.rec-name { font-size: 12.5px; font-weight: 600; }
+
+/* pin button (top-right) */
+.rec-pin {
+  position: absolute; top: 10px; right: 10px;
+  width: 32px; height: 32px;
+  appearance: none; border: 1px solid var(--border-strong); background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(4px);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--muted);
+  transition: all .12s;
+  z-index: 2;
+}
+.rec-pin:hover { color: var(--ink); border-color: var(--ink); transform: scale(1.05); }
+.rec-pin.on {
+  background: var(--accent); color: #fff; border-color: var(--accent-ink);
+  box-shadow: 1px 1px 0 var(--accent-ink);
+}
+.rec-pin svg { width: 16px; height: 16px; }
+
+/* badge */
 .rec-badge {
-  font-family: "Inter",sans-serif; font-size: 9.5px;
-  padding: 2px 5px; border-radius: 4px; background: var(--accent-soft); color: var(--accent-ink);
+  align-self: flex-start;
+  font-family: "Inter",sans-serif; font-size: 11.5px; font-weight: 600;
+  padding: 4px 10px; border-radius: 999px;
+  letter-spacing: .01em;
 }
-.rec-tags { display: flex; flex-wrap: wrap; gap: 4px; }
-.rec-tag {
-  font-family: "Inter",sans-serif; font-size: 9.5px;
-  padding: 2px 6px; background: var(--chip-bg); color: rgba(31,29,27,0.7); border-radius: 4px;
+.rec-badge.b-best  { background: #e8f4ff; color: #1d4ed8; }
+.rec-badge.b-value { background: #ecfdf3; color: #15803d; }
+.rec-badge.b-tow   { background: var(--accent-soft); color: var(--accent-ink); }
+.rec-badge.b-eff   { background: #fef3c7; color: #a16207; }
+.rec-badge.b-fam   { background: #fce7f3; color: #be185d; }
+.rec-badge.b-default { background: var(--chip-bg); color: var(--ink); }
+
+.rec-title { display: flex; flex-direction: column; gap: 3px; }
+.rec-name { font-size: 17px; font-weight: 600; line-height: 1.25; padding-right: 36px; /* room for pin */ }
+.rec-sub { font-family: "Inter",sans-serif; font-size: 13px; color: var(--muted); }
+
+/* 2x2 spec grid */
+.rec-specs {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
 }
-.rec-actions { display: flex; gap: 6px; margin-top: 2px; }
-.rec-actions span {
-  flex: 1; text-align: center; padding: 5px 0; font-size: 11px;
-  cursor: pointer; border-radius: 6px;
+.rec-spec {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 9px; padding: 9px 11px;
+  display: flex; flex-direction: column; gap: 2px;
 }
-.rec-det { border: 1px solid var(--border-strong); color: rgba(31,29,27,0.85); }
-.rec-det:hover { background: var(--chip-bg); }
-.rec-cmp { background: var(--ink); color: var(--bg); }
-.rec-cmp:hover { background: #333; }
+.rec-spec-label {
+  font-family: "Inter",sans-serif; font-size: 11.5px; color: var(--muted);
+  font-weight: 500;
+}
+.rec-spec-value { font-size: 14px; font-weight: 600; color: var(--ink); }
+
+/* horizontal divider before highlights */
+.rec-divider { height: 1px; background: var(--border); margin: 2px 0; }
+
+/* highlights list with green checkmarks */
+.rec-highlights { display: flex; flex-direction: column; gap: 7px; }
+.rec-highlight {
+  display: flex; align-items: flex-start; gap: 9px;
+  font-size: 13.5px; font-weight: 500; color: var(--ink); line-height: 1.4;
+}
+.rec-highlight::before {
+  content: '✓';
+  flex-shrink: 0;
+  color: #16a34a; font-weight: 700;
+  font-family: "Inter",sans-serif;
+  font-size: 14px;
+  line-height: 1.2;
+  margin-top: 1px;
+}
+
+/* CTA button at the bottom */
+.rec-cta {
+  margin-top: auto;
+  appearance: none; width: 100%;
+  border: 1px solid var(--border-strong); background: var(--bg);
+  border-radius: 10px; padding: 11px 14px;
+  font: 600 13.5px/1 "Geist",sans-serif; color: var(--ink);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background .12s, border-color .12s;
+}
+.rec-cta:hover { background: var(--chip-bg); border-color: var(--ink); }
 
 /* ── composer ── */
 .composer {
-  border-top: 1px solid var(--border); padding: 14px 32px 20px;
+  border-top: 1px solid var(--border); padding: 16px 18px 22px;
   flex-shrink: 0; background: var(--bg);
 }
+
+/* AI-suggested replies, shown above the input box */
+.suggestions {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 12px;
+}
+.suggestions:empty { display: none; }
+
+.suggestions.animate-in {
+  animation: sug-slide .35s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes sug-slide {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.suggestion-label {
+  width: 100%;
+  font-family: "Inter",sans-serif; font-size: 12px;
+  color: var(--muted); letter-spacing: .06em; text-transform: uppercase;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.sug-chip {
+  appearance: none;
+  padding: 9px 14px; border: 1px solid var(--border-strong); border-radius: 999px;
+  font: 500 14px/1.2 "Geist",sans-serif; color: var(--ink); background: #fff;
+  cursor: pointer; user-select: none;
+  transition: all .12s;
+}
+.sug-chip:hover {
+  background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.sug-chip:active { transform: translateY(0); }
+
 .cbox {
-  border: 1.5px solid var(--border-strong); border-radius: 14px; padding: 10px 12px;
-  min-height: 62px; display: flex; flex-direction: column; gap: 8px; background: #fff;
+  border: 1.5px solid var(--border-strong); border-radius: 14px; padding: 12px 14px;
+  min-height: 70px; display: flex; flex-direction: column; gap: 8px; background: #fff;
   transition: border-color .15s, box-shadow .15s;
 }
 .cbox:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
-.tokens-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
-.token {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 4px 3px 9px; border-radius: 6px;
-  background: var(--accent-soft); color: var(--accent-ink);
-  border: 1px solid var(--accent); font-size: 11.5px; font-weight: 500;
-}
-.token button {
-  appearance: none; border: 0; background: transparent; color: inherit;
-  cursor: pointer; opacity: .55; font-size: 11px; padding: 0 4px; line-height: 1;
-}
-.token button:hover { opacity: 1; }
-
 .input-field {
   flex: 1; min-width: 140px; appearance: none; border: 0; outline: 0; background: transparent;
-  font: inherit; font-size: 13.5px; color: var(--ink); padding: 2px 0;
+  font: inherit; font-size: 16px; color: var(--ink); padding: 4px 0;
 }
 .input-field::placeholder { color: rgba(31,29,27,0.4); }
 
-.cfoot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-.cfoot-meta { font-family: "Inter",sans-serif; font-size: 10.5px; color: var(--muted); }
+.cfoot { display: flex; justify-content: flex-end; align-items: center; }
 
 .btn-send {
   appearance: none; border: 1.5px solid var(--accent-ink); background: var(--accent); color: #fff;
-  padding: 8px 16px; border-radius: 999px; font: 600 12px/1 "Geist",sans-serif; cursor: pointer;
+  padding: 10px 22px; border-radius: 999px; font: 600 14px/1 "Geist",sans-serif; cursor: pointer;
   box-shadow: 2px 2px 0 var(--accent-ink); transition: transform .08s, box-shadow .08s;
 }
 .btn-send:hover:not(:disabled) { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--accent-ink); }
 .btn-send:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
 
-/* chip (shared between quick + filter) */
-.chip {
-  padding: 5px 10px; border: 1px solid var(--border-strong); border-radius: 999px;
-  font: 500 11.5px/1 "Geist",sans-serif; color: rgba(31,29,27,0.85); background: var(--bg);
-  cursor: pointer; user-select: none; transition: all .12s;
-}
-.chip:hover { background: var(--chip-bg); }
-.chip.on { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
-
-/* ── sidebar ── */
-.side {
-  width: 570px; border-left: 1px solid var(--border); background: var(--bg);
-  display: flex; flex-direction: column; flex-shrink: 0;
-  min-width: 320px; max-width: 760px;
-}
-.side-head {
-  padding: 14px 24px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-}
-.side-head b { font-size: 13px; font-weight: 600; }
-.side-head-actions { display: flex; align-items: center; gap: 8px; }
-.side-reset { font-family: "Inter",sans-serif; font-size: 10px; color: var(--muted); cursor: pointer; background: none; border: none; }
-.side-reset:hover { color: var(--ink); }
-.btn-apply {
-  appearance: none; background: transparent; color: var(--muted);
-  border: 1px solid rgba(31,29,27,0.2); border-radius: 999px;
-  font: 500 11px/1 "Geist",sans-serif; padding: 6px 13px; cursor: default;
-  transition: all .2s;
-}
-.btn-apply.active {
-  background: var(--accent); color: #fff;
-  border-color: var(--accent-ink);
-  box-shadow: 2px 2px 0 var(--accent-ink);
-  cursor: pointer;
-}
-.btn-apply.active:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--accent-ink); }
-.side-body { padding: 16px 40px 16px 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
-
-/* budget slider module */
-.budget-module { display: flex; flex-direction: column; gap: 10px; }
-.budget-vals { display: flex; justify-content: space-between; font-family: "Inter",sans-serif; font-size: 10.5px; color: var(--muted); }
-.budget-input {
-  width: 100%; appearance: none; height: 4px; border-radius: 2px;
-  background: linear-gradient(to right, var(--accent) 0%, var(--accent) 50%, rgba(31,29,27,0.15) 50%);
-  outline: none; cursor: pointer;
-}
-.budget-input::-webkit-slider-thumb {
-  appearance: none; width: 16px; height: 16px; border-radius: 50%;
-  background: #fff; border: 2px solid var(--accent);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.18); cursor: pointer;
-}
-.budget-bottom-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-}
-.budget-selected {
-  font-family: "Inter",sans-serif; font-size: 12px; font-weight: 500;
-  color: var(--ink);
-}
-.btn-budget-send {
-  appearance: none; background: var(--ink); color: #fff;
-  border: 1.5px solid var(--ink); border-radius: 8px;
-  font: 600 11.5px/1 "Geist",sans-serif; padding: 8px 14px; cursor: pointer;
-  white-space: nowrap; transition: background .12s; flex-shrink: 0;
-}
-.btn-budget-send:hover { background: #333; }
-
-/* drag handle between chat and sidebar */
-.resize-handle {
-  width: 5px; flex-shrink: 0; cursor: col-resize;
-  background: transparent; position: relative;
-  transition: background .15s;
-}
-.resize-handle::after {
-  content: ''; position: absolute;
-  top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 1px; height: 40px;
-  background: var(--border-strong); border-radius: 1px; opacity: 0.35;
-  transition: opacity .15s, height .15s;
-}
-.resize-handle:hover::after,
-.resize-handle.dragging::after { opacity: 0.8; height: 60px; }
-.resize-handle:hover,
-.resize-handle.dragging { background: var(--accent-soft); }
-
-.filter-group { display: flex; flex-direction: column; gap: 8px; }
-.filter-label {
-  font-family: "Inter",sans-serif; font-size: 10px;
-  color: var(--muted); letter-spacing: .08em; text-transform: uppercase;
-}
-.chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
-
 /* ── responsive ── */
-@media (max-width: 900px) {
-  .side { width: 240px; }
-  .stream { padding: 16px 20px; }
-  .composer { padding: 12px 20px 16px; }
+@media (max-width: 980px) {
+  .col-spacer { display: none; }
+  .col-center { width: 100%; }
+}
+@media (max-width: 720px) {
+  .recs { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .main { flex-direction: column; position: relative; }
-  .stream { padding: 14px 16px; gap: 12px; }
-  .composer { padding: 10px 16px 14px; }
-  .bub { font-size: 13px; max-width: calc(100vw - 80px); }
-  .recs { flex-direction: column; }
-  .rec { width: 100%; }
-  .side {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    width: 100%; height: 72vh;
-    border-left: none; border-top: 1px solid var(--border);
-    border-radius: 16px 16px 0 0;
-    transform: translateY(100%);
-    transition: transform .28s cubic-bezier(.4,0,.2,1);
-    z-index: 100;
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.10);
-  }
-  .side.open { transform: translateY(0); }
-  .side-head { position: relative; }
-  .side-head::before {
-    content: ''; display: block; position: absolute;
-    top: 8px; left: 50%; transform: translateX(-50%);
-    width: 36px; height: 4px;
-    background: var(--border-strong); border-radius: 2px; opacity: .35;
-  }
-  .btn-filter { display: flex !important; }
-  .topbar { padding: 0 16px; gap: 10px; }
-  .topbar-title { font-size: 12px; }
+  .stream { padding: 14px 10px 8px; gap: 14px; }
+  .composer { padding: 10px 10px 14px; }
+  .info-banner { margin: 10px 10px 0; padding: 12px 14px; }
+  .info-banner-text b { font-size: 14px; }
+  .info-banner-text span { font-size: 12.5px; }
+  .bub { font-size: 15px; }
+  .topbar { padding: 0 18px; gap: 10px; }
+  .topbar-title { font-size: 14px; }
+  .sug-chip { font-size: 13.5px; padding: 8px 12px; }
 }
-.drawer-backdrop {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.25); z-index: 99;
-}
-.drawer-backdrop.open { display: block; }
-.btn-filter {
-  display: none;
-  appearance: none; border: 1px solid rgba(31,29,27,0.3); background: transparent;
-  color: rgba(31,29,27,0.65); font: 500 11px/1 "Geist",sans-serif; padding: 6px 11px;
-  border-radius: 999px; cursor: pointer; align-items: center;
-}
-.btn-filter:hover { color: var(--ink); border-color: rgba(31,29,27,0.6); }
 
 /* error toast */
 .toast {
-  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-  background: #ef4444; color: #fff; font-size: 12px; padding: 8px 16px;
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #ef4444; color: #fff; font-size: 13.5px; padding: 10px 18px;
   border-radius: 8px; z-index: 999; opacity: 0; transition: opacity .3s;
   pointer-events: none;
 }
 .toast.show { opacity: 1; }
+
+/* ── collection (saved cars) ── */
+.btn-collection {
+  appearance: none; border: 1px solid rgba(31,29,27,0.3); background: transparent;
+  color: rgba(31,29,27,0.7); font: 500 13px/1 "Geist",sans-serif;
+  height: 34px; padding: 0 12px; gap: 7px;
+  border-radius: 999px; cursor: pointer;
+  display: inline-flex; align-items: center;
+  position: relative;
+  transition: all .12s;
+}
+.btn-collection:hover { color: var(--ink); border-color: rgba(31,29,27,0.6); }
+.btn-collection.has-items {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.btn-collection-count {
+  font-family: "Inter",sans-serif; font-size: 11.5px; font-weight: 600;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: rgba(31,29,27,0.08); color: var(--ink);
+  border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.btn-collection.has-items .btn-collection-count {
+  background: var(--accent); color: #fff;
+}
+
+.collection-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(10,10,10,0.32);
+  z-index: 99;
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s;
+}
+.collection-backdrop.open { opacity: 1; pointer-events: all; }
+
+.collection-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 380px; max-width: 92vw;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 32px rgba(0,0,0,0.10);
+  z-index: 100;
+  transform: translateX(100%);
+  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column;
+}
+.collection-drawer.open { transform: none; }
+.collection-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 18px 20px 14px; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.collection-title { font-size: 15px; font-weight: 600; display: block; margin-bottom: 2px; }
+.collection-sub { font-family: "Inter",sans-serif; font-size: 12px; color: var(--muted); }
+.collection-close {
+  appearance: none; background: transparent; border: 1px solid var(--border);
+  width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--muted); transition: color .12s, border-color .12s;
+  flex-shrink: 0;
+}
+.collection-close:hover { color: var(--ink); border-color: var(--ink); }
+
+.collection-body {
+  flex: 1; overflow-y: auto; padding: 14px 20px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.collection-body:empty { display: none; }
+
+/* mini saved-car card */
+.coll-card {
+  border: 1px solid var(--border-strong); border-radius: 12px;
+  background: #fff; padding: 12px; display: flex; gap: 11px;
+  position: relative;
+}
+.coll-card-ph {
+  width: 64px; height: 56px; flex-shrink: 0;
+  background: repeating-linear-gradient(135deg,rgba(31,29,27,.06) 0 4px,rgba(0,0,0,0) 4px 8px), var(--bg);
+  border: 1px dashed rgba(31,29,27,0.2); border-radius: 7px;
+}
+.coll-card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.coll-card-name { font-size: 13.5px; font-weight: 600; line-height: 1.25; padding-right: 24px; }
+.coll-card-match {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: "Inter",sans-serif; font-size: 11.5px; font-weight: 500;
+  color: var(--accent-ink); margin-top: 2px;
+}
+.coll-match-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #16a34a; flex-shrink: 0;
+}
+.coll-card-details {
+  appearance: none; border: 1px solid var(--border-strong); background: var(--bg);
+  border-radius: 8px; padding: 6px 12px; margin-top: 6px;
+  font: 500 12px/1 "Geist",sans-serif; color: var(--ink);
+  cursor: pointer; transition: background .12s;
+}
+.coll-card-details:hover { background: var(--chip-bg); }
+.coll-card-remove {
+  position: absolute; top: 8px; right: 8px;
+  appearance: none; background: transparent; border: none;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--muted);
+  transition: color .12s, background .12s;
+}
+.coll-card-remove:hover { color: var(--ink); background: var(--chip-bg); }
+
+.collection-empty {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px; gap: 10px; text-align: center;
+  color: var(--muted);
+}
+.collection-empty.hidden { display: none; }
+.collection-empty-icon {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--chip-bg);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.collection-empty-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.collection-empty-text { font-family: "Inter",sans-serif; font-size: 12.5px; line-height: 1.5; max-width: 240px; }
+
+@media (max-width: 720px) {
+  .recs { grid-template-columns: 1fr; }
+}
+
+/* ── EV design surprises — minimal text-list style ── */
+.surprises {
+  margin-top: 2px;
+  padding: 14px 16px;
+  border-left: 2px solid var(--accent);
+  background: rgba(124,92,255,0.04);
+  border-radius: 0 8px 8px 0;
+}
+.surprises-header {
+  font-family: "Inter",sans-serif;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--accent-ink);
+  margin-bottom: 10px;
+}
+.surprises-list { display: flex; flex-direction: column; gap: 7px; }
+.surprise-row {
+  font-size: 13.5px; line-height: 1.5;
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.surprise-title { font-weight: 600; color: var(--ink); }
+.surprise-sep { color: var(--muted); }
+.surprise-desc { color: rgba(31,29,27,0.7); flex: 1; min-width: 0; }
 </style>
 </head>
 <body>
@@ -364,67 +520,85 @@ html, body { height: 100%; font-family: "Geist","Inter",system-ui,sans-serif; co
 
   <!-- top bar -->
   <div class="topbar">
-    <b class="topbar-title" style="font-size:14px;">Möller Bil · Find a car</b>
+    <b class="topbar-title">Möller Bil · Find a car</b>
     <div class="topbar-spacer"></div>
+    <button class="btn-collection" id="btnCollection" onclick="toggleCollection()" title="Saved cars">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M3.5 2.5h9v11l-4.5-3-4.5 3v-11z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+      </svg>
+      <span class="btn-collection-count" id="collectionCount">0</span>
+    </button>
     <button class="btn-reset-all" onclick="resetAll()">Reset chat</button>
-    <button class="btn-filter" onclick="toggleDrawer()">Filters ↑</button>
   </div>
 
-  <!-- main: [spacer] [chat + sidebar] [spacer] -->
+  <!-- main: [spacer] [chat] [spacer] -->
   <div class="main">
     <div class="col-spacer left"></div>
     <div class="col-center">
 
-    <!-- chat area -->
-    <div class="chat">
+      <!-- chat area -->
+      <div class="chat">
 
-      <!-- info banner -->
-      <div class="info-banner">
-        <div class="info-banner-text">
-          <b>More than just finding a car</b>
-          <span>Möller Bil offers insurance, service plans, financing, trade-ins and more.</span>
+        <!-- info banner -->
+        <div class="info-banner">
+          <div class="info-banner-text">
+            <b>More than just finding a car</b>
+            <span>Möller Bil offers insurance, service plans, financing, trade-ins and more.</span>
+          </div>
+          <a class="info-banner-link" href="#" target="_blank">Learn more →</a>
         </div>
-        <a class="info-banner-link" href="#" target="_blank">Learn more →</a>
-      </div>
 
-      <div class="stream" id="stream"></div>
+        <div class="stream" id="stream"></div>
 
-      <!-- composer -->
-      <div class="composer">
-        <div class="cbox">
-          <div class="tokens-row" id="tokensRow">
+        <!-- composer -->
+        <div class="composer">
+
+          <!-- AI suggestions appear here, above input -->
+          <div class="suggestions" id="suggestions"></div>
+
+          <div class="cbox">
             <input class="input-field" id="inputField" placeholder="Tell the assistant what you need…"
               onkeydown="handleKey(event)" oninput="updateSend()">
-          </div>
-          <div class="cfoot">
-            <button class="btn-send" id="btnSend" disabled onclick="sendMessage()">Send →</button>
+            <div class="cfoot">
+              <button class="btn-send" id="btnSend" disabled onclick="sendMessage()">Send →</button>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- drag handle -->
-    <div class="resize-handle" id="resizeHandle" title="Drag to resize"></div>
-
-    <!-- right sidebar -->
-    <aside class="side" id="side">
-      <div class="side-head">
-        <b>Refine search</b>
-        <div class="side-head-actions">
-          <button class="side-reset" onclick="resetFilters()">reset</button>
-          <button class="btn-apply" id="btnApply" onclick="applyFilters()">Apply →</button>
-        </div>
       </div>
-      <div class="side-body" id="sideBody"></div>
-    </aside>
 
     </div><!-- /col-center -->
     <div class="col-spacer right"></div>
   </div>
 </div>
 
+<!-- collection (saved cars) drawer -->
+<div class="collection-backdrop" id="collectionBackdrop" onclick="closeCollection()"></div>
+<aside class="collection-drawer" id="collectionDrawer">
+  <div class="collection-head">
+    <div>
+      <b class="collection-title">Your saved cars</b>
+      <div class="collection-sub" id="collectionSub">No cars saved yet</div>
+    </div>
+    <button class="collection-close" onclick="closeCollection()" aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="collection-body" id="collectionBody"></div>
+  <div class="collection-empty" id="collectionEmpty">
+    <div class="collection-empty-icon">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <path d="M8 5.5h16v22l-8-5.5-8 5.5v-22z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="collection-empty-title">No cars saved yet</div>
+    <div class="collection-empty-text">Pin cars from recommendations to save them here for easy comparison.</div>
+  </div>
+</aside>
+
 <div class="toast" id="toast"></div>
-<div class="drawer-backdrop" id="drawerBackdrop" onclick="toggleDrawer()"></div>
 
 <script>
 // ── config ──────────────────────────────────────────────────────────────
@@ -434,354 +608,259 @@ const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
 const SYSTEM_PROMPT = `You are a friendly car advisor at Möller Bil. Help users find the right car through natural conversation.
 
 Rules:
-- Ask ONE question at a time, keep replies short (2-3 sentences max unless recommending)
-- Start by asking something open and easy — like what's prompting them to look for a car, or what their current situation is. Do NOT ask about car usage scenarios first.
-- Gather info gradually: situation/motivation → passengers → budget → fuel type → must-haves
-- Validate briefly before moving on ("Got it.", "That helps.", etc.)
+- STRICTLY ONE question per reply. Never ask two questions in the same message — not even casually ("Also, ...?" or "And one more thing..."). If you have multiple areas left to cover, pick the single most natural one and save the rest for later turns.
+- Keep replies short: 1-2 sentences of acknowledgment + 1 question. That's it.
 - Always respond in English
+- All prices and budgets are in Norwegian kroner (kr). Format like "350 000 kr" or "~450 000 kr". NEVER use $ or €.
 
-IMPORTANT: End every reply (except recommendations) with a JSON block of 3-4 short suggested replies the user could tap, directly relevant to your question. Format:
+Conversation flow — adaptive, not rigid:
+Before recommending cars, you should have info on these 5 areas:
+A) Situation/motivation (why they're looking)
+B) Passengers/seats they need
+C) Budget range
+D) Fuel type preference (petrol, diesel, hybrid, electric)
+E) Must-have features (e.g. tow hitch, sunroof, heated seats, AWD)
+
+Rules for the flow:
+- Ask about whatever is the natural next topic given what the user just said. Follow their lead — if they bring up budget, dive into budget; if they mention kids, explore passengers/safety.
+- If a user's earlier message already answered an area (e.g. they said "I need a 7-seater for my family"), DON'T ask that question again — just acknowledge it and move to a different area.
+- Track what's been covered. Skip topics they've already answered, even implicitly.
+- Budget is the one area you should not let them skip entirely. If they avoid it or you've covered other areas without it, gently circle back: "Before I can find the right match, it'd really help to know roughly what budget you're thinking — even a ballpark helps!"
+- Once you have info on all 5 areas (explicitly or implicitly), it's time to recommend.
+
+Handling user input issues:
+- If the user's message looks like a typo, garbled text, or they seem confused (e.g. random characters, an obvious misspelling of a car model, an unrealistic number like "5 kr budget" or "200 passengers"), respond gently with an "Oops, looks like something might have gone wrong there — did you mean…?" tone. Stay warm and helpful, never make them feel bad. Then suggest 2-3 likely interpretations as SUGGESTIONS so they can tap to clarify.
+- If the message is too vague or unclear, ask a soft clarifying question instead of guessing.
+
+Special micro-feature — EV DESIGN SURPRISES:
+- When you ask the "One quick last thing: are there any must-have features..." question (the must-haves area E above), you SHOULD include an EV_SURPRISES block to surface 2-3 modern EV features the user may not know exist. This sparks ideas for what they might want.
+- Format (place this AFTER your main reply text, before SUGGESTIONS):
+EV_SURPRISES:
+Item1: [feature name] | [one-line description, max 12 words]
+Item2: [feature name] | [one-line description]
+Item3: [feature name] | [one-line description]
+- Pick 2-3 from: vehicle-to-load power outlets, frunk (front trunk) storage, panoramic glass roofs, ambient interior lighting, regenerative one-pedal driving, heat pump cabin warming, dog mode/camp mode, OTA software updates, vegan eco-leather interiors, AR navigation HUD, massage seats, summon/auto-park, captain's chair second row, integrated dashcam, Matrix LED headlights.
+- Only include this block on the must-haves question, nowhere else.
+
+IMPORTANT — TOOL STEPS:
+Every reply MUST start with a TOOLS block on the very first line. This tells the user what you did before answering. Format:
+TOOLS:["step 1","step 2"]
+- Use 1-3 short steps (max 5 words each), written as present participle ("Searching...", "Comparing...", "Checking...")
+- Steps must reflect what you ACTUALLY considered to answer — not generic filler.
+- Examples:
+  - User asks about budget → TOOLS:["Filtering by price range"]
+  - User asks about a family car → TOOLS:["Checking 7-seater models","Reviewing safety ratings"]
+  - User says "I want a Tesla" → TOOLS:["Searching Tesla inventory","Checking availability in Norway"]
+  - Before recommending → TOOLS:["Searching inventory","Comparing models","Reading owner reviews"]
+  - User sends gibberish → TOOLS:["Parsing your message"]
+- TOOLS block must appear BEFORE any text, on its own line. Then your normal reply follows.
+
+CRITICAL — SUGGESTIONS ARE MANDATORY:
+Every single reply (except RECOMMENDATIONS) MUST end with a SUGGESTIONS block. This is non-negotiable. Even if the user just said "thanks" or made small talk, provide 3-4 tappable replies that move the conversation forward. NEVER omit this block. Format:
 SUGGESTIONS:["option 1","option 2","option 3","option 4"]
+- Each option must be max 6 words, written as something a user might naturally say.
+- Make them concrete and useful — not generic ("Tell me more" is too vague). Examples: "Yes, that's right", "Show me hybrids instead", "Around 400 000 kr", "Family of 4".
 
-When recommending, use this format (no SUGGESTIONS block needed):
+When recommending, also start with a TOOLS block, then the intro text, then RECOMMENDATIONS. Recommend 2-3 cars max. Each must follow this exact format:
 RECOMMENDATIONS:
-Model: [Brand Model Year]
-Type: [e.g. Hybrid SUV]
-Seats: [number]
-Price: [e.g. $35k]
-Why: [1 sentence tied to their situation]
+Badge: [short label like "Best overall pick" / "Best value" / "Best for families" / "Most efficient" / "Best for towing"]
+Model: [Brand Model]
+Year: [e.g. 2025]
+Subtitle: [short tagline, e.g. "Most reliable in class" or "Under 400 000 kr with hybrid"]
+Spec1Label: [e.g. "Starting price"]
+Spec1Value: [e.g. "~380 000 kr"]
+Spec2Label: [e.g. "Fuel economy"]
+Spec2Value: [e.g. "1.6 l/100km"]
+Spec3Label: [e.g. "Seating"]
+Spec3Value: [e.g. "7 passengers"]
+Spec4Label: [e.g. "Range" or "Towing" or "0-60"]
+Spec4Value: [e.g. "1 500 kg towing"]
+Highlight1: [short benefit, max 8 words]
+Highlight2: [short benefit, max 8 words]
+Highlight3: [short benefit, max 8 words]
+Highlight4: [short benefit, max 8 words]
 ---
-(max 3 cars)`;
+(repeat block for each car, separated by ---)`;
 
 // ── state ────────────────────────────────────────────────────────────────
 let messages = [];   // { role, content } for API
-let uiMessages = []; // rendered messages
-let activeTokens = [];
-let activeChips = {};
 let isStreaming = false;
+let pinnedCars = []; // { model, year, badge } objects
 
-// ── filter taxonomy ──────────────────────────────────────────────────────
-const FILTERS = [
-  { key: 'usage',  title: 'Usage',           options: ['Commuting','City driving','Mountain trips','Family use','Road trips','Leisure'] },
-  { key: 'seats',  title: 'Number of seats', options: ['2','4','5','6','7+'] },
-  { key: 'fuel',   title: 'Fuel type',       options: ['Electric','Hybrid','Petrol','Diesel'] },
-  { key: 'size',   title: 'Vehicle size',    options: ['City','Compact','Mid-size','Family','SUV','Van'] },
-];
+// ── collection (saved cars) ───────────────────────────────────────────────
+function pinCar(rec) {
+  const model = cleanField(rec.model);
+  if (pinnedCars.some(c => c.model === model)) return;
+  pinnedCars.push({
+    model: model,
+    year: cleanField(rec.year),
+    badge: cleanField(rec.badge),
+  });
+  renderCollection();
+}
 
-function tokenLabel(key, opt) {
-  return key === 'seats' ? `${opt} seats` : opt;
+function unpinCar(model) {
+  pinnedCars = pinnedCars.filter(c => c.model !== model);
+  renderCollection();
+  // also update any open rec cards in the stream that match this model
+  document.querySelectorAll('.rec').forEach(card => {
+    const nameEl = card.querySelector('.rec-name');
+    if (nameEl && nameEl.textContent === model) {
+      card.classList.remove('pinned');
+      const pinBtn = card.querySelector('.rec-pin');
+      if (pinBtn) {
+        pinBtn.classList.remove('on');
+        pinBtn.title = 'Pin this car';
+      }
+    }
+  });
+}
+
+function renderCollection() {
+  const body = document.getElementById('collectionBody');
+  const empty = document.getElementById('collectionEmpty');
+  const sub = document.getElementById('collectionSub');
+  const countEl = document.getElementById('collectionCount');
+  const btn = document.getElementById('btnCollection');
+
+  // update count badge
+  const n = pinnedCars.length;
+  countEl.textContent = n;
+  btn.classList.toggle('has-items', n > 0);
+
+  // update sub text
+  sub.textContent = n === 0
+    ? 'No cars saved yet'
+    : `${n} car${n > 1 ? 's' : ''} saved`;
+
+  // render or empty state
+  if (n === 0) {
+    body.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  body.innerHTML = '';
+  pinnedCars.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'coll-card';
+
+    // derive a match score label from the badge
+    const matchLabel = c.badge || 'Matched';
+
+    card.innerHTML = `
+      <div class="coll-card-ph"></div>
+      <div class="coll-card-info">
+        <div class="coll-card-name">${escapeHtml(c.model)}</div>
+        <div class="coll-card-match">
+          <span class="coll-match-dot"></span>
+          ${escapeHtml(matchLabel)}
+        </div>
+        <button class="coll-card-details" onclick="showToast('Detail page — coming soon')">View details</button>
+      </div>
+      <button class="coll-card-remove" aria-label="Remove" title="Remove">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    `;
+    card.querySelector('.coll-card-remove').addEventListener('click', () => {
+      unpinCar(c.model);
+    });
+    body.appendChild(card);
+  });
+}
+
+function toggleCollection() {
+  const drawer = document.getElementById('collectionDrawer');
+  const backdrop = document.getElementById('collectionBackdrop');
+  const isOpen = drawer.classList.toggle('open');
+  backdrop.classList.toggle('open', isOpen);
+}
+
+function closeCollection() {
+  document.getElementById('collectionDrawer').classList.remove('open');
+  document.getElementById('collectionBackdrop').classList.remove('open');
 }
 
 // ── init ─────────────────────────────────────────────────────────────────
 function init() {
-  buildSidebar();
-  showOnboarding();
+  renderCollection();
+  showGreeting();
 }
 
-// ── sidebar ───────────────────────────────────────────────────────────────
-function buildSidebar() {
-  const body = document.getElementById('sideBody');
-  body.innerHTML = '';
-
-  FILTERS.forEach(group => {
-    const div = document.createElement('div');
-    div.className = 'filter-group';
-    div.innerHTML = `<div class="filter-label">${group.title}</div><div class="chips-row" id="grp-${group.key}"></div>`;
-    body.appendChild(div);
-
-    const row = div.querySelector(`#grp-${group.key}`);
-    group.options.forEach(opt => {
-      const btn = document.createElement('button');
-      btn.className = 'chip';
-      btn.textContent = opt;
-      const key = `${group.key}:${opt}`;
-      if (activeChips[key]) btn.classList.add('on');
-      btn.onclick = () => toggleChip(group.key, opt, btn, key);
-      row.appendChild(btn);
-    });
+function showGreeting() {
+  const greeting = "Hei! 👋 Looking for a new car can feel overwhelming — too many models, too many specs. **I'm here to make it easy.** Tell me a bit about yourself and I'll narrow it down to a few cars that actually fit your life. So, what's on your mind?";
+  const initialSuggestions = [
+    "My current car needs replacing",
+    "Buying my first car",
+    "Curious about going electric",
+    "Just exploring my options"
+  ];
+  appendAIMessage(greeting, () => {
+    setSuggestions(initialSuggestions);
   });
+  messages.push({ role: 'assistant', content: greeting });
+}
 
-  // brand selector
-  const brandGroup = document.createElement('div');
-  brandGroup.className = 'filter-group';
-  brandGroup.innerHTML = `<div class="filter-label">Brand</div><div class="chips-row" id="grp-brand"></div>`;
-  body.appendChild(brandGroup);
+// ── suggestions (above input) ─────────────────────────────────────────────
+function setSuggestions(list) {
+  const wrap = document.getElementById('suggestions');
+  wrap.innerHTML = '';
+  if (!list || list.length === 0) return;
 
-  const BRANDS = ['Audi','BMW','Mercedes','Volkswagen','Toyota','Volvo','Peugeot','Renault','Ford','Kia','Hyundai','Tesla'];
-  const brandRow = brandGroup.querySelector('#grp-brand');
-  BRANDS.forEach(brand => {
+  // restart entrance animation
+  wrap.classList.remove('animate-in');
+  void wrap.offsetWidth; // force reflow
+  wrap.classList.add('animate-in');
+
+  const label = document.createElement('div');
+  label.className = 'suggestion-label';
+  label.textContent = 'Quick replies';
+  wrap.appendChild(label);
+
+  list.forEach(text => {
     const btn = document.createElement('button');
-    btn.className = 'chip';
-    btn.textContent = brand;
-    const key = `brand:${brand}`;
-    if (activeChips[key]) btn.classList.add('on');
-    btn.onclick = () => toggleChip('brand', brand, btn, key);
-    brandRow.appendChild(btn);
+    btn.className = 'sug-chip';
+    btn.textContent = text;
+    btn.onclick = () => {
+      // tap = send immediately
+      const input = document.getElementById('inputField');
+      input.value = text;
+      sendMessage();
+    };
+    wrap.appendChild(btn);
   });
-
-  // budget slider
-  const budgetGroup = document.createElement('div');
-  budgetGroup.className = 'filter-group';
-  budgetGroup.innerHTML = `
-    <div class="filter-label">Budget</div>
-    <div class="budget-module">
-      <div class="budget-vals"><span>50 000 kr</span><span>1 500 000 kr</span></div>
-      <input class="budget-input" id="budgetSlider" type="range"
-        min="50000" max="1500000" step="25000" value="400000"
-        oninput="updateBudgetDisplay(this.value)">
-      <div class="budget-bottom-row">
-        <span class="budget-selected" id="budgetSelected">Up to 400 000 kr</span>
-      </div>
-    </div>
-  `;
-  body.appendChild(budgetGroup);
-  updateBudgetSliderTrack(400000);
-  // restore apply button state after re-render
-  setApplyVisible(pendingManualChange);
 }
 
-// tracks whether user has manually changed filters since last apply
-let pendingManualChange = false;
-
-function setApplyVisible(v) {
-  const btn = document.getElementById('btnApply');
-  if (btn) {
-    btn.classList.toggle('active', v);
-    btn.disabled = !v;
-  }
-}
-
-function toggleChip(groupKey, opt, btn, key) {
-  if (activeChips[key]) {
-    delete activeChips[key];
-    btn.classList.remove('on');
-  } else {
-    activeChips[key] = true;
-    btn.classList.add('on');
-  }
-  pendingManualChange = true;
-  setApplyVisible(true);
-}
-
-function applyFilters() {
-  // build a human-readable summary of all active chips
-  const parts = [];
-  const grouped = {};
-  Object.keys(activeChips).forEach(key => {
-    const [groupKey, opt] = key.split(':');
-    if (!grouped[groupKey]) grouped[groupKey] = [];
-    grouped[groupKey].push(opt);
-  });
-
-  const labelMap = {
-    usage: 'usage', seats: 'seats', fuel: 'fuel type',
-    size: 'vehicle size', brand: 'brand'
-  };
-
-  Object.entries(grouped).forEach(([groupKey, opts]) => {
-    if (groupKey === 'seats') {
-      parts.push(`${opts.join(' or ')} seat${opts.length > 1 ? 's' : ''}`);
-    } else {
-      parts.push(opts.join(' or '));
-    }
-  });
-
-  // also include budget if slider was moved
-  const slider = document.getElementById('budgetSlider');
-  const budgetEl = document.getElementById('budgetSelected');
-  if (slider && parseInt(slider.value) !== 400000 && budgetEl) {
-    parts.push(budgetEl.textContent.toLowerCase());
-  }
-
-  if (parts.length === 0) return;
-
-  const msg = `I'm looking for: ${parts.join(', ')}.`;
-  document.getElementById('inputField').value = msg;
-  updateSend();
-  sendMessage();
-
-  pendingManualChange = false;
-  setApplyVisible(false);
-}
-
-function updateBudgetDisplay(val) {
-  const n = parseInt(val);
-  const formatted = n.toLocaleString('nb-NO') + ' kr';
-  const el = document.getElementById('budgetSelected');
-  if (el) el.textContent = 'Up to ' + formatted;
-  updateBudgetSliderTrack(n);
-}
-
-function updateBudgetSliderTrack(val) {
-  const slider = document.getElementById('budgetSlider');
-  if (!slider) return;
-  const min = 50000, max = 1500000;
-  const pct = ((val - min) / (max - min)) * 100;
-  slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, rgba(31,29,27,0.15) ${pct}%)`;
-}
-
-function sendBudget() {
-  const slider = document.getElementById('budgetSlider');
-  if (!slider) return;
-  const val = parseInt(slider.value);
-  const formatted = val.toLocaleString('nb-NO') + ' kr';
-  const msg = `My budget is up to ${formatted}`;
-  document.getElementById('inputField').value = msg;
-  updateSend();
-  sendMessage();
-}
-
-// ── sync chat content → sidebar filters ──────────────────────────────────
-// Build a flat lookup: lowercase option text → { groupKey, opt }
-function buildFilterLookup() {
-  const map = {};
-  FILTERS.forEach(group => {
-    group.options.forEach(opt => {
-      map[opt.toLowerCase()] = { groupKey: group.key, opt };
-    });
-  });
-  // also add BRANDS
-  const BRANDS = ['Audi','BMW','Mercedes','Volkswagen','Toyota','Volvo','Peugeot','Renault','Ford','Kia','Hyundai','Tesla'];
-  BRANDS.forEach(b => { map[b.toLowerCase()] = { groupKey: 'brand', opt: b }; });
-  return map;
-}
-
-function syncFiltersFromText(text) {
-  const lookup = buildFilterLookup();
-  const lower = text.toLowerCase();
-  let changed = false;
-
-  Object.entries(lookup).forEach(([word, { groupKey, opt }]) => {
-    // use includes() for multi-word options, \b for single words
-    const matched = word.includes(' ')
-      ? lower.includes(word)
-      : new RegExp(`\\b${word}\\b`).test(lower);
-
-    if (matched) {
-      const key = `${groupKey}:${opt}`;
-      if (!activeChips[key]) {
-        activeChips[key] = true;
-        changed = true;
-      }
-    }
-  });
-
-  // also check common aliases that AI might use
-  const aliases = {
-    'commut': 'usage:Commuting',
-    'city driv': 'usage:City driving',
-    'family': 'usage:Family use',
-    'road trip': 'usage:Road trips',
-    'mountain': 'usage:Mountain trips',
-    'leisure': 'usage:Leisure',
-    'electric': 'fuel:Electric',
-    'hybrid': 'fuel:Hybrid',
-    'petrol': 'fuel:Petrol',
-    'diesel': 'fuel:Diesel',
-    'suv': 'size:SUV',
-    'compact': 'size:Compact',
-    'van': 'size:Van',
-    'just me': 'seats:2',
-    'just myself': 'seats:2',
-    'alone': 'seats:2',
-    'partner': 'seats:4',
-    'two people': 'seats:4',
-    'kids': 'seats:5',
-    'children': 'seats:5',
-    'seven': 'seats:7+',
-    '7 seat': 'seats:7+',
-  };
-
-  Object.entries(aliases).forEach(([alias, chipKey]) => {
-    if (lower.includes(alias)) {
-      if (!activeChips[chipKey]) {
-        activeChips[chipKey] = true;
-        changed = true;
-      }
-    }
-  });
-
-  if (changed) buildSidebar();
-}
-
-function resetFilters() {
-  activeChips = {};
-  activeTokens = [];
-  pendingManualChange = false;
-  setApplyVisible(false);
-  renderTokens();
-  buildSidebar();
-}
-
-// ── tokens ────────────────────────────────────────────────────────────────
-function addToken(label) {
-  if (!activeTokens.includes(label)) {
-    activeTokens.push(label);
-    renderTokens();
-    updateSend();
-  }
-}
-
-function removeToken(label) {
-  activeTokens = activeTokens.filter(t => t !== label);
-  // deselect chip
-  Object.keys(activeChips).forEach(key => {
-    const [groupKey, opt] = key.split(':');
-    if (tokenLabel(groupKey, opt) === label) delete activeChips[key];
-  });
-  renderTokens();
-  buildSidebar();
-  updateSend();
-}
-
-function renderTokens() {
-  const row = document.getElementById('tokensRow');
-  const input = document.getElementById('inputField');
-  // remove existing token elements
-  row.querySelectorAll('.token').forEach(el => el.remove());
-  activeTokens.forEach(label => {
-    const span = document.createElement('span');
-    span.className = 'token';
-    span.innerHTML = `${label}<button onclick="removeToken('${label}')">×</button>`;
-    row.insertBefore(span, input);
-  });
-  const tc = document.getElementById('tokenCount');
-  if (tc) tc.textContent = activeTokens.length;
+function clearSuggestions() {
+  const wrap = document.getElementById('suggestions');
+  wrap.innerHTML = '';
 }
 
 // ── chat UI helpers ───────────────────────────────────────────────────────
-function appendAIMessage(text, suggestions = []) {
+function appendAIMessage(text, onDone) {
   const stream = document.getElementById('stream');
-  stream.querySelectorAll('.quick-chips').forEach(el => el.remove());
 
   const msgDiv = document.createElement('div');
   msgDiv.className = 'msg ai';
-  msgDiv.innerHTML = `<div class="av ai">AI</div><div class="bub"></div>`;
+  msgDiv.innerHTML = `
+    <div class="msg-content">
+      <div class="bub"></div>
+    </div>
+  `;
   stream.appendChild(msgDiv);
 
   const bub = msgDiv.querySelector('.bub');
-  const formatted = formatText(text);
-
-  // typewriter: reveal HTML char by char, respecting tags
-  let i = 0;
-  const chars = [...formatted]; // spread preserves multi-byte chars
-  // but we need to stream the raw HTML safely — parse into segments first
-  // Strategy: build full HTML, then reveal via clip using a character counter
-  // on the *text* content only, keeping tags intact
-  const full = formatted;
-  const textOnly = text; // original plain text length drives the timing
-
+  const full = formatText(text);
+  const total = text.length;
   let revealed = 0;
-  const total = textOnly.length;
-  const speed = 18; // ms per character
+  const speed = 18;
 
   function tick() {
     revealed = Math.min(revealed + 2, total);
-    // calculate what fraction of text is revealed
-    const ratio = revealed / total;
-    // slice the formatted HTML proportionally by stripping trailing text
-    // Simple approach: reveal formatted HTML up to ratio of its plain-text length
-    const plainSoFar = Math.floor(ratio * textOnly.length);
+    const plainSoFar = revealed;
     let plainCount = 0;
     let htmlOut = '';
     let inTag = false;
@@ -799,47 +878,23 @@ function appendAIMessage(text, suggestions = []) {
     if (revealed < total) {
       setTimeout(tick, speed);
     } else {
-      // done — show full text and append chips
       bub.innerHTML = full;
-      if (suggestions.length > 0) {
-        const chipsDiv = document.createElement('div');
-        chipsDiv.className = 'quick-chips';
-        suggestions.forEach(label => {
-          const btn = document.createElement('button');
-          btn.className = 'chip';
-          btn.textContent = label;
-          btn.onclick = () => {
-            const input = document.getElementById('inputField');
-            input.value = label;
-            input.focus();
-            updateSend();
-          };
-          chipsDiv.appendChild(btn);
-        });
-        stream.appendChild(chipsDiv);
-      }
       stream.scrollTop = stream.scrollHeight;
+      if (typeof onDone === 'function') onDone(msgDiv);
     }
   }
   tick();
   return msgDiv;
 }
 
-function appendUserMessage(text, tokens) {
+function appendUserMessage(text) {
   const stream = document.getElementById('stream');
-
-  // hide chips when user sends a message
-  stream.querySelectorAll('.quick-chips').forEach(el => el.remove());
-
   const msgDiv = document.createElement('div');
   msgDiv.className = 'msg user';
-  let tokenHtml = '';
-  if (tokens.length > 0) {
-    tokenHtml = `<span class="bub-tokens">${tokens.map(t => `<span class="bub-token">${t}</span>`).join('')}</span>`;
-  }
   msgDiv.innerHTML = `
-    <div class="av user">U</div>
-    <div class="bub">${tokenHtml}${text ? escapeHtml(text) : ''}</div>
+    <div class="msg-content">
+      <div class="bub">${escapeHtml(text)}</div>
+    </div>
   `;
   stream.appendChild(msgDiv);
   stream.scrollTop = stream.scrollHeight;
@@ -851,8 +906,10 @@ function appendTypingIndicator() {
   msgDiv.className = 'msg ai';
   msgDiv.id = 'typingMsg';
   msgDiv.innerHTML = `
-    <div class="av ai">AI</div>
-    <div class="bub"><span class="typing"><span></span><span></span><span></span></span></div>
+    <div class="msg-content">
+      <div class="tool-strip" id="toolStrip"></div>
+      <div class="bub"><span class="typing"><span></span><span></span><span></span></span></div>
+    </div>
   `;
   stream.appendChild(msgDiv);
   stream.scrollTop = stream.scrollHeight;
@@ -864,52 +921,243 @@ function removeTypingIndicator() {
   if (el) el.remove();
 }
 
+// ── tool steps (real, from AI response) ────────────────────────────────────
+function parseToolSteps(text) {
+  const match = text.match(/^TOOLS:\s*(\[.*?\])/m);
+  if (match) {
+    try { return JSON.parse(match[1]); } catch(e) {}
+  }
+  return [];
+}
 
-// ── recommendation card parser ────────────────────────────────────────────
+function stripToolsBlock(text) {
+  return text.replace(/^TOOLS:\s*\[.*?\]\s*/m, '').trim();
+}
+
+// Animate tool steps inside the typing indicator — returns a promise
+async function runToolStrip(steps) {
+  const strip = document.getElementById('toolStrip');
+  if (!strip || !steps.length) return;
+  for (let i = 0; i < steps.length; i++) {
+    const stepEl = document.createElement('div');
+    stepEl.className = 'tool-step';
+    stepEl.innerHTML = `<span class="tool-icon"></span><span>${escapeHtml(steps[i])}…</span>`;
+    strip.appendChild(stepEl);
+    document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
+    // stagger each step for natural feel
+    await new Promise(r => setTimeout(r, 500 + Math.random() * 250));
+    stepEl.classList.add('done');
+    stepEl.querySelector('span:last-child').textContent = steps[i];
+  }
+}
+
+// ── EV design surprises (shown with the must-haves question) ──────────────
+function parseEVSurprises(text) {
+  if (!text.includes('EV_SURPRISES:')) return null;
+  const after = text.split('EV_SURPRISES:')[1] || '';
+  const block = after.split('SUGGESTIONS:')[0];
+
+  const items = [];
+  for (let i = 1; i <= 5; i++) {
+    const m = block.match(new RegExp(`Item${i}:\\s*([^|\\n]+)\\|\\s*([^\\n]+)`));
+    if (m) {
+      items.push({
+        title: cleanField(m[1]),
+        desc:  cleanField(m[2]),
+      });
+    }
+  }
+  return items.length ? items : null;
+}
+
+function renderEVSurprises(items, msgEl) {
+  const content = msgEl.querySelector('.msg-content');
+  const wrap = document.createElement('div');
+  wrap.className = 'surprises';
+
+  const header = document.createElement('div');
+  header.className = 'surprises-header';
+  header.textContent = 'You might not know about';
+  wrap.appendChild(header);
+
+  const list = document.createElement('div');
+  list.className = 'surprises-list';
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'surprise-row';
+    row.innerHTML = `
+      <span class="surprise-title">${escapeHtml(item.title)}</span>
+      <span class="surprise-sep">—</span>
+      <span class="surprise-desc">${escapeHtml(item.desc)}</span>
+    `;
+    list.appendChild(row);
+  });
+  wrap.appendChild(list);
+  content.appendChild(wrap);
+  document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
+}
+
+// ── recommendation card parser & renderer ─────────────────────────────────
 function parseRecs(text) {
   if (!text.includes('RECOMMENDATIONS:')) return null;
-  const parts = text.split('---').map(s => s.trim()).filter(Boolean);
+  // strip everything before RECOMMENDATIONS: marker
+  const after = text.split('RECOMMENDATIONS:')[1] || '';
+  const parts = after.split('---').map(s => s.trim()).filter(Boolean);
   return parts.map(part => {
     const get = (key) => {
       const match = part.match(new RegExp(`${key}:\\s*(.+)`));
       return match ? match[1].trim() : '';
     };
+
+    const specs = [];
+    for (let i = 1; i <= 4; i++) {
+      const label = get(`Spec${i}Label`);
+      const value = get(`Spec${i}Value`);
+      if (label && value) specs.push({ label, value });
+    }
+
+    const highlights = [];
+    for (let i = 1; i <= 4; i++) {
+      const h = get(`Highlight${i}`);
+      if (h) highlights.push(h);
+    }
+
+    // fallback for old-format responses (Type/Seats/Price/Why)
+    if (specs.length === 0) {
+      const type  = get('Type');
+      const seats = get('Seats');
+      const price = get('Price');
+      if (price) specs.push({ label: 'Price', value: price });
+      if (seats) specs.push({ label: 'Seating', value: seats + ' passengers' });
+      if (type)  specs.push({ label: 'Type',  value: type });
+    }
+    if (highlights.length === 0) {
+      const why = get('Why');
+      if (why) highlights.push(why);
+    }
+
     return {
-      model: get('Model'),
-      type:  get('Type'),
-      seats: get('Seats'),
-      price: get('Price'),
-      why:   get('Why'),
+      badge:     get('Badge'),
+      model:     get('Model'),
+      year:      get('Year'),
+      subtitle:  get('Subtitle'),
+      specs,
+      highlights,
     };
   }).filter(r => r.model);
 }
 
-function renderRecs(recs, container) {
+// pick a badge color class based on the badge text
+function badgeClass(badge) {
+  const b = (badge || '').toLowerCase();
+  if (b.includes('overall') || b.includes('best pick') || b.includes('top')) return 'b-best';
+  if (b.includes('value') || b.includes('budget') || b.includes('affordable')) return 'b-value';
+  if (b.includes('tow') || b.includes('haul') || b.includes('rugged')) return 'b-tow';
+  if (b.includes('efficient') || b.includes('economy') || b.includes('eco')) return 'b-eff';
+  if (b.includes('family') || b.includes('safe') || b.includes('practical')) return 'b-fam';
+  return 'b-default';
+}
+
+const PIN_SVG = `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M9.5 1.5L14.5 6.5L11.5 7L8 10.5L5.5 8L9 4.5L9.5 1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" fill="currentColor" fill-opacity="0.15"/>
+  <path d="M5.5 8L1.5 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+</svg>`;
+
+// Clean AI-generated field text: strip outer quotes and parenthetical explanations
+function cleanField(str) {
+  if (!str) return '';
+  let s = str.trim();
+  // strip outer quotes (single or double)
+  s = s.replace(/^["']+|["']+$/g, '');
+  // remove parenthesized content like "(within budget)" or "(pre-owned 2023)"
+  s = s.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+  // collapse double spaces
+  s = s.replace(/\s{2,}/g, ' ');
+  return s;
+}
+
+function renderRecs(recs, msgEl) {
+  const content = msgEl.querySelector('.msg-content');
   const recsDiv = document.createElement('div');
   recsDiv.className = 'recs';
-  recs.forEach((r, i) => {
+  recs.forEach((r) => {
     const card = document.createElement('div');
     card.className = 'rec';
+
+    const model = cleanField(r.model);
+    const badge = cleanField(r.badge);
+    const year = cleanField(r.year);
+    const subtitle = cleanField(r.subtitle);
+
+    const yearPart = year || '';
+    const subPart = subtitle || '';
+    const subline = (yearPart && subPart) ? `${escapeHtml(yearPart)} · ${escapeHtml(subPart)}` : escapeHtml(yearPart || subPart);
+
+    const specsHtml = r.specs.length
+      ? `<div class="rec-specs">${r.specs.map(s => `
+          <div class="rec-spec">
+            <span class="rec-spec-label">${escapeHtml(cleanField(s.label))}</span>
+            <span class="rec-spec-value">${escapeHtml(cleanField(s.value))}</span>
+          </div>
+        `).join('')}</div>`
+      : '';
+
+    const highlightsHtml = r.highlights.length
+      ? `<div class="rec-divider"></div>
+         <div class="rec-highlights">${r.highlights.map(h =>
+            `<div class="rec-highlight">${escapeHtml(cleanField(h))}</div>`
+          ).join('')}</div>`
+      : '';
+
+    const badgeHtml = badge
+      ? `<span class="rec-badge ${badgeClass(badge)}">${escapeHtml(badge)}</span>`
+      : '';
+
     card.innerHTML = `
+      <button class="rec-pin" title="Save this car" aria-label="Save this car">${PIN_SVG}</button>
       <div class="rec-ph">[ car shot ]</div>
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <span class="rec-name">${escapeHtml(r.model)}</span>
-        ${i === 0 ? '<span class="rec-badge">best match</span>' : ''}
+      ${badgeHtml}
+      <div class="rec-title">
+        <div class="rec-name">${escapeHtml(model)}</div>
+        ${subline ? `<div class="rec-sub">${subline}</div>` : ''}
       </div>
-      <div class="rec-tags">
-        ${r.type ? `<span class="rec-tag">${escapeHtml(r.type)}</span>` : ''}
-        ${r.seats ? `<span class="rec-tag">${escapeHtml(r.seats)} seats</span>` : ''}
-        ${r.price ? `<span class="rec-tag">${escapeHtml(r.price)}</span>` : ''}
-      </div>
-      ${r.why ? `<div style="font-size:11px;color:var(--muted);line-height:1.4">${escapeHtml(r.why)}</div>` : ''}
-      <div class="rec-actions">
-        <span class="rec-det">Details</span>
-        <span class="rec-cmp">Compare</span>
-      </div>
+      ${specsHtml}
+      ${highlightsHtml}
+      <button class="rec-cta">View details</button>
     `;
+
+    // wire pin button
+    const pinBtn = card.querySelector('.rec-pin');
+    if (pinnedCars.some(c => c.model === model)) {
+      card.classList.add('pinned');
+      pinBtn.classList.add('on');
+      pinBtn.title = 'Unsave';
+    }
+    pinBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasPinned = card.classList.toggle('pinned');
+      pinBtn.classList.toggle('on', wasPinned);
+      pinBtn.title = wasPinned ? 'Unsave' : 'Save this car';
+      if (wasPinned) {
+        pinCar({ ...r, model }); // pass cleaned model
+      } else {
+        unpinCar(model);
+      }
+    });
+
+    // wire CTA
+    const cta = card.querySelector('.rec-cta');
+    cta.addEventListener('click', () => {
+      // placeholder: in future, navigate to detail page
+      showToast(`Detail page for ${model} — coming soon`);
+    });
+
     recsDiv.appendChild(card);
   });
-  container.querySelector('.bub').appendChild(recsDiv);
+  content.appendChild(recsDiv);
+  // scroll into view after cards render
+  const stream = document.getElementById('stream');
+  stream.scrollTop = stream.scrollHeight;
 }
 
 // ── send message ──────────────────────────────────────────────────────────
@@ -917,29 +1165,20 @@ async function sendMessage() {
   if (isStreaming) return;
   const input = document.getElementById('inputField');
   const text = input.value.trim();
-  const tokens = [...activeTokens];
-  if (!text && tokens.length === 0) return;
-
-  // build combined content
-  const combined = tokens.length > 0
-    ? (tokens.join(', ') + (text ? '. ' + text : ''))
-    : text;
+  if (!text) return;
 
   // render user bubble
-  appendUserMessage(text, tokens);
+  appendUserMessage(text);
 
-  // sync sidebar filters from what the user said, then clear input
-  syncFiltersFromText(combined);
+  // clear input + suggestions
   input.value = '';
-  activeTokens = [];
-  renderTokens();
-  buildSidebar();
+  clearSuggestions();
   updateSend();
 
   // push to history
-  messages.push({ role: 'user', content: combined });
+  messages.push({ role: 'user', content: text });
 
-  // show typing
+  // show typing indicator (tool steps will be added once we get the AI response)
   isStreaming = true;
   document.getElementById('btnSend').disabled = true;
   appendTypingIndicator();
@@ -970,28 +1209,60 @@ async function sendMessage() {
     }
 
     const data = await resp.json();
-    const aiText = data.choices?.[0]?.message?.content || '';
-    if (!aiText) throw new Error('Empty response from API');
-    messages.push({ role: 'assistant', content: aiText });
+    const aiRaw = data.choices?.[0]?.message?.content || '';
+    if (!aiRaw) throw new Error('Empty response from API');
+    messages.push({ role: 'assistant', content: aiRaw });
+
+    // 1) Parse the TOOLS block from the AI response
+    const toolSteps = parseToolSteps(aiRaw);
+    // Strip TOOLS block from the text so it doesn't show in the bubble
+    const aiText = stripToolsBlock(aiRaw);
+
+    // 2) Animate the real tool steps into the typing indicator
+    await runToolStrip(toolSteps);
+
+    // 3) Detach the strip element so it survives removeTypingIndicator
+    const stripEl = document.getElementById('toolStrip');
+    if (stripEl) {
+      stripEl.removeAttribute('id');
+      stripEl.parentNode && stripEl.parentNode.removeChild(stripEl);
+    }
 
     removeTypingIndicator();
+
+    // helper to inject the preserved strip at the top of a freshly-created AI msg
+    const attachStripTo = (msgEl) => {
+      if (!stripEl || !stripEl.children.length) return;
+      const content = msgEl.querySelector('.msg-content');
+      content.insertBefore(stripEl, content.firstChild);
+    };
 
     // check if it has recommendations
     const recs = parseRecs(aiText);
     if (recs && recs.length > 0) {
       const intro = aiText.split('RECOMMENDATIONS:')[0].trim();
-      const msgEl = appendAIMessage(intro || 'Here are my top picks for you:', ['Compare these', 'Tell me more', 'Different budget', 'What about EVs?']);
-      renderRecs(recs, msgEl);
+      const introText = stripToolsBlock(intro) || 'Here are my top picks for you:';
+      const msgEl = appendAIMessage(introText, (el) => {
+        renderRecs(recs, el);
+        setSuggestions(['Compare these cars', 'Adjust my budget', 'What about EVs?', 'Show more options']);
+      });
+      attachStripTo(msgEl);
     } else {
-      // extract AI-generated suggestions and clean text
+      const surprises = parseEVSurprises(aiText);
       const { cleanText, suggestions } = parseSuggestions(aiText);
-      appendAIMessage(cleanText, suggestions);
+      const msgEl = appendAIMessage(cleanText, (el) => {
+        if (surprises && surprises.length > 0) {
+          renderEVSurprises(surprises, el);
+        }
+        setSuggestions(suggestions);
+      });
+      attachStripTo(msgEl);
     }
 
   } catch (err) {
     removeTypingIndicator();
     showToast('Error: ' + err.message);
-    appendAIMessage('Sorry, something went wrong. Please try again.', []);
+    appendAIMessage('Sorry, something went wrong. Please try again.');
     messages.pop(); // remove failed user message
   } finally {
     isStreaming = false;
@@ -1000,194 +1271,47 @@ async function sendMessage() {
 }
 
 function parseSuggestions(text) {
-  const match = text.match(/SUGGESTIONS:\s*(\[.*?\])/s);
+  // strip TOOLS block from the displayed text
+  let working = text;
+  working = working.replace(/^TOOLS:\s*\[.*?\]\s*/m, '').trim();
+  // also strip EV_SURPRISES block (rendered separately)
+  working = working.replace(/EV_SURPRISES:[\s\S]*?(?=SUGGESTIONS:|$)/, '').trim();
+
+  const match = working.match(/SUGGESTIONS:\s*(\[.*?\])/s);
   if (match) {
     try {
       const suggestions = JSON.parse(match[1]);
-      const cleanText = text.replace(/SUGGESTIONS:\s*\[.*?\]/s, '').trim();
-      return { cleanText, suggestions };
+      const cleanText = working.replace(/SUGGESTIONS:\s*\[.*?\]/s, '').trim();
+      if (Array.isArray(suggestions) && suggestions.length > 0) {
+        return { cleanText, suggestions };
+      }
     } catch(e) {}
   }
-  return { cleanText: text, suggestions: [] };
+  // FALLBACK: AI forgot to include SUGGESTIONS. Generate sensible defaults.
+  return { cleanText: working, suggestions: defaultSuggestions(working) };
 }
 
-// ── onboarding spotlight tour ─────────────────────────────────────────────
-const ONBOARDING_STEPS = [
-  {
-    target: '.chat',
-    title: 'Chat with your advisor',
-    body: "No car knowledge needed. Just talk naturally — about your life, your needs, your budget. The AI will guide you step by step.",
-    pos: 'right',
-  },
-  {
-    target: '.side',
-    title: 'Refine with filters',
-    body: "Use these chips to quickly narrow things down by seat count, fuel type, or vehicle size. Your choices are sent straight to the conversation.",
-    pos: 'left',
-  },
-  {
-    target: '.stream',
-    title: 'Get matched cars',
-    body: "Once the advisor understands your situation, it'll recommend specific models — with reasons tailored to you. You can keep asking questions anytime.",
-    pos: 'right',
-  },
-];
-
-let onboardingStep = 0;
-
-function showOnboarding() {
-  onboardingStep = 0;
-  // show the greeting in chat first, then overlay the tour on top
-  const greeting = "Hi! I'm your car advisor at Möller Bil — no car knowledge needed. **What's got you thinking about a new car?**";
-  appendAIMessage(greeting, ["My current car needs replacing", "It's my first car", "I want something different", "Just exploring options"]);
-  messages.push({ role: 'assistant', content: greeting });
-  renderOnboardingStep();
-}
-
-function renderOnboardingStep() {
-  // remove previous overlay pieces
-  document.querySelectorAll('.ob-overlay, .ob-card').forEach(el => el.remove());
-
-  const step = ONBOARDING_STEPS[onboardingStep];
-  const targetEl = document.querySelector(step.target);
-
-  // full-screen dim overlay with a "hole" cut via box-shadow
-  const overlay = document.createElement('div');
-  overlay.className = 'ob-overlay';
-  overlay.style.cssText = `
-    position:fixed; inset:0; z-index:300; pointer-events:none;
-  `;
-
-  // individual pane dims
-  // dim everything except the target by overlaying semi-transparent divs
-  const dimAll = document.createElement('div');
-  dimAll.style.cssText = `
-    position:fixed; inset:0; background:rgba(10,10,10,0.55);
-    z-index:300; pointer-events:all;
-    transition: opacity .35s;
-  `;
-
-  // cut a hole by clipping around the target
-  if (targetEl) {
-    const r = targetEl.getBoundingClientRect();
-    dimAll.style.background = 'transparent';
-    dimAll.style.pointerEvents = 'none';
-
-    // four dim rects around the target
-    const rects = [
-      { top:0, left:0, width:'100%', height: r.top+'px' },
-      { top: r.bottom+'px', left:0, width:'100%', bottom:0 },
-      { top: r.top+'px', left:0, width: r.left+'px', height: r.height+'px' },
-      { top: r.top+'px', left: r.right+'px', right:0, height: r.height+'px' },
-    ];
-    rects.forEach(s => {
-      const d = document.createElement('div');
-      d.style.cssText = `position:fixed; background:rgba(10,10,10,0.60); z-index:300; pointer-events:all;`;
-      Object.assign(d.style, s);
-      overlay.appendChild(d);
-    });
-
-    // subtle highlight border on target
-    const highlight = document.createElement('div');
-    highlight.style.cssText = `
-      position:fixed;
-      top:${r.top}px; left:${r.left}px;
-      width:${r.width}px; height:${r.height}px;
-      border:2px solid rgba(124,92,255,0.7);
-      border-radius:8px; z-index:301;
-      pointer-events:none;
-      box-shadow: 0 0 0 4px rgba(124,92,255,0.12);
-      transition: all .35s;
-    `;
-    overlay.appendChild(highlight);
+// Default suggestion fallback when AI omits the SUGGESTIONS block
+function defaultSuggestions(aiText) {
+  const t = (aiText || '').toLowerCase();
+  if (/budget|price|cost|kr|spend/i.test(t)) {
+    return ['Around 300 000 kr', 'Around 500 000 kr', 'Around 700 000 kr', 'Flexible on budget'];
   }
-
-  document.body.appendChild(overlay);
-
-  // floating card
-  const card = document.createElement('div');
-  card.className = 'ob-card';
-  card.style.cssText = `
-    position:fixed; z-index:400;
-    background:#fff; border:1px solid rgba(31,29,27,0.14);
-    border-radius:16px; padding:22px 24px; width:280px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.18);
-    font-family:"Geist","Inter",system-ui,sans-serif;
-    animation: ob-fadein .28s ease;
-  `;
-
-  const isLast = onboardingStep === ONBOARDING_STEPS.length - 1;
-  const stepNum = onboardingStep + 1;
-  const total   = ONBOARDING_STEPS.length;
-
-  card.innerHTML = `
-    <style>
-      @keyframes ob-fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
-      .ob-dots { display:flex; gap:5px; margin-bottom:14px; }
-      .ob-dot { width:6px; height:6px; border-radius:50%; background:rgba(31,29,27,0.18); }
-      .ob-dot.active { background:#7c5cff; }
-      .ob-step-label { font-family:"Inter",sans-serif; font-size:10px; color:rgba(31,29,27,0.45); letter-spacing:.07em; text-transform:uppercase; margin-bottom:6px; }
-      .ob-title { font-size:15px; font-weight:600; color:#1f1d1b; margin-bottom:8px; line-height:1.3; }
-      .ob-body { font-size:13px; color:rgba(31,29,27,0.6); line-height:1.6; margin-bottom:18px; }
-      .ob-actions { display:flex; justify-content:space-between; align-items:center; }
-      .ob-skip { font-size:11.5px; color:rgba(31,29,27,0.4); cursor:pointer; background:none; border:none; font-family:inherit; }
-      .ob-skip:hover { color:rgba(31,29,27,0.7); }
-      .ob-next { appearance:none; background:#7c5cff; color:#fff; border:1.5px solid #4a32c4;
-        padding:8px 18px; border-radius:999px; font:600 12px/1 "Geist",sans-serif; cursor:pointer;
-        box-shadow:2px 2px 0 #4a32c4; transition:transform .08s, box-shadow .08s; }
-      .ob-next:hover { transform:translate(-1px,-1px); box-shadow:3px 3px 0 #4a32c4; }
-    </style>
-    <div class="ob-dots">
-      ${Array.from({length:total}, (_,i) => `<div class="ob-dot${i===onboardingStep?' active':''}"></div>`).join('')}
-    </div>
-    <div class="ob-step-label">${stepNum} of ${total}</div>
-    <div class="ob-title">${step.title}</div>
-    <div class="ob-body">${step.body}</div>
-    <div class="ob-actions">
-      <button class="ob-skip" onclick="finishOnboarding()">Skip tour</button>
-      <button class="ob-next" onclick="${isLast ? 'finishOnboarding()' : 'nextOnboardingStep()'}">${isLast ? 'Get started →' : 'Next →'}</button>
-    </div>
-  `;
-
-  // position card next to target
-  if (targetEl) {
-    const r = targetEl.getBoundingClientRect();
-    if (step.pos === 'right') {
-      card.style.left  = (r.right + 16) + 'px';
-      card.style.top   = (r.top + r.height/2 - 120) + 'px';
-    } else {
-      card.style.right = (window.innerWidth - r.left + 16) + 'px';
-      card.style.top   = (r.top + r.height/2 - 120) + 'px';
-    }
-    // clamp vertically
-    const cardH = 260;
-    const top = parseFloat(card.style.top);
-    if (top < 12) card.style.top = '12px';
-    if (top + cardH > window.innerHeight - 12) card.style.top = (window.innerHeight - cardH - 12) + 'px';
-  } else {
-    card.style.top  = '50%';
-    card.style.left = '50%';
-    card.style.transform = 'translate(-50%,-50%)';
+  if (/passenger|seat|family|kids/i.test(t)) {
+    return ['Just me', '2-4 people', '5-7 people', 'Need 7+ seats'];
   }
-
-  document.body.appendChild(card);
+  if (/electric|hybrid|petrol|diesel|fuel/i.test(t)) {
+    return ['Electric (EV)', 'Hybrid', 'Petrol or diesel', 'Not sure yet'];
+  }
+  if (/feature|must.?have|tow|sunroof|heated/i.test(t)) {
+    return ['Heated seats', 'Tow hitch', 'Sunroof', 'No specific must-haves'];
+  }
+  if (/recommend|show|suggest|find/i.test(t)) {
+    return ['Show me options', 'Need more info first', 'Different direction', 'Continue'];
+  }
+  // generic catch-all
+  return ['Tell me more', 'Continue', 'Skip this', 'Start over'];
 }
-
-function nextOnboardingStep() {
-  onboardingStep++;
-  if (onboardingStep >= ONBOARDING_STEPS.length) { finishOnboarding(); return; }
-  renderOnboardingStep();
-}
-
-function finishOnboarding() {
-  document.querySelectorAll('.ob-overlay, .ob-card').forEach(el => {
-    el.style.transition = 'opacity .25s';
-    el.style.opacity = '0';
-    setTimeout(() => el.remove(), 260);
-  });
-}
-
-function startChat() { finishOnboarding(); }
 
 // ── utils ─────────────────────────────────────────────────────────────────
 function formatText(text) {
@@ -1206,33 +1330,33 @@ function handleKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
 
+// global Escape handler — close the collection drawer if open
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const drawer = document.getElementById('collectionDrawer');
+    if (drawer && drawer.classList.contains('open')) {
+      closeCollection();
+    }
+  }
+});
+
 function updateSend() {
   const input = document.getElementById('inputField');
   const btn = document.getElementById('btnSend');
-  const hasContent = input.value.trim().length > 0 || activeTokens.length > 0;
+  const hasContent = input.value.trim().length > 0;
   btn.disabled = !hasContent || isStreaming;
 }
 
 function resetAll() {
   messages = [];
-  uiMessages = [];
-  activeTokens = [];
-  activeChips = {};
+  pinnedCars = [];
   document.getElementById('stream').innerHTML = '';
   document.getElementById('inputField').value = '';
-  renderTokens();
-  buildSidebar();
+  clearSuggestions();
+  closeCollection();
+  renderCollection();
   updateSend();
-  showOnboarding();
-}
-
-function toggleDrawer() {
-  const side = document.querySelector('.side');
-  const backdrop = document.getElementById('drawerBackdrop');
-  const btn = document.querySelector('.btn-filter');
-  const isOpen = side.classList.toggle('open');
-  backdrop.classList.toggle('open', isOpen);
-  if (btn) btn.textContent = isOpen ? 'Filters ↓' : 'Filters ↑';
+  showGreeting();
 }
 
 function showToast(msg) {
@@ -1241,39 +1365,6 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 4000);
 }
-
-// ── sidebar resize ────────────────────────────────────────────────────────
-(function() {
-  const handle = document.getElementById('resizeHandle');
-  const side   = document.getElementById('side');
-  if (!handle || !side) return;
-
-  let startX, startW;
-
-  handle.addEventListener('mousedown', e => {
-    startX = e.clientX;
-    startW = side.offsetWidth;
-    handle.classList.add('dragging');
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
-    function onMove(e) {
-      const delta = startX - e.clientX; // dragging left = wider sidebar
-      const newW = Math.min(520, Math.max(200, startW + delta));
-      side.style.width = newW + 'px';
-    }
-    function onUp() {
-      handle.classList.remove('dragging');
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    }
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    e.preventDefault();
-  });
-})();
 
 // ── start ─────────────────────────────────────────────────────────────────
 init();
