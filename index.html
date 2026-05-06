@@ -128,7 +128,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .bub {
   padding: 14px 18px; border: 1.25px solid var(--border-strong);
   border-radius: 14px 14px 14px 4px; background: var(--bg);
-  font-size: 16px; line-height: 1.6;
+  font-size: 16px; line-height: 1.5;
   word-wrap: break-word;
   align-self: flex-start;
   max-width: 720px;
@@ -192,12 +192,17 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 }
 
 /* ── quick chips: above input field, multi-select tags ── */
+.quick-reply-wrap { padding-bottom: 14px; }
+.quick-reply-wrap.empty { display: none; }
+.quick-reply-label {
+  font-family: "Moller",sans-serif; font-size: 11px; font-weight: 500;
+  color: var(--muted); letter-spacing: .08em; text-transform: uppercase;
+  margin-bottom: 10px; display: block;
+}
 .quick-chips {
   display: flex; flex-wrap: wrap; gap: 10px;
-  padding: 0 0 14px 0;
   animation: chips-slide .35s cubic-bezier(.4,0,.2,1);
 }
-.quick-chips:empty { display: none; }
 @keyframes chips-slide {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: none; }
@@ -206,7 +211,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   appearance: none;
   padding: 12px 20px;
   border: 1px solid var(--border-strong); border-radius: 999px;
-  font: 500 16px/1.2 "Moller",sans-serif;
+  font: 500 16px/1.5 "Moller",sans-serif;
   color: var(--ink); background: #fff;
   cursor: pointer; user-select: none; transition: all .14s;
 }
@@ -361,12 +366,13 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 }
 .cbox {
   border: 1.5px solid var(--border-strong); border-radius: 14px; padding: 12px 14px;
-  min-height: 70px; display: flex; flex-direction: column; gap: 10px; background: #fff;
+  display: flex; flex-direction: column; gap: 10px; background: #fff;
   transition: border-color .15s, box-shadow .15s;
 }
 .cbox:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
-.tokens-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tokens-row { display: none; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tokens-row:not(:empty) { display: flex; }
 .token {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px 5px 4px 10px; border-radius: 6px;
@@ -380,11 +386,14 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .token button:hover { opacity: 1; }
 
 .input-field {
-  flex: 1; min-width: 140px; width: 100%;
+  flex: 1 1 auto; min-width: 140px; width: 100%;
   appearance: none; border: 0; outline: 0; background: transparent;
   font-family: "Moller",sans-serif; font-size: 16px; color: var(--ink);
-  padding: 4px 0; resize: none; line-height: 1.5;
-  min-height: 24px; max-height: 200px; overflow-y: auto;
+  padding: 0; margin: 0; resize: none; line-height: 1.5;
+  overflow-y: hidden;
+  display: block;
+  field-sizing: content;
+  box-sizing: content-box;
 }
 .input-field::placeholder { color: rgba(31,29,27,0.4); }
 
@@ -707,7 +716,10 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
       <div class="stream" id="stream"></div>
 
       <div class="composer">
-        <div class="quick-chips" id="suggestionsBar"></div>
+        <div class="quick-reply-wrap empty" id="suggestionsWrap">
+          <span class="quick-reply-label">Quick reply</span>
+          <div class="quick-chips" id="suggestionsBar"></div>
+        </div>
         <div class="cbox">
           <div class="tokens-row" id="tokensRow"></div>
           <textarea class="input-field" id="inputField" rows="1"
@@ -774,9 +786,10 @@ const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
 const SYSTEM_PROMPT = `You are a friendly car advisor at Möller Bil. Help users find the right car through natural conversation.
 
 Rules:
-- Ask ONE question at a time, keep replies short (2-3 sentences max unless recommending)
+- ONE question per reply. NEVER ask two questions in the same reply, even labeled "1." and "2." or chained with "and". If you've covered topic A and want to move to topic B, save B for the next turn.
+- Keep replies short (2-3 sentences max unless recommending).
 - Start by asking something open and easy — like what's prompting them to look for a car, or what their current situation is. Do NOT ask about car usage scenarios first.
-- Always respond in English
+- Always respond in English.
 - All prices and budgets are in Norwegian kroner (kr). Format like "350 000 kr" or "~450 000 kr". NEVER use $ or €.
 
 Conversation flow — adaptive, not rigid:
@@ -821,10 +834,11 @@ TOOLS:["step 1","step 2"]
   - User sends gibberish → TOOLS:["Parsing your message"]
 - TOOLS block must appear BEFORE any text, on its own line. Then your normal reply follows.
 
-CRITICAL — SUGGESTIONS ARE MANDATORY:
-Every single reply (except RECOMMENDATIONS) MUST end with a SUGGESTIONS block. This is non-negotiable. Even if the user just said "thanks" or made small talk, provide 3-4 tappable replies that move the conversation forward. NEVER omit this block. Format:
+CRITICAL — SUGGESTIONS ARE MANDATORY AND MUST MATCH YOUR QUESTION:
+Every single reply (except RECOMMENDATIONS) MUST end with a SUGGESTIONS block. This is non-negotiable. NEVER omit this block. Format:
 SUGGESTIONS:["option 1","option 2","option 3","option 4"]
 - Each option must be max 6 words, written as something a user might naturally say.
+- Suggestions MUST be plausible direct answers to the EXACT question you just asked. If you asked about fuel type, suggestions must be fuel options ("Electric", "Hybrid", "Petrol or diesel", "Not sure yet"). If you asked about must-have features, suggestions must be features ("Tow hitch", "Roof rails", "Heated seats", "No specific must-haves"). NEVER mix topics — e.g. don't show budget chips when you asked about fuel.
 - Make them concrete and useful — not generic ("Tell me more" is too vague). Examples: "Yes, that's right", "Show me hybrids instead", "Around 400 000 kr", "Family of 4".
 
 When recommending, also start with a TOOLS block, then the intro text, then RECOMMENDATIONS. Recommend 2-3 cars max. Each must follow this exact format:
@@ -1246,6 +1260,9 @@ function removeToken(label) {
     const [groupKey, opt] = key.split(':');
     if (tokenLabel(groupKey, opt) === label) delete activeChips[key];
   });
+  document.querySelectorAll('#suggestionsBar .chip').forEach(c => {
+    if (c.textContent === label) c.classList.remove('on');
+  });
   renderTokens();
   buildSidebar();
   updateSend();
@@ -1266,7 +1283,10 @@ function renderTokens() {
 
 function autoGrow(el) {
   el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+  // measure scrollHeight after browser reflows to 'auto'
+  requestAnimationFrame(() => {
+    el.style.height = (el.scrollHeight + 2) + 'px';
+  });
 }
 
 // ── chat UI helpers ───────────────────────────────────────────────────────
@@ -1365,17 +1385,27 @@ function removeTypingIndicator() {
 // ── quick chips (kept under AI bubble — enlarged from spec) ──────────────
 function renderQuickChips(suggestions, msgEl) {
   const bar = document.getElementById('suggestionsBar');
+  const wrap = document.getElementById('suggestionsWrap');
   bar.innerHTML = '';
-  if (!suggestions || suggestions.length === 0) return;
+  if (!suggestions || suggestions.length === 0) {
+    wrap.classList.add('empty');
+    return;
+  }
+  wrap.classList.remove('empty');
 
   suggestions.forEach(label => {
     const btn = document.createElement('button');
     btn.className = 'chip';
     btn.textContent = label;
+    if (activeTokens.includes(label)) btn.classList.add('on');
     btn.onclick = () => {
-      // tap = add as token (multi-select); user clicks Send to submit
-      addToken(label);
-      btn.remove();
+      if (btn.classList.contains('on')) {
+        removeToken(label);
+        btn.classList.remove('on');
+      } else {
+        addToken(label);
+        btn.classList.add('on');
+      }
     };
     bar.appendChild(btn);
   });
@@ -1823,20 +1853,26 @@ function parseSuggestions(text) {
 }
 
 function defaultSuggestions(aiText) {
-  const t = (aiText || '').toLowerCase();
-  if (/budget|price|cost|kr|spend/i.test(t)) {
-    return ['Around 300 000 kr', 'Around 500 000 kr', 'Around 700 000 kr', 'Flexible on budget'];
+  // Match against the LAST question in the text (the most recently asked thing)
+  // so we don't get fooled by earlier mentions of unrelated topics.
+  const full = (aiText || '');
+  const questions = full.match(/[^.!?]*\?/g) || [];
+  const lastQuestion = (questions[questions.length - 1] || full).toLowerCase();
+
+  // Order matters: most specific first.
+  if (/must.?have|feature|tow|sunroof|heated|roof rack|roof rail|awd|leather|panoram/i.test(lastQuestion)) {
+    return ['Tow hitch', 'Roof rails', 'Heated seats', 'No specific must-haves'];
   }
-  if (/passenger|seat|family|kids/i.test(t)) {
-    return ['Just me', '2-4 people', '5-7 people', 'Need 7+ seats'];
-  }
-  if (/electric|hybrid|petrol|diesel|fuel/i.test(t)) {
+  if (/electric|hybrid|petrol|diesel|fuel|ev\b/i.test(lastQuestion)) {
     return ['Electric (EV)', 'Hybrid', 'Petrol or diesel', 'Not sure yet'];
   }
-  if (/feature|must.?have|tow|sunroof|heated/i.test(t)) {
-    return ['Heated seats', 'Tow hitch', 'Sunroof', 'No specific must-haves'];
+  if (/passenger|seat|family|kids|children|how many people/i.test(lastQuestion)) {
+    return ['Just me', '2-4 people', '5-7 people', 'Need 7+ seats'];
   }
-  if (/recommend|show|suggest|find/i.test(t)) {
+  if (/budget|price|cost|spend|how much|\bkr\b/i.test(lastQuestion)) {
+    return ['Around 300 000 kr', 'Around 500 000 kr', 'Around 700 000 kr', 'Flexible on budget'];
+  }
+  if (/recommend|show|suggest|find/i.test(lastQuestion)) {
     return ['Show me options', 'Need more info first', 'Different direction', 'Continue'];
   }
   return ['Tell me more', 'Continue', 'Skip this', 'Start over'];
