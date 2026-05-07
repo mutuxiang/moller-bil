@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>AI Car Assistant</title>
+<title>AI Car Assistant — Møller Bil</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 @font-face { font-family: "Moller"; src: url("fonts/Moller-Regular.otf") format("opentype"); font-weight: 400; font-style: normal; }
@@ -16,15 +16,40 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --accent: #0000FF;
-  --accent-soft: rgba(0,0,255,0.08);
-  --accent-ink: #0000CC;
-  --bg: #f8f8f8;
-  --ink: #0a0a0a;
-  --border: rgba(0,0,0,0.12);
-  --border-strong: rgba(0,0,0,0.50);
-  --muted: rgba(0,0,0,0.42);
-  --chip-bg: #ebebeb;
+  /* Brand primitives */
+  --moller-blue:       #001946;
+  --moller-blue-700:   #001232;
+  --salmon:            #E1644B;
+  --cream-100:         #F9F7F4;
+  --cream-200:         #F3EEE8;
+  --cream-300:         #EFE9E1;
+  --light-blue:        #D9E4F9;
+
+  /* Action: brand navy instead of bright blue */
+  --action-blue:       #001946;
+  --action-blue-hover: #001232;
+
+  /* Semantic */
+  --accent:        var(--moller-blue);
+  --accent-soft:   rgba(0,25,70,0.06);
+  --accent-soft-2: rgba(0,25,70,0.10);
+  --accent-ink:    var(--moller-blue-700);
+  --action:        var(--action-blue);
+  --action-hover:  var(--action-blue-hover);
+  --eyebrow:       var(--salmon);
+
+  --bg:           var(--cream-100);
+  --bg-surface:   var(--cream-200);
+  --bg-surface-2: var(--cream-300);
+  --ink:          var(--moller-blue);
+  --border:       rgba(0,25,70,0.10);
+  --border-strong:rgba(0,25,70,0.22);
+  --muted:        rgba(0,25,70,0.55);
+  --chip-bg:      var(--cream-200);
+
+  --radius-card:  4px;
+  --radius-lg:    14px;
+  --ease-out:     cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: var(--ink); background: var(--bg); }
@@ -33,47 +58,47 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .app { display: flex; flex-direction: column; height: 100vh; }
 
 .topbar {
-  height: 60px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; padding: 0 22px; gap: 12px; flex-shrink: 0;
+  height: 80px; border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+  display: flex; align-items: center; padding: 0 32px; gap: 14px; flex-shrink: 0;
 }
-.topbar-logo { height: 28px; width: auto; display: block; }
+.topbar-logo { height: 32px; width: auto; display: block; }
 .topbar-spacer { flex: 1; }
 
 .btn-reset-all,
 .btn-filter,
 .btn-collection {
-  appearance: none; border: 1px solid rgba(31,29,27,0.3); background: transparent;
-  color: rgba(31,29,27,0.7); font: 500 13px/1 "Moller",sans-serif;
-  height: 34px; padding: 0 14px;
+  appearance: none; border: 1px solid var(--border-strong); background: transparent;
+  color: var(--muted); font: 400 14px/1 "Moller",sans-serif;
+  height: 36px; padding: 0 16px;
   border-radius: 999px; cursor: pointer;
   display: inline-flex; align-items: center; gap: 7px;
-  transition: all .12s;
+  transition: color 220ms var(--ease-out), border-color 220ms var(--ease-out), background 220ms var(--ease-out);
 }
 .btn-reset-all:hover,
 .btn-filter:hover,
-.btn-collection:hover { color: var(--ink); border-color: rgba(31,29,27,0.6); }
+.btn-collection:hover { color: var(--ink); border-color: var(--ink); background: var(--accent-soft); }
 
 .btn-collection { position: relative; }
 .btn-collection.has-items {
   border-color: var(--accent);
-  color: var(--accent-ink);
+  color: var(--accent);
   background: var(--accent-soft);
 }
 .btn-collection-count {
-  font-family: "Moller",sans-serif; font-size: 11.5px; font-weight: 500;
-  min-width: 18px; height: 18px; padding: 0 5px;
-  background: rgba(31,29,27,0.08); color: var(--ink);
+  font-family: "Moller",sans-serif; font-size: 12px; font-weight: 400;
+  min-width: 20px; height: 20px; padding: 0 6px;
+  background: var(--accent-soft-2); color: var(--ink);
   border-radius: 999px;
   display: inline-flex; align-items: center; justify-content: center;
   line-height: 1;
 }
 .btn-collection.has-items .btn-collection-count {
-  background: var(--accent); color: #fff;
+  background: var(--accent); color: var(--cream-100);
 }
 
 .main { flex: 1; display: flex; min-height: 0; }
 
-/* left & right empty spacer columns */
 .col-spacer {
   width: 80px; flex-shrink: 0; background: var(--bg);
   border-right: 1px solid var(--border);
@@ -82,7 +107,6 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   border-right: none; border-left: 1px solid var(--border);
 }
 
-/* centre content wrapper */
 .col-center {
   flex: 1; display: flex; min-width: 0; min-height: 0;
 }
@@ -92,29 +116,30 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 .stream {
   flex: 1; overflow-y: auto; padding: 28px 32px 16px;
-  display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth;
+  display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth;
 }
-.stream::-webkit-scrollbar { width: 8px; }
-.stream::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+.stream::-webkit-scrollbar { width: 6px; }
+.stream::-webkit-scrollbar-thumb { background: rgba(0,25,70,0.12); border-radius: 3px; }
 
-/* ── info banner above stream ── */
+/* ── info banner ── */
 .info-banner {
-  margin: 18px 32px 0;
-  border: 1px solid var(--border); border-radius: 12px;
-  padding: 14px 18px; background: #fff;
-  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  margin: 24px 32px 0;
+  border-radius: var(--radius-lg);
+  padding: 20px 24px; background: var(--bg-surface-2);
+  display: flex; align-items: center; gap: 16px; flex-shrink: 0;
 }
-.info-banner-text { flex: 1; }
-.info-banner-text b { font-size: 15px; font-weight: 500; display: block; margin-bottom: 3px; }
-.info-banner-text span { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+.info-banner-text { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.info-banner-text .eyebrow { font-size: 13px; font-weight: 500; color: var(--eyebrow); display: block; }
+.info-banner-text b { font-size: 18px; font-weight: 500; display: block; color: var(--ink); }
+.info-banner-text span { font-size: 15px; color: var(--muted); line-height: 1.5; }
 .info-banner-link {
-  appearance: none; border: 1px solid var(--border-strong); background: transparent;
-  color: var(--ink); font: 500 13.5px/1 "Moller",sans-serif; padding: 9px 16px;
+  appearance: none; border: 1px solid var(--ink); background: transparent;
+  color: var(--ink); font: 400 15px/1 "Moller",sans-serif; padding: 11px 22px;
   border-radius: 999px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
   text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
-  transition: background .12s;
+  transition: background 220ms var(--ease-out), color 220ms var(--ease-out);
 }
-.info-banner-link:hover { background: var(--chip-bg); }
+.info-banner-link:hover { background: var(--ink); color: var(--cream-100); }
 
 /* ── messages ── */
 .msg { display: flex; gap: 10px; align-items: flex-start; max-width: 880px; }
@@ -125,36 +150,46 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .msg-content { display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1; }
 .msg.user .msg-content { align-items: flex-end; }
 
+/* ── chat bubbles: 1 small corner, 3 large ── */
 .bub {
-  padding: 14px 18px; border: 1.25px solid var(--border-strong);
-  border-radius: 14px 14px 14px 4px; background: var(--bg);
-  font-size: 16px; line-height: 1.5;
+  padding: 14px 20px; border: 1px solid var(--border);
+  /* top-left small, three others large */
+  border-radius: 4px 20px 20px 20px;
+  background: var(--bg-surface);
+  font-size: 16px; line-height: 1.6;
   word-wrap: break-word;
   align-self: flex-start;
-  max-width: 720px;
+  max-width: 680px;
+  color: var(--ink);
 }
-.msg.user .bub { border-radius: 14px 14px 4px 14px; background: var(--chip-bg); align-self: flex-end; }
+.msg.user .bub {
+  background: var(--bg-surface-2); border-color: transparent; align-self: flex-end;
+  /* top-right small, three others large */
+  border-radius: 20px 4px 20px 20px;
+}
 .bub b { font-weight: 500; }
 
-.bub-tokens { display: inline-flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-right: 6px; }
+/* user-bubble filter tags — outlined, not filled */
+.bub-tokens { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-right: 6px; }
 .bub-token {
-  padding: 3px 9px; border-radius: 5px;
-  background: var(--accent-soft); color: var(--accent-ink);
-  border: 1px solid var(--accent); font-size: 13px; font-weight: 500;
+  padding: 3px 11px; border-radius: 999px;
+  background: transparent; color: var(--ink);
+  border: 1.5px solid rgba(0,25,70,0.35);
+  font-size: 13px; font-weight: 400;
 }
 
-/* ── tool indicators (real-time tool steps from AI) ── */
+/* ── tool indicators ── */
 .tool-strip { display: flex; flex-direction: column; gap: 5px; align-self: flex-start; }
 .tool-step {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 12px; border-radius: 999px;
-  background: var(--accent-soft); border: 1px solid rgba(124,92,255,0.25);
-  font-family: "Moller",sans-serif; font-size: 12.5px; font-weight: 500;
-  color: var(--accent-ink);
-  animation: tool-fade .3s cubic-bezier(.4,0,.2,1);
+  padding: 6px 14px; border-radius: 999px;
+  background: var(--accent-soft); border: 1px solid var(--border);
+  font-family: "Moller",sans-serif; font-size: 13px; font-weight: 400;
+  color: var(--accent);
+  animation: tool-fade .3s var(--ease-out);
 }
 .tool-step.done {
-  background: var(--bg); border-color: var(--border);
+  background: transparent; border-color: var(--border);
   color: var(--muted);
 }
 .tool-step .tool-icon {
@@ -169,8 +204,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   animation: tool-spin .8s linear infinite;
 }
 .tool-step.done .tool-icon::before {
-  content: '✓';
-  font-size: 11px; font-weight: 500; line-height: 1;
+  content: '✓'; font-size: 11px; font-weight: 500; line-height: 1;
 }
 @keyframes tool-spin { to { transform: rotate(360deg); } }
 @keyframes tool-fade {
@@ -181,7 +215,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 /* typing dots */
 .typing { display: inline-flex; gap: 4px; padding: 4px 0; align-items: center; }
 .typing span {
-  width: 7px; height: 7px; border-radius: 50%; background: rgba(31,29,27,0.35);
+  width: 7px; height: 7px; border-radius: 50%; background: rgba(0,25,70,0.25);
   animation: bounce 1.2s infinite;
 }
 .typing span:nth-child(2) { animation-delay: .15s; }
@@ -191,17 +225,16 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   40% { transform: translateY(-4px); opacity: 1; }
 }
 
-/* ── quick chips: above input field, multi-select tags ── */
-.quick-reply-wrap { padding-bottom: 14px; }
+/* ── quick chips ── */
+.quick-reply-wrap { padding-bottom: 16px; }
 .quick-reply-wrap.empty { display: none; }
 .quick-reply-label {
-  font-family: "Moller",sans-serif; font-size: 11px; font-weight: 500;
-  color: var(--muted); letter-spacing: .08em; text-transform: uppercase;
-  margin-bottom: 10px; display: block;
+  font-family: "Moller",sans-serif; font-size: 13px; font-weight: 500;
+  color: var(--eyebrow); margin-bottom: 10px; display: block;
 }
 .quick-chips {
-  display: flex; flex-wrap: wrap; gap: 10px;
-  animation: chips-slide .35s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-wrap: wrap; gap: 8px;
+  animation: chips-slide .35s var(--ease-out);
 }
 @keyframes chips-slide {
   from { opacity: 0; transform: translateY(6px); }
@@ -209,175 +242,276 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 }
 .chip {
   appearance: none;
-  padding: 12px 20px;
+  padding: 9px 18px;
   border: 1px solid var(--border-strong); border-radius: 999px;
-  font: 500 16px/1.5 "Moller",sans-serif;
-  color: var(--ink); background: #fff;
-  cursor: pointer; user-select: none; transition: all .14s;
+  font: 500 15px/1.5 "Moller",sans-serif;
+  color: var(--ink); background: var(--cream-100);
+  cursor: pointer; user-select: none;
+  transition: background 220ms var(--ease-out), color 220ms var(--ease-out), border-color 220ms var(--ease-out);
 }
 .chip:hover {
-  background: var(--accent-soft); color: var(--accent-ink);
-  border-color: var(--accent); transform: translateY(-1px);
+  background: var(--accent); color: var(--cream-100);
+  border-color: var(--accent);
 }
-.chip:active { transform: translateY(0); }
 .chip.on {
-  background: var(--accent-soft); color: var(--accent-ink);
+  background: var(--accent); color: var(--cream-100);
   border-color: var(--accent);
 }
 
-/* ── EV design surprises ── */
+/* ── EV surprises ── */
 .surprises {
   margin-top: 2px;
-  padding: 14px 16px;
-  border-left: 2px solid var(--accent);
-  background: rgba(124,92,255,0.04);
-  border-radius: 0 8px 8px 0;
+  padding: 18px 20px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
   align-self: flex-start;
-  max-width: 720px;
+  max-width: 680px;
 }
 .surprises-header {
-  font-family: "Moller",sans-serif;
-  font-size: 11px; font-weight: 500;
-  letter-spacing: .08em; text-transform: uppercase;
-  color: var(--accent-ink);
-  margin-bottom: 10px;
+  font-size: 13px; font-weight: 500;
+  color: var(--eyebrow); margin-bottom: 12px;
 }
 .surprises-list { display: flex; flex-direction: column; gap: 8px; }
 .surprise-row {
-  font-size: 13.5px; line-height: 1.5;
-  display: flex; flex-wrap: wrap; gap: 6px;
+  display: flex; align-items: center; gap: 14px;
+  background: var(--cream-100); border-radius: var(--radius-card); padding: 12px 14px;
 }
-.surprise-title { font-weight: 500; color: var(--ink); }
-.surprise-sep { color: var(--muted); }
-.surprise-desc { color: rgba(31,29,27,0.7); flex: 1; min-width: 0; }
+.surprise-img {
+  width: 56px; height: 56px; flex-shrink: 0;
+  background: repeating-linear-gradient(135deg,rgba(0,25,70,.05) 0 5px,rgba(0,0,0,0) 5px 10px), var(--bg);
+  border: 1px solid var(--border); border-radius: var(--radius-card);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--muted);
+}
+.surprise-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.surprise-title { font-size: 15px; font-weight: 500; color: var(--ink); line-height: 1.3; }
+.surprise-desc { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
 
-/* ── recommendation cards (from attachment 2 — 2x2 grid, badges, specs, CTA, pin) ── */
+/* ════════════════════════════════════════════════════════════
+   RECOMMENDATION CARDS — redesigned
+   ════════════════════════════════════════════════════════════ */
 .recs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
   margin-top: 4px;
   max-width: 720px;
 }
+
 .rec {
-  border: 1.5px solid var(--border-strong); border-radius: 14px;
-  background: #fff; padding: 16px;
-  display: flex; flex-direction: column; gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--cream-100);
+  display: flex; flex-direction: column;
   position: relative;
-  transition: border-color .18s, box-shadow .18s, transform .18s;
+  overflow: hidden;
+  transition: border-color 220ms var(--ease-out), box-shadow 220ms var(--ease-out);
+}
+.rec:hover {
+  border-color: rgba(0,25,70,0.35);
+  box-shadow: 0 6px 24px rgba(0,25,70,0.09);
 }
 .rec.pinned {
   border-color: var(--accent);
-  border-width: 2px;
-  box-shadow: 0 0 0 4px var(--accent-soft);
+  background: var(--bg-surface);
   order: -1;
+  box-shadow: 0 4px 16px rgba(0,25,70,0.10);
 }
 
+/* Image placeholder — short side doubled (120→240px) */
 .rec-ph {
-  background: repeating-linear-gradient(135deg,rgba(31,29,27,.05) 0 6px,rgba(0,0,0,0) 6px 12px), var(--bg);
-  border: 1.25px dashed rgba(31,29,27,0.2); border-radius: 10px; height: 100px;
+  width: 100%; height: 240px;
+  background:
+    repeating-linear-gradient(135deg, rgba(0,25,70,.04) 0 8px, rgba(0,0,0,0) 8px 16px),
+    var(--cream-200);
+  border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
-  font-family: "Moller",sans-serif; font-size: 12px; color: var(--muted);
-  letter-spacing: .04em;
-}
-
-.rec-pin {
-  position: absolute; top: 10px; right: 10px;
-  width: 32px; height: 32px;
-  appearance: none; border: 1px solid var(--border-strong); background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(4px);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: var(--muted);
-  transition: all .12s;
-  z-index: 2;
-}
-.rec-pin:hover { color: var(--ink); border-color: var(--ink); transform: scale(1.05); }
-.rec-pin.on {
-  background: var(--accent); color: #fff; border-color: var(--accent-ink);
-  box-shadow: 1px 1px 0 var(--accent-ink);
-}
-.rec-pin svg { width: 16px; height: 16px; }
-
-.rec-badge {
-  align-self: flex-start;
-  font-family: "Moller",sans-serif; font-size: 11.5px; font-weight: 500;
-  padding: 4px 10px; border-radius: 999px;
-  letter-spacing: .01em;
-}
-.rec-badge.b-best  { background: #e8f4ff; color: #1d4ed8; }
-.rec-badge.b-value { background: #ecfdf3; color: #15803d; }
-.rec-badge.b-tow   { background: var(--accent-soft); color: var(--accent-ink); }
-.rec-badge.b-eff   { background: #fef3c7; color: #a16207; }
-.rec-badge.b-fam   { background: #fce7f3; color: #be185d; }
-.rec-badge.b-default { background: var(--chip-bg); color: var(--ink); }
-
-.rec-title { display: flex; flex-direction: column; gap: 3px; }
-.rec-name { font-size: 17px; font-weight: 500; line-height: 1.25; padding-right: 36px; }
-.rec-sub { font-family: "Moller",sans-serif; font-size: 13px; color: var(--muted); }
-
-.rec-specs {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-}
-.rec-spec {
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: 9px; padding: 9px 11px;
-  display: flex; flex-direction: column; gap: 2px;
-}
-.rec-spec-label {
-  font-family: "Moller",sans-serif; font-size: 11.5px; color: var(--muted);
-  font-weight: 500;
-}
-.rec-spec-value { font-size: 14px; font-weight: 500; color: var(--ink); }
-
-.rec-divider { height: 1px; background: var(--border); margin: 2px 0; }
-
-.rec-highlights { display: flex; flex-direction: column; gap: 7px; }
-.rec-highlight {
-  display: flex; align-items: flex-start; gap: 9px;
-  font-size: 13.5px; font-weight: 500; color: var(--ink); line-height: 1.4;
-}
-.rec-highlight::before {
-  content: '✓';
+  font-size: 13px; color: var(--muted); letter-spacing: .02em;
   flex-shrink: 0;
-  color: #16a34a; font-weight: 500;
-  font-family: "Moller",sans-serif;
-  font-size: 14px;
-  line-height: 1.2;
-  margin-top: 1px;
+  position: relative;
 }
 
-.rec-cta {
+/* Card body — all content below image */
+.rec-body {
+  padding: 16px 18px 18px;
+  display: flex; flex-direction: column; gap: 14px;
+  flex: 1;
+}
+
+.rec-actions {
   margin-top: auto;
-  appearance: none; width: 100%;
-  border: 1px solid var(--border-strong); background: var(--bg);
-  border-radius: 10px; padding: 11px 14px;
-  font: 500 13.5px/1 "Moller",sans-serif; color: var(--ink);
+  display: flex; gap: 10px;
+}
+.rec-inv {
+  appearance: none; flex: 1;
+  border: 0; background: var(--accent); color: var(--cream-100);
+  border-radius: 999px; padding: 13px 20px;
+  font: 500 15px/1 "Moller",sans-serif;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 6px;
-  transition: background .12s, border-color .12s;
+  transition: background 220ms var(--ease-out), opacity 220ms;
 }
-.rec-cta:hover { background: var(--chip-bg); border-color: var(--ink); }
+.rec-inv:hover:not(:disabled) { background: var(--action-hover); }
+.rec-inv:disabled { opacity: .5; cursor: wait; }
+
+/* ── inventory cards ── */
+.inv-block {
+  align-self: flex-start; max-width: 720px; width: 100%;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.inv-header {
+  font-size: 13px; font-weight: 500; color: var(--eyebrow);
+  letter-spacing: .03em;
+}
+.inv-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 16px; margin-top: 4px;
+}
+.inv-card {
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  background: var(--cream-100);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  transition: border-color 220ms var(--ease-out), box-shadow 220ms var(--ease-out);
+}
+.inv-card:hover {
+  border-color: rgba(0,25,70,0.30);
+  box-shadow: 0 4px 16px rgba(0,25,70,0.08);
+}
+.inv-card.pinned {
+  border-color: var(--accent);
+  background: var(--bg-surface);
+  order: -1;
+}
+.inv-ph {
+  width: 100%; height: 240px;
+  background:
+    repeating-linear-gradient(135deg, rgba(0,25,70,.04) 0 8px, rgba(0,0,0,0) 8px 16px),
+    var(--cream-200);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* Inner padding wrapper for inventory cards */
+.inv-body {
+  padding: 14px 16px 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  flex: 1;
+}
+
+.inv-head { display: flex; flex-direction: column; gap: 3px; }
+.inv-title { font-size: 17px; font-weight: 500; line-height: 1.3; color: var(--ink); }
+.inv-sub {
+  font-size: 13.5px; color: var(--muted);
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.inv-sub > span:not(:last-child)::after { content: '·'; margin-left: 6px; opacity: .5; }
+.inv-stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.inv-stat {
+  border-radius: var(--radius-card); padding: 11px 13px;
+  display: flex; flex-direction: column; gap: 3px;
+  background: var(--bg-surface);
+}
+/* Car price gets the blue highlight; per-year gets the plain surface */
+.inv-stat.is-price { background: var(--light-blue); }
+.inv-stat-label { font-size: 12.5px; color: var(--muted); }
+.inv-stat.is-price .inv-stat-label { color: var(--accent); }
+.inv-stat-value {
+  font-size: 16px; font-weight: 500; color: var(--ink); line-height: 1.2;
+  white-space: nowrap;
+}
+.inv-stat-note { font-size: 12px; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+.inv-stat.is-price .inv-stat-note { color: var(--accent-ink); }
+.inv-edge {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 11px 13px; border-radius: var(--radius-card);
+  background: var(--cream-200);
+  font-size: 13.5px; line-height: 1.45; color: var(--ink);
+}
+.inv-edge-text { flex: 1; min-width: 0; }
+.inv-edge-label {
+  display: block; font-size: 12px; font-weight: 500;
+  color: var(--eyebrow); margin-bottom: 2px;
+}
+.inv-actions { margin-top: auto; display: flex; gap: 8px; }
+.inv-save, .inv-cta {
+  appearance: none; flex: 1;
+  border: 1px solid var(--border-strong); background: transparent;
+  border-radius: 999px; padding: 10px 14px;
+  font: 400 13.5px/1 "Moller",sans-serif; color: var(--ink);
+  cursor: pointer;
+  transition: background 220ms var(--ease-out), color 220ms var(--ease-out), border-color 220ms var(--ease-out);
+}
+.inv-save:hover, .inv-cta:hover { background: var(--ink); color: var(--cream-100); border-color: var(--ink); }
+.inv-save.on {
+  background: var(--accent); color: var(--cream-100); border-color: var(--accent);
+}
+.inv-save.on:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+
+@media (max-width: 900px) {
+  .inv-grid { grid-template-columns: 1fr; }
+}
+
+/* Rec badge — eyebrow above model name */
+.rec-badge {
+  font-size: 12.5px; font-weight: 500;
+  color: var(--eyebrow);
+  display: inline-block;
+  letter-spacing: .01em;
+}
+
+.rec-title { display: flex; flex-direction: column; gap: 2px; }
+.rec-name { font-size: 21px; font-weight: 500; line-height: 1.2; color: var(--ink); }
+.rec-sub { font-size: 14px; color: var(--muted); margin-top: 1px; }
+
+.rec-specs {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 7px;
+}
+.rec-spec {
+  background: var(--bg-surface); border-radius: var(--radius-card); padding: 9px 12px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.rec-spec-label { font-size: 12px; color: var(--muted); }
+.rec-spec-value { font-size: 15px; font-weight: 500; color: var(--ink); }
+
+.rec-divider { height: 1px; background: var(--border); }
+
+.rec-highlights { display: flex; flex-direction: column; gap: 6px; }
+.rec-highlight {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 14px; font-weight: 400; color: var(--ink); line-height: 1.5;
+}
+.rec-highlight::before {
+  content: '';
+  flex-shrink: 0;
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--salmon);
+  margin-top: 8px;
+}
 
 /* ── composer ── */
 .composer {
-  border-top: 1px solid var(--border); padding: 16px 32px 22px;
+  border-top: 1px solid var(--border); padding: 14px 32px 20px;
   flex-shrink: 0; background: var(--bg);
 }
 .cbox {
-  border: 1.5px solid var(--border-strong); border-radius: 14px; padding: 12px 14px;
-  display: flex; flex-direction: column; gap: 10px; background: #fff;
-  transition: border-color .15s, box-shadow .15s;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 10px; background: var(--cream-100);
+  transition: border-color 220ms var(--ease-out);
 }
-.cbox:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.cbox:focus-within { border-color: var(--accent); }
 
 .tokens-row { display: none; flex-wrap: wrap; gap: 6px; align-items: center; }
 .tokens-row:not(:empty) { display: flex; }
 .token {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 5px 4px 10px; border-radius: 6px;
-  background: var(--accent-soft); color: var(--accent-ink);
-  border: 1px solid var(--accent); font-size: 13px; font-weight: 500;
+  padding: 5px 8px 5px 14px; border-radius: 999px;
+  background: var(--accent); color: var(--cream-100);
+  border: 0; font-size: 13px; font-weight: 400;
 }
 .token button {
   appearance: none; border: 0; background: transparent; color: inherit;
@@ -395,87 +529,100 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   field-sizing: content;
   box-sizing: content-box;
 }
-.input-field::placeholder { color: rgba(31,29,27,0.4); }
+.input-field::placeholder { color: rgba(0,25,70,0.32); }
 
 .cfoot { display: flex; justify-content: flex-end; align-items: center; }
 
 .btn-send {
-  appearance: none; border: 1.5px solid var(--accent-ink); background: var(--accent); color: #fff;
-  padding: 10px 22px; border-radius: 999px; font: 500 14px/1 "Moller",sans-serif; cursor: pointer;
-  box-shadow: 2px 2px 0 var(--accent-ink); transition: transform .08s, box-shadow .08s;
+  appearance: none; border: 0; background: var(--accent); color: var(--cream-100);
+  padding: 11px 24px; border-radius: 999px;
+  font: 500 15px/1 "Moller",sans-serif; cursor: pointer;
+  transition: background 220ms var(--ease-out), opacity 220ms;
 }
-.btn-send:hover:not(:disabled) { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--accent-ink); }
-.btn-send:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+.btn-send:hover:not(:disabled) { background: var(--action-hover); }
+.btn-send:disabled { opacity: .35; cursor: not-allowed; }
 
-/* ── sidebar (filters) ── */
+/* ── sidebar ── */
 .side {
-  width: 480px; border-left: 1px solid var(--border); background: var(--bg);
+  width: 460px; border-left: 1px solid var(--border); background: var(--bg-surface);
   display: flex; flex-direction: column; flex-shrink: 0;
-  min-width: 320px; max-width: 640px;
+  min-width: 300px; max-width: 600px;
 }
 .side-head {
   padding: 16px 22px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
-.side-head b { font-size: 14px; font-weight: 500; }
+.side-head b { font-size: 20px; font-weight: 500; color: var(--ink); }
 .side-head-actions { display: flex; align-items: center; gap: 8px; }
 .side-reset {
-  font-family: "Moller",sans-serif; font-size: 11.5px; color: var(--muted);
-  cursor: pointer; background: none; border: none;
+  font-size: 11.5px; color: var(--muted);
+  cursor: pointer; background: none; border: none; font-family: inherit;
 }
 .side-reset:hover { color: var(--ink); }
 .btn-apply {
   appearance: none; background: transparent; color: var(--muted);
-  border: 1px solid rgba(31,29,27,0.2); border-radius: 999px;
-  font: 500 12px/1 "Moller",sans-serif; padding: 7px 14px; cursor: default;
-  transition: all .2s;
+  border: 1px solid var(--border-strong); border-radius: 999px;
+  font: 400 13.5px/1 "Moller",sans-serif; padding: 8px 16px; cursor: default;
+  transition: background 220ms var(--ease-out), color 220ms var(--ease-out), border-color 220ms var(--ease-out);
 }
 .btn-apply.active {
-  background: var(--accent); color: #fff;
-  border-color: var(--accent-ink);
-  box-shadow: 2px 2px 0 var(--accent-ink);
-  cursor: pointer;
+  background: var(--accent); color: var(--cream-100);
+  border-color: var(--accent); cursor: pointer;
 }
-.btn-apply.active:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--accent-ink); }
+.btn-apply.active:hover { background: var(--action-hover); border-color: var(--action-hover); }
 
-.side-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
+.side-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
 
-.filter-group { display: flex; flex-direction: column; gap: 9px; }
-.filter-label {
-  font-family: "Moller",sans-serif; font-size: 11px;
-  color: var(--muted); letter-spacing: .08em; text-transform: uppercase;
-  font-weight: 500;
-}
+.filter-group { display: flex; flex-direction: column; gap: 8px; }
+.filter-label { font-size: 13px; color: var(--eyebrow); font-weight: 500; }
 .chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
 
-/* sidebar filter chips are smaller than chat suggestion chips */
-.chips-row .chip {
-  padding: 6px 12px;
-  font-size: 13px;
-}
+.chips-row .chip { padding: 6px 12px; font-size: 13px; }
 
-/* budget slider */
+/* budget dual-handle slider */
 .budget-module { display: flex; flex-direction: column; gap: 10px; }
 .budget-vals {
   display: flex; justify-content: space-between;
-  font-family: "Moller",sans-serif; font-size: 11.5px; color: var(--muted);
+  font-size: 11.5px; color: var(--muted);
+}
+.budget-track { position: relative; height: 24px; margin: 4px 0; }
+.budget-track::before {
+  content: ''; position: absolute;
+  top: 50%; left: 0; right: 0; height: 4px;
+  transform: translateY(-50%);
+  background: rgba(0,25,70,0.14); border-radius: 2px;
+}
+.budget-track-fill {
+  position: absolute; top: 50%; height: 4px;
+  transform: translateY(-50%);
+  background: var(--accent); border-radius: 2px;
+  pointer-events: none;
 }
 .budget-input {
-  width: 100%; appearance: none; height: 4px; border-radius: 2px;
-  background: linear-gradient(to right, var(--accent) 0%, var(--accent) 50%, rgba(31,29,27,0.15) 50%);
-  outline: none; cursor: pointer;
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 24px; margin: 0;
+  appearance: none; -webkit-appearance: none;
+  background: transparent; outline: none;
+  pointer-events: none;
 }
 .budget-input::-webkit-slider-thumb {
-  appearance: none; width: 16px; height: 16px; border-radius: 50%;
-  background: #fff; border: 2px solid var(--accent);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.18); cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  pointer-events: auto;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--cream-100); border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0,25,70,0.20); cursor: pointer;
+  position: relative; z-index: 2;
 }
-.budget-selected {
-  font-family: "Moller",sans-serif; font-size: 13px; font-weight: 500;
-  color: var(--ink);
+.budget-input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--cream-100); border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0,25,70,0.20); cursor: pointer;
 }
+.budget-input::-webkit-slider-runnable-track { background: transparent; }
+.budget-selected { font-size: 13px; font-weight: 500; color: var(--ink); }
 
-/* drag handle between chat and sidebar */
+/* drag handle */
 .resize-handle {
   width: 5px; flex-shrink: 0; cursor: col-resize;
   background: transparent; position: relative;
@@ -485,18 +632,18 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   content: ''; position: absolute;
   top: 50%; left: 50%; transform: translate(-50%, -50%);
   width: 1px; height: 40px;
-  background: var(--border-strong); border-radius: 1px; opacity: 0.35;
+  background: var(--border-strong); border-radius: 1px; opacity: 0.30;
   transition: opacity .15s, height .15s;
 }
 .resize-handle:hover::after,
-.resize-handle.dragging::after { opacity: 0.8; height: 60px; }
+.resize-handle.dragging::after { opacity: 0.7; height: 60px; }
 .resize-handle:hover,
 .resize-handle.dragging { background: var(--accent-soft); }
 
-/* ── collection (saved cars) drawer ── */
+/* ── collection drawer ── */
 .collection-backdrop {
   position: fixed; inset: 0;
-  background: rgba(10,10,10,0.32);
+  background: rgba(10,10,10,0.28);
   z-index: 99;
   opacity: 0; pointer-events: none;
   transition: opacity .25s;
@@ -505,13 +652,12 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 .collection-drawer {
   position: fixed; top: 0; right: 0; bottom: 0;
-  width: 380px; max-width: 92vw;
-  background: var(--bg);
+  width: 400px; max-width: 92vw;
+  background: var(--bg-surface);
   border-left: 1px solid var(--border);
-  box-shadow: -8px 0 32px rgba(0,0,0,0.10);
   z-index: 100;
   transform: translateX(100%);
-  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  transition: transform 360ms var(--ease-out);
   display: flex; flex-direction: column;
 }
 .collection-drawer.open { transform: none; }
@@ -520,8 +666,8 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   padding: 18px 22px 14px; border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.collection-title { font-size: 15px; font-weight: 500; display: block; margin-bottom: 2px; }
-.collection-sub { font-family: "Moller",sans-serif; font-size: 12px; color: var(--muted); }
+.collection-title { font-size: 20px; font-weight: 500; display: block; margin-bottom: 4px; color: var(--ink); }
+.collection-sub { font-size: 12px; color: var(--muted); }
 .collection-close {
   appearance: none; background: transparent; border: 1px solid var(--border);
   width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
@@ -533,38 +679,38 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 .collection-body {
   flex: 1; overflow-y: auto; padding: 14px 22px 22px;
-  display: flex; flex-direction: column; gap: 12px;
+  display: flex; flex-direction: column; gap: 10px;
 }
 .collection-body:empty { display: none; }
 
 .coll-card {
-  border: 1px solid var(--border-strong); border-radius: 12px;
-  background: #fff; padding: 12px; display: flex; gap: 11px;
-  position: relative;
+  border: 1px solid var(--border); border-radius: var(--radius-card);
+  background: var(--cream-100); padding: 14px; display: flex; gap: 12px;
+  position: relative; align-items: stretch;
 }
 .coll-card-ph {
-  width: 64px; height: 56px; flex-shrink: 0;
-  background: repeating-linear-gradient(135deg,rgba(31,29,27,.06) 0 4px,rgba(0,0,0,0) 4px 8px), var(--bg);
-  border: 1px dashed rgba(31,29,27,0.2); border-radius: 7px;
+  width: 72px; flex-shrink: 0; align-self: stretch;
+  background: repeating-linear-gradient(135deg,rgba(0,25,70,.05) 0 4px,rgba(0,0,0,0) 4px 8px), var(--bg);
+  border: 1px solid var(--border); border-radius: var(--radius-card);
 }
 .coll-card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.coll-card-name { font-size: 13.5px; font-weight: 500; line-height: 1.25; padding-right: 24px; }
+.coll-card-name { font-size: 15px; font-weight: 500; line-height: 1.3; padding-right: 24px; color: var(--ink); }
 .coll-card-match {
   display: inline-flex; align-items: center; gap: 5px;
-  font-family: "Moller",sans-serif; font-size: 11.5px; font-weight: 500;
-  color: var(--accent-ink); margin-top: 2px;
+  font-size: 13px; color: var(--muted); margin-top: 2px;
 }
 .coll-match-dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: #16a34a; flex-shrink: 0;
 }
 .coll-card-details {
-  appearance: none; border: 1px solid var(--border-strong); background: var(--bg);
-  border-radius: 8px; padding: 6px 12px; margin-top: 6px;
-  font: 500 12px/1 "Moller",sans-serif; color: var(--ink);
-  cursor: pointer; transition: background .12s;
+  appearance: none; border: 1px solid var(--border-strong); background: transparent;
+  border-radius: 999px; padding: 7px 13px; margin-top: 8px;
+  font: 400 13px/1 "Moller",sans-serif; color: var(--ink);
+  cursor: pointer; align-self: flex-start;
+  transition: background 220ms var(--ease-out), color 220ms var(--ease-out), border-color 220ms var(--ease-out);
 }
-.coll-card-details:hover { background: var(--chip-bg); }
+.coll-card-details:hover { background: var(--ink); color: var(--cream-100); border-color: var(--ink); }
 .coll-card-remove {
   position: absolute; top: 8px; right: 8px;
   appearance: none; background: transparent; border: none;
@@ -577,41 +723,38 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 .collection-empty {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 24px; gap: 10px; text-align: center;
-  color: var(--muted);
+  padding: 24px; gap: 10px; text-align: center; color: var(--muted);
 }
 .collection-empty.hidden { display: none; }
 .collection-empty-icon {
-  width: 64px; height: 64px; border-radius: 50%;
+  width: 60px; height: 60px; border-radius: 50%;
   background: var(--chip-bg);
   display: flex; align-items: center; justify-content: center;
-  color: var(--muted);
-  margin-bottom: 4px;
+  color: var(--muted); margin-bottom: 4px;
 }
 .collection-empty-title { font-size: 14px; font-weight: 500; color: var(--ink); }
-.collection-empty-text {
-  font-family: "Moller",sans-serif; font-size: 12.5px; line-height: 1.5; max-width: 240px;
-}
+.collection-empty-text { font-size: 12.5px; line-height: 1.5; max-width: 220px; }
 
 /* ── onboarding ── */
 .ob-overlay { position:fixed; inset:0; z-index:300; pointer-events:none; }
 .ob-card {
-  position:fixed; z-index:400; background:#fff; border:1px solid rgba(31,29,27,0.14);
-  border-radius:16px; padding:22px 24px; width:280px; box-shadow:0 8px 32px rgba(0,0,0,0.18);
+  position:fixed; z-index:400; background:var(--cream-100); border:1px solid var(--border);
+  border-radius:16px; padding:22px 24px; width:280px; box-shadow:0 8px 32px rgba(0,25,70,0.14);
   font-family:"Moller",system-ui,sans-serif; animation: ob-fadein .28s ease;
 }
 @keyframes ob-fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
 .ob-dots { display:flex; gap:5px; margin-bottom:14px; }
-.ob-dot { width:6px; height:6px; border-radius:50%; background:rgba(31,29,27,0.18); }
+.ob-dot { width:6px; height:6px; border-radius:50%; background:rgba(0,25,70,0.16); }
 .ob-dot.active { background:var(--accent); }
-.ob-step-label { font-family:"Moller",sans-serif; font-size:10px; color:rgba(31,29,27,0.45); letter-spacing:.07em; text-transform:uppercase; margin-bottom:6px; }
+.ob-step-label { font-size:10px; color:var(--muted); letter-spacing:.07em; text-transform:uppercase; margin-bottom:6px; }
 .ob-title { font-size:15px; font-weight:600; color:var(--ink); margin-bottom:8px; line-height:1.3; }
-.ob-body { font-size:13px; color:rgba(31,29,27,0.6); line-height:1.6; margin-bottom:18px; }
+.ob-body { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:18px; }
 .ob-actions { display:flex; justify-content:space-between; align-items:center; }
-.ob-skip { font-size:11.5px; color:rgba(31,29,27,0.4); cursor:pointer; background:none; border:none; font-family:inherit; }
-.ob-skip:hover { color:rgba(31,29,27,0.7); }
+.ob-skip { font-size:11.5px; color:var(--muted); cursor:pointer; background:none; border:none; font-family:inherit; }
+.ob-skip:hover { color:var(--ink); }
 .ob-next {
-  appearance:none; background:var(--accent); color:#fff; border:1.5px solid var(--accent-ink);
+  appearance:none; background:var(--accent); color:var(--cream-100);
+  border:1.5px solid var(--accent-ink);
   padding:8px 18px; border-radius:999px; font:600 12px/1 "Moller",sans-serif; cursor:pointer;
   box-shadow:2px 2px 0 var(--accent-ink); transition:transform .08s, box-shadow .08s;
 }
@@ -620,7 +763,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 /* ── responsive ── */
 @media (max-width: 1100px) {
   .col-spacer { display: none; }
-  .side { width: 420px; }
+  .side { width: 400px; }
 }
 @media (max-width: 900px) {
   .stream { padding: 18px 22px 12px; }
@@ -641,7 +784,6 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   .chip { font-size: 13.5px; padding: 8px 13px; }
   .quick-chips { gap: 6px; }
   .topbar { padding: 0 14px; gap: 8px; }
-  .topbar-title { font-size: 14px; }
   .btn-reset-all,
   .btn-collection { height: 32px; padding: 0 12px; font-size: 12.5px; }
   .side {
@@ -660,14 +802,14 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
     content: ''; display: block; position: absolute;
     top: 8px; left: 50%; transform: translateX(-50%);
     width: 36px; height: 4px;
-    background: var(--border-strong); border-radius: 2px; opacity: .35;
+    background: var(--border-strong); border-radius: 2px; opacity: .30;
   }
   .resize-handle { display: none; }
   .btn-filter { display: inline-flex !important; }
 }
 .drawer-backdrop {
   display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.25); z-index: 99;
+  background: rgba(0,0,0,0.20); z-index: 99;
 }
 .drawer-backdrop.open { display: block; }
 .btn-filter { display: none; }
@@ -707,8 +849,9 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
       <div class="info-banner">
         <div class="info-banner-text">
+          <span class="eyebrow">Welcome to Møller Bil</span>
           <b>More than just finding a car</b>
-          <span>Möller Bil offers insurance, service plans, financing, trade-ins and more.</span>
+          <span>Insurance, service plans, financing, trade-ins and more — all in one place.</span>
         </div>
         <a class="info-banner-link" href="#" target="_blank">Learn more →</a>
       </div>
@@ -739,7 +882,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
         <b>Refine search</b>
         <div class="side-head-actions">
           <button class="side-reset" onclick="resetFilters()">reset</button>
-          <button class="btn-apply" id="btnApply" onclick="applyFilters()">Apply →</button>
+          <button class="btn-apply" id="btnApply" onclick="applyFilters()">Apply</button>
         </div>
       </div>
       <div class="side-body" id="sideBody"></div>
@@ -782,8 +925,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 const DEEPSEEK_API_KEY = 'sk-014c7c0d0b8a48d19db2ace18c9b0cce';
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
 
-// Use the more sophisticated prompt from attachment 2
-const SYSTEM_PROMPT = `You are a friendly car advisor at Möller Bil. Help users find the right car through natural conversation.
+const SYSTEM_PROMPT = `You are a friendly car advisor at Møller Bil. Help users find the right car through natural conversation.
 
 Rules:
 - ONE question per reply. NEVER ask two questions in the same reply, even labeled "1." and "2." or chained with "and". If you've covered topic A and want to move to topic B, save B for the next turn.
@@ -841,7 +983,7 @@ SUGGESTIONS:["option 1","option 2","option 3","option 4"]
 - Suggestions MUST be plausible direct answers to the EXACT question you just asked. If you asked about fuel type, suggestions must be fuel options ("Electric", "Hybrid", "Petrol or diesel", "Not sure yet"). If you asked about must-have features, suggestions must be features ("Tow hitch", "Roof rails", "Heated seats", "No specific must-haves"). NEVER mix topics — e.g. don't show budget chips when you asked about fuel.
 - Make them concrete and useful — not generic ("Tell me more" is too vague). Examples: "Yes, that's right", "Show me hybrids instead", "Around 400 000 kr", "Family of 4".
 
-When recommending, also start with a TOOLS block, then the intro text, then RECOMMENDATIONS. Recommend 2-3 cars max. Each must follow this exact format:
+When recommending, also start with a TOOLS block, then a brief intro text, then RECOMMENDATIONS. Recommend 2-3 MODELS (not specific listings) max. The user will then click "View inventory" on a model they like to see the actual used cars in stock. Each must follow this exact format:
 RECOMMENDATIONS:
 Badge: [short label like "Best overall pick" / "Best value" / "Best for families" / "Most efficient" / "Best for towing"]
 Model: [Brand Model]
@@ -867,7 +1009,7 @@ let messages = [];
 let activeTokens = [];
 let activeChips = {};
 let isStreaming = false;
-let pinnedCars = []; // { model, year, badge }
+let pinnedCars = [];
 
 // ── filter taxonomy ──────────────────────────────────────────────────────
 const FILTERS = [
@@ -889,7 +1031,7 @@ function init() {
   showOnboarding();
 }
 
-// ── onboarding spotlight tour ─────────────────────────────────────────────
+// ── onboarding ─────────────────────────────────────────────────────────────
 const ONBOARDING_STEPS = [
   {
     target: '.chat',
@@ -915,15 +1057,13 @@ let onboardingStep = 0;
 
 function showOnboarding() {
   onboardingStep = 0;
-  // Make sure we only ask ONE clear question in the greeting
-  const greeting = "Hei! 👋 Looking for a new car can feel overwhelming. I'm here to make it easy. **What's got you thinking about a new car?**";
+  const greeting = "Hi there! Looking for a new car can feel overwhelming — I'm here to make it easy. **What's got you thinking about a new car?**";
   const initialSuggestions = [
     "My current car needs replacing",
     "Buying my first car",
     "Curious about going electric",
     "Just exploring my options"
   ];
-  
   appendAIMessage(greeting, (msgEl) => {
     renderQuickChips(initialSuggestions, msgEl);
   });
@@ -931,7 +1071,6 @@ function showOnboarding() {
 }
 
 function renderOnboardingStep() {
-  // remove previous overlay pieces
   document.querySelectorAll('.ob-overlay, .ob-card').forEach(el => el.remove());
 
   const step = ONBOARDING_STEPS[onboardingStep];
@@ -943,13 +1082,11 @@ function renderOnboardingStep() {
   const dimAll = document.createElement('div');
   dimAll.style.cssText = `position:fixed; inset:0; background:rgba(10,10,10,0.55); z-index:300; pointer-events:all; transition: opacity .35s;`;
 
-  // cut a hole by clipping around the target
   if (targetEl) {
     const r = targetEl.getBoundingClientRect();
     dimAll.style.background = 'transparent';
     dimAll.style.pointerEvents = 'none';
 
-    // four dim rects around the target
     const rects = [
       { top:0, left:0, width:'100%', height: r.top+'px' },
       { top: r.bottom+'px', left:0, width:'100%', bottom:0 },
@@ -963,12 +1100,11 @@ function renderOnboardingStep() {
       overlay.appendChild(d);
     });
 
-    // subtle highlight border on target
     const highlight = document.createElement('div');
     highlight.style.cssText = `
       position:fixed; top:${r.top}px; left:${r.left}px; width:${r.width}px; height:${r.height}px;
-      border:2px solid rgba(124,92,255,0.7); border-radius:8px; z-index:301; pointer-events:none;
-      box-shadow: 0 0 0 4px rgba(124,92,255,0.12); transition: all .35s;
+      border:2px solid rgba(0,25,70,0.5); border-radius:8px; z-index:301; pointer-events:none;
+      box-shadow: 0 0 0 4px rgba(0,25,70,0.08); transition: all .35s;
     `;
     overlay.appendChild(highlight);
   } else {
@@ -977,7 +1113,6 @@ function renderOnboardingStep() {
 
   document.body.appendChild(overlay);
 
-  // floating card
   const card = document.createElement('div');
   card.className = 'ob-card';
 
@@ -998,7 +1133,6 @@ function renderOnboardingStep() {
     </div>
   `;
 
-  // position card next to target
   if (targetEl) {
     const r = targetEl.getBoundingClientRect();
     if (step.pos === 'right') {
@@ -1008,7 +1142,6 @@ function renderOnboardingStep() {
       card.style.right = (window.innerWidth - r.left + 16) + 'px';
       card.style.top   = (r.top + r.height/2 - 120) + 'px';
     }
-    // clamp vertically
     const cardH = 260;
     let top = parseFloat(card.style.top);
     if (top < 12) card.style.top = '12px';
@@ -1059,7 +1192,6 @@ function buildSidebar() {
     });
   });
 
-  // brands
   const brandGroup = document.createElement('div');
   brandGroup.className = 'filter-group';
   brandGroup.innerHTML = `<div class="filter-label">Brand</div><div class="chips-row" id="grp-brand"></div>`;
@@ -1076,31 +1208,56 @@ function buildSidebar() {
     brandRow.appendChild(btn);
   });
 
-  // budget slider
   const budgetGroup = document.createElement('div');
   budgetGroup.className = 'filter-group';
+  const startMin = pendingBudget ? pendingBudget.min : (window._lastBudget?.min ?? 50000);
+  const startMax = pendingBudget ? pendingBudget.max : (window._lastBudget?.max ?? 1500000);
   budgetGroup.innerHTML = `
     <div class="filter-label">Budget</div>
     <div class="budget-module">
       <div class="budget-vals"><span>50 000 kr</span><span>1 500 000 kr</span></div>
-      <input class="budget-input" id="budgetSlider" type="range"
-        min="50000" max="1500000" step="25000" value="400000"
-        oninput="updateBudgetDisplay(this.value)">
-      <span class="budget-selected" id="budgetSelected">Up to 400 000 kr</span>
+      <div class="budget-track" id="budgetTrack">
+        <div class="budget-track-fill" id="budgetTrackFill"></div>
+        <input class="budget-input" id="budgetMin" type="range"
+          min="50000" max="1500000" step="25000" value="${startMin}"
+          oninput="onBudgetInput('min')">
+        <input class="budget-input" id="budgetMax" type="range"
+          min="50000" max="1500000" step="25000" value="${startMax}"
+          oninput="onBudgetInput('max')">
+      </div>
+      <span class="budget-selected" id="budgetSelected"></span>
     </div>
   `;
   body.appendChild(budgetGroup);
-  updateBudgetSliderTrack(400000);
+  updateBudgetDisplay();
+  if (pendingBudget) { pendingManualChange = true; pendingBudget = null; }
   setApplyVisible(pendingManualChange);
 }
 
 let pendingManualChange = false;
 
 function setApplyVisible(v) {
-  const btn = document.getElementById('btnApply');
+  const btn   = document.getElementById('btnApply');
+  const input = document.getElementById('inputField');
+  const send  = document.getElementById('btnSend');
+
   if (btn) {
     btn.classList.toggle('active', v);
     btn.disabled = !v;
+  }
+
+  // Lock the chat input when sidebar has un-applied changes
+  if (input) {
+    input.disabled = !!v;
+    input.placeholder = v
+      ? 'Apply your filter changes to continue…'
+      : 'Tell the assistant what you need…';
+    input.style.opacity = v ? '0.4' : '';
+    input.style.cursor  = v ? 'not-allowed' : '';
+  }
+  if (send) {
+    if (v) send.disabled = true;
+    else updateSend();   // re-evaluate normally when unlocked
   }
 }
 
@@ -1133,42 +1290,63 @@ function applyFilters() {
     }
   });
 
-  const slider = document.getElementById('budgetSlider');
+  const sMin = document.getElementById('budgetMin');
+  const sMax = document.getElementById('budgetMax');
   const budgetEl = document.getElementById('budgetSelected');
-  if (slider && parseInt(slider.value) !== 400000 && budgetEl) {
-    parts.push(budgetEl.textContent.toLowerCase());
+  if (sMin && sMax && budgetEl) {
+    const lo = parseInt(sMin.value), hi = parseInt(sMax.value);
+    if (!(lo === 50000 && hi === 1500000)) {
+      parts.push(budgetEl.textContent.toLowerCase());
+    }
   }
 
   if (parts.length === 0) return;
 
   const msg = `I'm looking for: ${parts.join(', ')}.`;
+
+  // Unlock chat first, then populate and send
+  pendingManualChange = false;
+  setApplyVisible(false);
+
   document.getElementById('inputField').value = msg;
   updateSend();
   sendMessage();
-
-  pendingManualChange = false;
-  setApplyVisible(false);
 }
 
-function updateBudgetDisplay(val) {
-  const n = parseInt(val);
-  const formatted = n.toLocaleString('nb-NO').replace(/,/g, ' ') + ' kr';
-  const el = document.getElementById('budgetSelected');
-  if (el) el.textContent = 'Up to ' + formatted;
-  updateBudgetSliderTrack(n);
+function fmtKr(n) { return parseInt(n).toLocaleString('nb-NO').replace(/,/g, ' ') + ' kr'; }
+
+function onBudgetInput(which) {
+  const sMin = document.getElementById('budgetMin');
+  const sMax = document.getElementById('budgetMax');
+  let lo = parseInt(sMin.value), hi = parseInt(sMax.value);
+  if (which === 'min' && lo >= hi) sMin.value = (hi - 25000);
+  if (which === 'max' && hi <= lo) sMax.value = (lo + 25000);
+  updateBudgetDisplay();
   pendingManualChange = true;
   setApplyVisible(true);
 }
 
-function updateBudgetSliderTrack(val) {
-  const slider = document.getElementById('budgetSlider');
-  if (!slider) return;
-  const min = 50000, max = 1500000;
-  const pct = ((val - min) / (max - min)) * 100;
-  slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, rgba(31,29,27,0.15) ${pct}%)`;
+function updateBudgetDisplay() {
+  const sMin = document.getElementById('budgetMin');
+  const sMax = document.getElementById('budgetMax');
+  const fill = document.getElementById('budgetTrackFill');
+  const sel = document.getElementById('budgetSelected');
+  if (!sMin || !sMax) return;
+  const lo = parseInt(sMin.value), hi = parseInt(sMax.value);
+  const MIN = 50000, MAX = 1500000;
+  const loPct = ((lo - MIN) / (MAX - MIN)) * 100;
+  const hiPct = ((hi - MIN) / (MAX - MIN)) * 100;
+  if (fill) { fill.style.left = loPct + '%'; fill.style.right = (100 - hiPct) + '%'; }
+  if (sel) {
+    if (lo === MIN && hi === MAX) sel.textContent = 'Any budget';
+    else if (lo === MIN) sel.textContent = 'Up to ' + fmtKr(hi);
+    else if (hi === MAX) sel.textContent = 'From ' + fmtKr(lo);
+    else sel.textContent = fmtKr(lo) + ' – ' + fmtKr(hi);
+  }
+  window._lastBudget = { min: lo, max: hi };
 }
 
-// ── sync chat content → sidebar filters ──────────────────────────────────
+// ── sync chat → sidebar filters ──────────────────────────────────────────
 function buildFilterLookup() {
   const map = {};
   FILTERS.forEach(group => {
@@ -1189,13 +1367,9 @@ function syncFiltersFromText(text) {
     const matched = word.includes(' ')
       ? lower.includes(word)
       : new RegExp(`\\b${word}\\b`).test(lower);
-
     if (matched) {
       const key = `${groupKey}:${opt}`;
-      if (!activeChips[key]) {
-        activeChips[key] = true;
-        changed = true;
-      }
+      if (!activeChips[key]) { activeChips[key] = true; changed = true; }
     }
   });
 
@@ -1216,30 +1390,123 @@ function syncFiltersFromText(text) {
     'just me': 'seats:2',
     'just myself': 'seats:2',
     'alone': 'seats:2',
-    'partner': 'seats:4',
-    'two people': 'seats:4',
-    'kids': 'seats:5',
-    'children': 'seats:5',
-    'seven': 'seats:7+',
-    '7 seat': 'seats:7+',
   };
 
   Object.entries(aliases).forEach(([alias, chipKey]) => {
     if (lower.includes(alias)) {
-      if (!activeChips[chipKey]) {
-        activeChips[chipKey] = true;
-        changed = true;
-      }
+      if (!activeChips[chipKey]) { activeChips[chipKey] = true; changed = true; }
     }
   });
 
+  const seatChip = inferSeatsFromText(lower);
+  if (seatChip) {
+    Object.keys(activeChips).forEach(k => { if (k.startsWith('seats:') && k !== seatChip) delete activeChips[k]; });
+    if (!activeChips[seatChip]) { activeChips[seatChip] = true; changed = true; }
+  }
+
+  const budget = inferBudgetFromText(lower);
+  if (budget) {
+    const slider = document.getElementById('budgetMin');
+    if (slider) {
+      setBudgetRange(budget.min, budget.max, true /* fromChat */);
+      changed = true;
+    } else {
+      pendingBudget = budget;
+      changed = true;
+    }
+  }
+
   if (changed) buildSidebar();
+}
+
+let pendingBudget = null;
+
+const NUM_WORDS = { a:1, an:1, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10 };
+function wordToNum(w) {
+  if (!w) return 0;
+  if (/^\d+$/.test(w)) return parseInt(w, 10);
+  return NUM_WORDS[w] || 0;
+}
+
+function inferSeatsFromText(text) {
+  let humans = 0;
+  let mentioned = false;
+
+  const adultRe = /(\d+|a|an|one|two|three|four)\s+(wife|wives|husband|husbands|partner|partners|spouse|spouses|adult|adults)/g;
+  let m;
+  while ((m = adultRe.exec(text)) !== null) { humans += wordToNum(m[1]); mentioned = true; }
+
+  const kidRe = /(\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten)\s+(kid|kids|child|children|son|sons|daughter|daughters)/g;
+  while ((m = kidRe.exec(text)) !== null) { humans += wordToNum(m[1]); mentioned = true; }
+
+  const genericRe = /(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(people|persons|passengers|family member|family members)/g;
+  while ((m = genericRe.exec(text)) !== null) { humans = Math.max(humans, wordToNum(m[1])); mentioned = true; }
+
+  if (mentioned && !/just\s+(me|myself)/.test(text)) humans += 1;
+
+  const seaterRe = /(\d+)\s*[-\s]?(seat|seater|seats)/;
+  const sm = text.match(seaterRe);
+  if (sm) humans = Math.max(humans, parseInt(sm[1], 10));
+
+  if (humans <= 0) return null;
+  if (humans <= 2) return 'seats:2';
+  if (humans <= 4) return 'seats:4';
+  if (humans <= 5) return 'seats:5';
+  if (humans <= 6) return 'seats:6';
+  return 'seats:7+';
+}
+
+function parseKr(s) {
+  if (!s) return null;
+  const cleaned = s.replace(/\s|,/g, '');
+  const num = parseInt(cleaned, 10);
+  if (isNaN(num)) return null;
+  if (/k$/i.test(s)) return num * 1000;
+  if (num < 10000) return num * 1000;
+  return num;
+}
+
+function inferBudgetFromText(text) {
+  const MIN = 50000, MAX = 1500000;
+  let m = text.match(/between\s+([\d\s,]+k?)\s+(?:and|to|-)\s+([\d\s,]+k?)\s*(?:kr|kroner)?/);
+  if (!m) m = text.match(/([\d\s,]+k?)\s*(?:kr|kroner)?\s*(?:to|-)\s*([\d\s,]+k?)\s*(?:kr|kroner)/);
+  if (m) {
+    const a = parseKr(m[1]), b = parseKr(m[2]);
+    if (a && b) return { min: Math.min(a,b), max: Math.max(a,b) };
+  }
+  m = text.match(/(?:under|below|max|maximum|up to|less than|no more than)\s+([\d\s,]+k?)\s*(?:kr|kroner)?/);
+  if (m) { const v = parseKr(m[1]); if (v) return { min: MIN, max: v }; }
+  m = text.match(/(?:above|over|at least|min|minimum|more than|from)\s+([\d\s,]+k?)\s*(?:kr|kroner)?/);
+  if (m) { const v = parseKr(m[1]); if (v) return { min: v, max: MAX }; }
+  m = text.match(/(?:around|about|roughly|approximately|~)\s*([\d\s,]+k?)\s*(?:kr|kroner)/);
+  if (m) {
+    const v = parseKr(m[1]);
+    if (v) return { min: Math.max(MIN, Math.round(v * 0.85 / 25000) * 25000), max: Math.min(MAX, Math.round(v * 1.15 / 25000) * 25000) };
+  }
+  return null;
+}
+
+function setBudgetRange(min, max, fromChat) {
+  const sMin = document.getElementById('budgetMin');
+  const sMax = document.getElementById('budgetMax');
+  if (!sMin || !sMax) { pendingBudget = { min, max }; return; }
+  sMin.value = min;
+  sMax.value = max;
+  updateBudgetDisplay();
+  // Only flag as pending (and lock input) when the user dragged the slider manually,
+  // NOT when called from chat-based filter sync.
+  if (!fromChat) {
+    pendingManualChange = true;
+    setApplyVisible(true);
+  }
 }
 
 function resetFilters() {
   activeChips = {};
   activeTokens = [];
   pendingManualChange = false;
+  pendingBudget = null;
+  window._lastBudget = null;
   setApplyVisible(false);
   renderTokens();
   buildSidebar();
@@ -1283,7 +1550,6 @@ function renderTokens() {
 
 function autoGrow(el) {
   el.style.height = 'auto';
-  // measure scrollHeight after browser reflows to 'auto'
   requestAnimationFrame(() => {
     el.style.height = (el.scrollHeight + 2) + 'px';
   });
@@ -1292,7 +1558,6 @@ function autoGrow(el) {
 // ── chat UI helpers ───────────────────────────────────────────────────────
 function appendAIMessage(text, onDone) {
   const stream = document.getElementById('stream');
-  // remove old quick chips when a new AI reply arrives
   const _bar = document.getElementById('suggestionsBar'); if (_bar) _bar.innerHTML = '';
 
   const msgDiv = document.createElement('div');
@@ -1341,7 +1606,6 @@ function appendAIMessage(text, onDone) {
 
 function appendUserMessage(text, tokens) {
   const stream = document.getElementById('stream');
-  // hide chips when user sends a message
   const _bar = document.getElementById('suggestionsBar'); if (_bar) _bar.innerHTML = '';
 
   const msgDiv = document.createElement('div');
@@ -1382,7 +1646,7 @@ function removeTypingIndicator() {
   if (el) el.remove();
 }
 
-// ── quick chips (kept under AI bubble — enlarged from spec) ──────────────
+// ── quick chips ───────────────────────────────────────────────────────────
 function renderQuickChips(suggestions, msgEl) {
   const bar = document.getElementById('suggestionsBar');
   const wrap = document.getElementById('suggestionsWrap');
@@ -1445,16 +1709,10 @@ function parseEVSurprises(text) {
   if (!text.includes('EV_SURPRISES:')) return null;
   const after = text.split('EV_SURPRISES:')[1] || '';
   const block = after.split('SUGGESTIONS:')[0];
-
   const items = [];
   for (let i = 1; i <= 5; i++) {
     const m = block.match(new RegExp(`Item${i}:\\s*([^|\\n]+)\\|\\s*([^\\n]+)`));
-    if (m) {
-      items.push({
-        title: cleanField(m[1]),
-        desc:  cleanField(m[2]),
-      });
-    }
+    if (m) items.push({ title: cleanField(m[1]), desc: cleanField(m[2]) });
   }
   return items.length ? items : null;
 }
@@ -1475,9 +1733,11 @@ function renderEVSurprises(items, msgEl) {
     const row = document.createElement('div');
     row.className = 'surprise-row';
     row.innerHTML = `
-      <span class="surprise-title">${escapeHtml(item.title)}</span>
-      <span class="surprise-sep">—</span>
-      <span class="surprise-desc">${escapeHtml(item.desc)}</span>
+      <div class="surprise-img">image</div>
+      <div class="surprise-text">
+        <span class="surprise-title">${escapeHtml(item.title)}</span>
+        <span class="surprise-desc">${escapeHtml(item.desc)}</span>
+      </div>
     `;
     list.appendChild(row);
   });
@@ -1496,20 +1756,17 @@ function parseRecs(text) {
       const match = part.match(new RegExp(`${key}:\\s*(.+)`));
       return match ? match[1].trim() : '';
     };
-
     const specs = [];
     for (let i = 1; i <= 4; i++) {
       const label = get(`Spec${i}Label`);
       const value = get(`Spec${i}Value`);
       if (label && value) specs.push({ label, value });
     }
-
     const highlights = [];
     for (let i = 1; i <= 4; i++) {
       const h = get(`Highlight${i}`);
       if (h) highlights.push(h);
     }
-
     return {
       badge:    get('Badge'),
       model:    get('Model'),
@@ -1520,21 +1777,6 @@ function parseRecs(text) {
     };
   }).filter(r => r.model);
 }
-
-function badgeClass(badge) {
-  const b = (badge || '').toLowerCase();
-  if (b.includes('overall') || b.includes('best pick') || b.includes('top')) return 'b-best';
-  if (b.includes('value') || b.includes('budget') || b.includes('affordable')) return 'b-value';
-  if (b.includes('tow') || b.includes('haul') || b.includes('rugged')) return 'b-tow';
-  if (b.includes('efficient') || b.includes('economy') || b.includes('eco')) return 'b-eff';
-  if (b.includes('family') || b.includes('safe') || b.includes('practical')) return 'b-fam';
-  return 'b-default';
-}
-
-const PIN_SVG = `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M9.5 1.5L14.5 6.5L11.5 7L8 10.5L5.5 8L9 4.5L9.5 1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" fill="currentColor" fill-opacity="0.15"/>
-  <path d="M5.5 8L1.5 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-</svg>`;
 
 function cleanField(str) {
   if (!str) return '';
@@ -1554,9 +1796,9 @@ function renderRecs(recs, msgEl) {
     const card = document.createElement('div');
     card.className = 'rec';
 
-    const model = cleanField(r.model);
-    const badge = cleanField(r.badge);
-    const year = cleanField(r.year);
+    const model    = cleanField(r.model);
+    const badge    = cleanField(r.badge);
+    const year     = cleanField(r.year);
     const subtitle = cleanField(r.subtitle);
 
     const subline = (year && subtitle)
@@ -1580,45 +1822,34 @@ function renderRecs(recs, msgEl) {
       : '';
 
     const badgeHtml = badge
-      ? `<span class="rec-badge ${badgeClass(badge)}">${escapeHtml(badge)}</span>`
+      ? `<span class="rec-badge">${escapeHtml(badge)}</span>`
       : '';
 
     card.innerHTML = `
-      <button class="rec-pin" title="Save this car" aria-label="Save this car">${PIN_SVG}</button>
-      <div class="rec-ph">[ car shot ]</div>
-      ${badgeHtml}
-      <div class="rec-title">
-        <div class="rec-name">${escapeHtml(model)}</div>
-        ${subline ? `<div class="rec-sub">${subline}</div>` : ''}
+      <div class="rec-ph">[ car image ]</div>
+      <div class="rec-body">
+        ${badgeHtml}
+        <div class="rec-title">
+          <div class="rec-name">${escapeHtml(model)}</div>
+          ${subline ? `<div class="rec-sub">${subline}</div>` : ''}
+        </div>
+        ${specsHtml}
+        ${highlightsHtml}
+        <div class="rec-actions">
+          <button class="rec-inv">View inventory</button>
+        </div>
       </div>
-      ${specsHtml}
-      ${highlightsHtml}
-      <button class="rec-cta">View details</button>
     `;
 
-    // pin button wiring
-    const pinBtn = card.querySelector('.rec-pin');
-    if (pinnedCars.some(c => c.model === model)) {
-      card.classList.add('pinned');
-      pinBtn.classList.add('on');
-      pinBtn.title = 'Unsave';
-    }
-    pinBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const wasPinned = card.classList.toggle('pinned');
-      pinBtn.classList.toggle('on', wasPinned);
-      pinBtn.title = wasPinned ? 'Unsave' : 'Save this car';
-      if (wasPinned) {
-        pinCar({ ...r, model });
-      } else {
-        unpinCar(model);
-      }
-    });
-
-    // cta wiring
-    const cta = card.querySelector('.rec-cta');
-    cta.addEventListener('click', () => {
-      showToast(`Detail page for ${model} — coming soon`);
+    const invBtn = card.querySelector('.rec-inv');
+    invBtn.addEventListener('click', () => {
+      if (invBtn.disabled) return;
+      invBtn.disabled = true;
+      invBtn.textContent = 'Loading…';
+      loadInventory(model, r).finally(() => {
+        invBtn.disabled = false;
+        invBtn.textContent = 'View inventory';
+      });
     });
 
     recsDiv.appendChild(card);
@@ -1627,49 +1858,228 @@ function renderRecs(recs, msgEl) {
   document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
 }
 
+// ── inventory ─────────────────────────────────────────────────────────────
+const INVENTORY_PROMPT = `You are the inventory system at Møller Bil, a Norwegian used-car dealer. Generate 3 plausible used-car listings for the requested model, drawn from a realistic dealer's lot.
+
+Output ONLY this exact format, no other text:
+INVENTORY:
+Year: [e.g. 2021]
+Trim: [e.g. "Inscription AWD" or "GT-Line" — keep it brief, 1-3 words]
+Mileage: [e.g. "45 000 km"]
+Color: [e.g. "Crystal White" or "Onyx Black"]
+Price: [e.g. "489 000 kr"]
+TcoYearly: [estimated yearly cost of ownership total, e.g. "~38 000 kr/year"]
+TcoBreakdown: [4 short items joined with " · ", e.g. "Insurance 14 000 · Service 9 000 · Tires 4 500 · Repairs ~10 000"]
+Edge: [ONE concrete advantage this specific listing has over the OTHER listings of the SAME model in the set — max 14 words. e.g. "Lowest mileage of the three", "Newest model year with full warranty left", "Top trim with heated rear seats", "Best value — same trim for 60 000 kr less"]
+---
+(repeat 2 more times)
+
+Rules:
+- All prices in Norwegian kroner (kr). Format like "489 000 kr".
+- Listings should differ on year/mileage/trim to give the customer real choice.
+- Mileage realistic for age (e.g. ~12-18 000 km/year).
+- TCO breakdown items must be Insurance, Service, Tires, Repairs (in that order).
+- Each Edge MUST be different and reflect a genuine comparative advantage between THIS listing and the OTHER two — never generic praise, always relative.
+- Keep the data plausible for the actual model requested.`;
+
+async function loadInventory(model, recData) {
+  const stream = document.getElementById('stream');
+  const msgDiv = appendTypingIndicator();
+
+  try {
+    const toolPromise = runToolStrip([`Searching ${model} inventory`, 'Checking total cost of ownership', 'Ranking by best match']);
+
+    const resp = await fetch(DEEPSEEK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        max_tokens: 700,
+        stream: false,
+        messages: [
+          { role: 'system', content: INVENTORY_PROMPT },
+          { role: 'user', content: `Show me used inventory for: ${model}` },
+        ],
+      }),
+    });
+    if (!resp.ok) throw new Error('Inventory request failed');
+    const data = await resp.json();
+    const aiRaw = data.choices?.[0]?.message?.content || '';
+
+    await toolPromise;
+
+    const stripEl = document.getElementById('toolStrip');
+    if (stripEl) {
+      stripEl.removeAttribute('id');
+      stripEl.parentNode && stripEl.parentNode.removeChild(stripEl);
+    }
+    removeTypingIndicator();
+
+    const items = parseInventory(aiRaw);
+    if (!items || items.length === 0) {
+      appendAIMessage(`Sorry, I couldn't find inventory for ${model} right now.`, (el) => {
+        if (stripEl) {
+          const c = el.querySelector('.msg-content');
+          c.insertBefore(stripEl, c.firstChild);
+        }
+      });
+      return;
+    }
+
+    const intro = `Here are the ${model}s currently in our inventory:`;
+    const msgEl = appendAIMessage(intro, (el) => {
+      renderInventory(items, model, el);
+      renderQuickChips([
+        'How does mileage affect me?',
+        'Can I finance or lease?',
+        "What's included in maintenance?",
+        'Book a test drive'
+      ], el);
+    });
+    if (stripEl) {
+      const c = msgEl.querySelector('.msg-content');
+      c.insertBefore(stripEl, c.firstChild);
+    }
+  } catch (err) {
+    removeTypingIndicator();
+    showToast('Could not load inventory: ' + err.message);
+  }
+}
+
+function parseInventory(text) {
+  if (!text.includes('INVENTORY:')) return null;
+  const after = text.split('INVENTORY:')[1] || '';
+  const parts = after.split('---').map(s => s.trim()).filter(Boolean);
+  return parts.map(part => {
+    const get = (key) => {
+      const m = part.match(new RegExp(`${key}:\\s*(.+)`));
+      return m ? cleanField(m[1]) : '';
+    };
+    return {
+      year: get('Year'), trim: get('Trim'), mileage: get('Mileage'), color: get('Color'),
+      price: get('Price'), tcoYearly: get('TcoYearly'), tcoBreakdown: get('TcoBreakdown'), edge: get('Edge'),
+    };
+  }).filter(it => it.year && it.price);
+}
+
+function renderInventory(items, model, msgEl) {
+  const content = msgEl.querySelector('.msg-content');
+  const block = document.createElement('div');
+  block.className = 'inv-block';
+
+  const header = document.createElement('div');
+  header.className = 'inv-header';
+  header.textContent = `IN STOCK · ${model}`;
+  block.appendChild(header);
+
+  const grid = document.createElement('div');
+  grid.className = 'inv-grid';
+
+  items.forEach((it) => {
+    const card = document.createElement('div');
+    card.className = 'inv-card';
+
+    const id = `${model} · ${it.year} ${it.trim || ''}`.trim();
+    const subParts = [it.trim, it.color, it.mileage].filter(Boolean);
+    const subHtml = subParts.map(p => `<span>${escapeHtml(p)}</span>`).join('');
+
+    card.innerHTML = `
+      <div class="inv-ph">[ ${escapeHtml(model)} ]</div>
+      <div class="inv-body">
+        <div class="inv-head">
+          <div class="inv-title">${escapeHtml(it.year)} ${escapeHtml(model)}</div>
+          <div class="inv-sub">${subHtml}</div>
+        </div>
+        <div class="inv-stats">
+          <div class="inv-stat is-price">
+            <span class="inv-stat-label">Car price</span>
+            <span class="inv-stat-value">${escapeHtml(it.price)}</span>
+            <span class="inv-stat-note">Incl. VAT &amp; registration</span>
+          </div>
+          <div class="inv-stat">
+            <span class="inv-stat-label">Per year</span>
+            <span class="inv-stat-value">${escapeHtml(it.tcoYearly)}</span>
+            <span class="inv-stat-note">Insurance, service, tires &amp; repairs</span>
+          </div>
+        </div>
+        ${it.edge ? `<div class="inv-edge"><div class="inv-edge-text"><span class="inv-edge-label">Why this one</span>${escapeHtml(it.edge)}</div></div>` : ''}
+        <div class="inv-actions">
+          <button class="inv-save">Save</button>
+          <button class="inv-cta">View details</button>
+        </div>
+      </div>
+    `;
+
+    const saveBtn = card.querySelector('.inv-save');
+    if (pinnedCars.some(c => c.model === id)) {
+      card.classList.add('pinned');
+      saveBtn.classList.add('on');
+      saveBtn.textContent = 'Saved';
+    }
+    saveBtn.addEventListener('click', () => {
+      const wasPinned = card.classList.toggle('pinned');
+      saveBtn.classList.toggle('on', wasPinned);
+      saveBtn.textContent = wasPinned ? 'Saved' : 'Save';
+      if (wasPinned) {
+        pinCar({ model: id, year: it.year, badge: it.price });
+      } else {
+        unpinCar(id);
+      }
+    });
+
+    card.querySelector('.inv-cta').addEventListener('click', () => {
+      showToast(`Detail page for ${id} — coming soon`);
+    });
+
+    grid.appendChild(card);
+  });
+
+  block.appendChild(grid);
+  content.appendChild(block);
+  document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
+}
+
 // ── pin / collection ─────────────────────────────────────────────────────
 function pinCar(rec) {
   const model = cleanField(rec.model);
   if (pinnedCars.some(c => c.model === model)) return;
-  pinnedCars.push({
-    model: model,
-    year: cleanField(rec.year),
-    badge: cleanField(rec.badge),
-  });
+  pinnedCars.push({ model, year: cleanField(rec.year), badge: cleanField(rec.badge) });
   renderCollection();
 }
 
 function unpinCar(model) {
   pinnedCars = pinnedCars.filter(c => c.model !== model);
   renderCollection();
-  // also update any open rec cards in the stream that match this model
-  document.querySelectorAll('.rec').forEach(card => {
-    const nameEl = card.querySelector('.rec-name');
-    if (nameEl && nameEl.textContent === model) {
-      card.classList.remove('pinned');
-      const pinBtn = card.querySelector('.rec-pin');
-      if (pinBtn) {
-        pinBtn.classList.remove('on');
-        pinBtn.title = 'Save this car';
+  document.querySelectorAll('.inv-card').forEach(card => {
+    const titleEl = card.querySelector('.inv-title');
+    if (titleEl) {
+      const saveBtn = card.querySelector('.inv-save');
+      const stillPinned = pinnedCars.some(c =>
+        titleEl.textContent.includes(c.model.split(' · ')[0]) || c.model.includes(titleEl.textContent)
+      );
+      if (!stillPinned && saveBtn) {
+        card.classList.remove('pinned');
+        saveBtn.classList.remove('on');
+        saveBtn.textContent = 'Save';
       }
     }
   });
 }
 
 function renderCollection() {
-  const body = document.getElementById('collectionBody');
-  const empty = document.getElementById('collectionEmpty');
-  const sub = document.getElementById('collectionSub');
+  const body    = document.getElementById('collectionBody');
+  const empty   = document.getElementById('collectionEmpty');
+  const sub     = document.getElementById('collectionSub');
   const countEl = document.getElementById('collectionCount');
-  const btn = document.getElementById('btnCollection');
+  const btn     = document.getElementById('btnCollection');
 
   const n = pinnedCars.length;
   countEl.textContent = n;
   btn.classList.toggle('has-items', n > 0);
-
-  sub.textContent = n === 0
-    ? 'No cars saved yet'
-    : `${n} car${n > 1 ? 's' : ''} saved`;
+  sub.textContent = n === 0 ? 'No cars saved yet' : `${n} car${n > 1 ? 's' : ''} saved`;
 
   if (n === 0) {
     body.innerHTML = '';
@@ -1677,32 +2087,25 @@ function renderCollection() {
     return;
   }
   empty.classList.add('hidden');
-
   body.innerHTML = '';
   pinnedCars.forEach(c => {
     const card = document.createElement('div');
     card.className = 'coll-card';
     const matchLabel = c.badge || 'Matched';
-
     card.innerHTML = `
       <div class="coll-card-ph"></div>
       <div class="coll-card-info">
         <div class="coll-card-name">${escapeHtml(c.model)}</div>
-        <div class="coll-card-match">
-          <span class="coll-match-dot"></span>
-          ${escapeHtml(matchLabel)}
-        </div>
+        <div class="coll-card-match">${escapeHtml(matchLabel)}</div>
         <button class="coll-card-details" onclick="showToast('Detail page — coming soon')">View details</button>
       </div>
-      <button class="coll-card-remove" aria-label="Remove" title="Remove">
+      <button class="coll-card-remove" aria-label="Remove">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </button>
     `;
-    card.querySelector('.coll-card-remove').addEventListener('click', () => {
-      unpinCar(c.model);
-    });
+    card.querySelector('.coll-card-remove').addEventListener('click', () => { unpinCar(c.model); });
     body.appendChild(card);
   });
 }
@@ -1732,7 +2135,6 @@ async function sendMessage() {
     : text;
 
   appendUserMessage(text, tokens);
-
   syncFiltersFromText(combined);
   input.value = '';
   autoGrow(input);
@@ -1742,7 +2144,6 @@ async function sendMessage() {
   updateSend();
 
   messages.push({ role: 'user', content: combined });
-
   isStreaming = true;
   document.getElementById('btnSend').disabled = true;
   appendTypingIndicator();
@@ -1777,20 +2178,16 @@ async function sendMessage() {
     if (!aiRaw) throw new Error('Empty response from API');
     messages.push({ role: 'assistant', content: aiRaw });
 
-    // 1) parse TOOLS
     const toolSteps = parseToolSteps(aiRaw);
-    const aiText = stripToolsBlock(aiRaw);
+    const aiText   = stripToolsBlock(aiRaw);
 
-    // 2) animate tool steps inside typing indicator
     await runToolStrip(toolSteps);
 
-    // 3) detach the strip element so it survives removeTypingIndicator
     const stripEl = document.getElementById('toolStrip');
     if (stripEl) {
       stripEl.removeAttribute('id');
       stripEl.parentNode && stripEl.parentNode.removeChild(stripEl);
     }
-
     removeTypingIndicator();
 
     const attachStripTo = (msgEl) => {
@@ -1799,23 +2196,25 @@ async function sendMessage() {
       content.insertBefore(stripEl, content.firstChild);
     };
 
-    // 4) recommendations or normal reply?
     const recs = parseRecs(aiText);
     if (recs && recs.length > 0) {
       const intro = aiText.split('RECOMMENDATIONS:')[0].trim();
       const introText = intro || 'Here are my top picks for you:';
       const msgEl = appendAIMessage(introText, (el) => {
         renderRecs(recs, el);
-        renderQuickChips(['Compare these cars', 'Adjust my budget', 'What about EVs?', 'Show more options'], el);
+        renderQuickChips([
+          'How does mileage affect me?',
+          'Can I finance or lease?',
+          "What's included in maintenance?",
+          'Show me different models'
+        ], el);
       });
       attachStripTo(msgEl);
     } else {
       const surprises = parseEVSurprises(aiText);
       const { cleanText, suggestions } = parseSuggestions(aiText);
       const msgEl = appendAIMessage(cleanText, (el) => {
-        if (surprises && surprises.length > 0) {
-          renderEVSurprises(surprises, el);
-        }
+        if (surprises && surprises.length > 0) renderEVSurprises(surprises, el);
         renderQuickChips(suggestions, el);
       });
       attachStripTo(msgEl);
@@ -1834,9 +2233,7 @@ async function sendMessage() {
 
 function parseSuggestions(text) {
   let working = text;
-  // strip any stray TOOLS block (defensive)
   working = working.replace(/^TOOLS:\s*\[.*?\]\s*/m, '').trim();
-  // strip EV_SURPRISES block (rendered separately)
   working = working.replace(/EV_SURPRISES:[\s\S]*?(?=SUGGESTIONS:|$)/, '').trim();
 
   const match = working.match(/SUGGESTIONS:\s*(\[.*?\])/s);
@@ -1853,13 +2250,10 @@ function parseSuggestions(text) {
 }
 
 function defaultSuggestions(aiText) {
-  // Match against the LAST question in the text (the most recently asked thing)
-  // so we don't get fooled by earlier mentions of unrelated topics.
   const full = (aiText || '');
   const questions = full.match(/[^.!?]*\?/g) || [];
   const lastQuestion = (questions[questions.length - 1] || full).toLowerCase();
 
-  // Order matters: most specific first.
   if (/must.?have|feature|tow|sunroof|heated|roof rack|roof rail|awd|leather|panoram/i.test(lastQuestion)) {
     return ['Tow hitch', 'Roof rails', 'Heated seats', 'No specific must-haves'];
   }
@@ -1898,9 +2292,7 @@ function handleKey(e) {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const drawer = document.getElementById('collectionDrawer');
-    if (drawer && drawer.classList.contains('open')) {
-      closeCollection();
-    }
+    if (drawer && drawer.classList.contains('open')) closeCollection();
   }
 });
 
