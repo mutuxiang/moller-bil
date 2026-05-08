@@ -245,18 +245,6 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .quick-reply-label.is-loading {
   color: var(--muted);
 }
-.quick-reply-label.is-loading::after {
-  content: '';
-  display: inline-block; vertical-align: middle;
-  width: 8px; height: 8px; border-radius: 50%;
-  margin-left: 8px;
-  background: currentColor;
-  animation: chip-dot-pulse 1.2s ease-in-out infinite;
-}
-@keyframes chip-dot-pulse {
-  0%, 100% { opacity: .25; transform: scale(.85); }
-  50%      { opacity: 1;   transform: scale(1); }
-}
 .chip-skeleton {
   height: 36px;
   border-radius: 999px;
@@ -1140,7 +1128,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 <script>
 // ── config ──────────────────────────────────────────────────────────────
-const DEEPSEEK_API_KEY = 'sk-bf6f1b8f40164ef1a4fce0a28a8e7783';
+const DEEPSEEK_API_KEY = 'sk-bd7d969e020d47129c4f4d8e2fafc035';
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
 
 const SYSTEM_PROMPT = `You are a friendly car advisor at Møller Bil. Help users find the right car through natural conversation.
@@ -1291,11 +1279,11 @@ let onboardingStep = 0;
 
 function showOnboarding() {
   onboardingStep = 0;
-  const greeting = "Hi there! Whether you have a brand in mind or no idea yet, I'll help you figure it out. **What's got you thinking about a new car?**";
+  const greeting = "Hi there! Looking for a new car can feel overwhelming — I'm here to make it easy. **What's got you thinking about a new car?**";
   const initialSuggestions = [
     "My current car needs replacing",
     "Curious about going electric",
-    "I have a brand in mind",
+    "Growing family, need more space",
     "Just exploring my options"
   ];
   appendAIMessage(greeting, (msgEl) => {
@@ -1441,8 +1429,8 @@ function jumpButtonHtml(topic) {
             class="filter-jump${has ? ' has-message' : ''}"
             ${has ? '' : 'disabled'}
             onclick="jumpToTopic('${topic}')"
-            title="${has ? 'Jump to the chat message about this' : 'Not discussed yet'}">
-            <span>Jump to chat</span>
+            title="${has ? 'Show the chat where this came up' : 'Not discussed yet'}">
+            <span>${has ? 'Show in chat' : 'Not yet discussed'}</span>
           </button>`;
 }
 
@@ -1482,8 +1470,10 @@ function refreshJumpButtons() {
     btn.classList.toggle('has-message', has);
     btn.disabled = !has;
     btn.title = has
-      ? 'Jump to the chat message about this'
-      : 'No chat about this topic yet';
+      ? 'Show the chat where this came up'
+      : 'Not discussed yet';
+    const span = btn.querySelector('span');
+    if (span) span.textContent = has ? 'Show in chat' : 'Not yet discussed';
   });
 }
 
