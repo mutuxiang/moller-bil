@@ -388,7 +388,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   letter-spacing: .03em;
 }
 .inv-grid {
-  display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
+  display: grid; grid-template-columns: repeat(2, 1fr);
   gap: 16px; margin-top: 4px;
 }
 .inv-card {
@@ -617,19 +617,6 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   flex: 1; min-width: 0;
 }
 
-/* small status dot — hollow when pending, filled navy when confirmed */
-.filter-status-dot {
-  width: 9px; height: 9px; border-radius: 50%;
-  flex-shrink: 0;
-  border: 1.5px solid var(--border-strong);
-  background: transparent;
-  transition: background .2s, border-color .2s;
-}
-.filter-group[data-state="confirmed"] .filter-status-dot {
-  border-color: var(--accent);
-  background: var(--accent);
-}
-
 /* Section title — eyebrow accent (salmon) so the topic stands as metadata */
 .filter-label {
   font-size: 12.5px; font-weight: 500;
@@ -638,21 +625,29 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   text-transform: uppercase;
 }
 
-/* Status word ("Confirmed" / "Pending") next to the title */
-.filter-status-text {
-  font-size: 12.5px;
-  color: var(--muted);
+/* Status pill — replaces dot + text */
+.filter-status-pill {
+  display: inline-flex; align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px; font-weight: 500;
   letter-spacing: .02em;
+  border: 1.5px solid var(--border-strong);
+  color: var(--muted);
+  background: transparent;
+  transition: background .2s, border-color .2s, color .2s;
 }
-.filter-group[data-state="confirmed"] .filter-status-text {
-  color: var(--accent); font-weight: 500;
+.filter-group[data-state="confirmed"] .filter-status-pill {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--cream-100);
 }
 
 /* The CONFIRMED VALUE — focal point of the panel */
 .filter-value {
   font-size: 17px; line-height: 1.4; color: var(--ink);
   font-weight: 500;
-  padding-top: 4px; padding-left: 18px;  /* aligns with text after the dot */
+  padding-top: 4px;
 }
 .filter-value.placeholder {
   font-size: 15px; color: var(--muted); font-weight: 400;
@@ -664,7 +659,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   font: 400 13px/1 "Moller", sans-serif;
   color: var(--muted);
   display: inline-flex; align-items: center;
-  padding: 6px 0 0 18px;
+  padding: 6px 0 0 0;
   cursor: pointer;
   align-self: flex-start;
   text-decoration: underline;
@@ -1504,15 +1499,14 @@ function getBudgetSummary() {
   return fmtKr(lo) + ' – ' + fmtKr(hi);
 }
 
-// HTML for one filter section's status header (dot + title + status word + jump)
+// HTML for one filter section's status header (title + status pill + jump)
 function sectionHeadHtml(topic, title, isConfirmed) {
   const statusWord = isConfirmed ? 'Confirmed' : 'Pending';
   return `
     <div class="filter-label-row">
       <div class="filter-label-left">
-        <span class="filter-status-dot"></span>
         <span class="filter-label">${title}</span>
-        <span class="filter-status-text">${statusWord}</span>
+        <span class="filter-status-pill">${statusWord}</span>
       </div>
       ${jumpButtonHtml(topic)}
     </div>`;
@@ -1534,7 +1528,7 @@ function refreshGroupSummary(groupKey) {
   if (!group) return;
   const summary = groupKey === 'budget' ? getBudgetSummary() : getConfirmedSummary(groupKey);
   const valueEl    = group.querySelector('.filter-value');
-  const statusText = group.querySelector('.filter-status-text');
+  const statusPill = group.querySelector('.filter-status-pill');
   const toggleBtn  = group.querySelector('.filter-change-toggle');
   const placeholder = group.dataset.placeholder || 'Not set';
 
@@ -1544,7 +1538,7 @@ function refreshGroupSummary(groupKey) {
       valueEl.classList.remove('placeholder');
       valueEl.textContent = summary;
     }
-    if (statusText) statusText.textContent = 'Confirmed';
+    if (statusPill) statusPill.textContent = 'Confirmed';
     if (toggleBtn && !group.classList.contains('expanded')) {
       toggleBtn.firstChild.nodeValue = 'Change';
     }
@@ -1554,7 +1548,7 @@ function refreshGroupSummary(groupKey) {
       valueEl.classList.add('placeholder');
       valueEl.textContent = placeholder;
     }
-    if (statusText) statusText.textContent = 'Pending';
+    if (statusPill) statusPill.textContent = 'Pending';
     if (toggleBtn && !group.classList.contains('expanded')) {
       toggleBtn.firstChild.nodeValue = 'Set it now';
     }
