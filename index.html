@@ -240,6 +240,42 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: none; }
 }
+
+/* loading skeleton chips — shown while AI is generating its reply */
+.quick-reply-label.is-loading {
+  color: var(--muted);
+}
+.quick-reply-label.is-loading::after {
+  content: '';
+  display: inline-block; vertical-align: middle;
+  width: 8px; height: 8px; border-radius: 50%;
+  margin-left: 8px;
+  background: currentColor;
+  animation: chip-dot-pulse 1.2s ease-in-out infinite;
+}
+@keyframes chip-dot-pulse {
+  0%, 100% { opacity: .25; transform: scale(.85); }
+  50%      { opacity: 1;   transform: scale(1); }
+}
+.chip-skeleton {
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0,25,70,0.04) 0%,
+      rgba(0,25,70,0.10) 50%,
+      rgba(0,25,70,0.04) 100%
+    );
+  background-size: 200% 100%;
+  animation: chip-shimmer 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes chip-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 .chip {
   appearance: none;
   padding: 9px 18px;
@@ -549,10 +585,12 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   min-width: 300px; max-width: 600px;
 }
 .side-head {
-  padding: 16px 22px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 18px 22px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
 }
-.side-head b { font-size: 20px; font-weight: 500; color: var(--ink); }
+.side-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.side-head b { font-size: 18px; font-weight: 500; color: var(--ink); display: block; }
+.side-head-sub { font-size: 12px; color: var(--muted); }
 .side-head-actions { display: flex; align-items: center; gap: 8px; }
 .side-reset {
   font-size: 11.5px; color: var(--muted);
@@ -573,11 +611,188 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 .side-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
 
-.filter-group { display: flex; flex-direction: column; gap: 8px; }
-.filter-label { font-size: 13px; color: var(--eyebrow); font-weight: 500; }
+/* ── filter section: status display first, editing tools second ── */
+.filter-group {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.filter-group:first-of-type { padding-top: 4px; }
+.filter-group:last-of-type { border-bottom: 0; padding-bottom: 4px; }
+
+.filter-label-row {
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.filter-label-left {
+  display: inline-flex; align-items: center; gap: 7px;
+  flex: 1; min-width: 0;
+}
+
+/* small status dot — hollow when pending, filled navy when confirmed */
+.filter-status-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  flex-shrink: 0;
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  transition: background .2s, border-color .2s;
+}
+.filter-group[data-state="confirmed"] .filter-status-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+/* Section title — eyebrow accent (salmon) so the topic stands as metadata */
+.filter-label {
+  font-size: 12.5px; font-weight: 500;
+  color: var(--eyebrow);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+/* Status word ("Confirmed" / "Pending") next to the title */
+.filter-status-text {
+  font-size: 12.5px;
+  color: var(--muted);
+  letter-spacing: .02em;
+}
+.filter-group[data-state="confirmed"] .filter-status-text {
+  color: var(--accent); font-weight: 500;
+}
+
+/* The CONFIRMED VALUE — focal point of the panel */
+.filter-value {
+  font-size: 17px; line-height: 1.4; color: var(--ink);
+  font-weight: 500;
+  padding-top: 4px; padding-left: 18px;  /* aligns with text after the dot */
+}
+.filter-value.placeholder {
+  font-size: 15px; color: var(--muted); font-weight: 400;
+}
+
+/* Toggle that reveals the editing chips — quiet text link, NO arrow */
+.filter-change-toggle {
+  appearance: none; background: transparent; border: 0;
+  font: 400 13px/1 "Moller", sans-serif;
+  color: var(--muted);
+  display: inline-flex; align-items: center;
+  padding: 6px 0 0 18px;
+  cursor: pointer;
+  align-self: flex-start;
+  text-decoration: underline;
+  text-decoration-color: rgba(0,25,70,0.2);
+  text-underline-offset: 3px;
+  transition: color .15s, text-decoration-color .15s;
+}
+.filter-change-toggle:hover {
+  color: var(--ink);
+  text-decoration-color: var(--ink);
+}
+
+/* Hidden by default; shown when user clicks Change */
+.filter-edit {
+  display: none;
+  padding-top: 6px; padding-left: 18px;
+}
+.filter-group.expanded .filter-edit { display: block; }
+
 .chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
 
-.chips-row .chip { padding: 6px 12px; font-size: 13px; }
+/* small "?" help icon with tooltip */
+.filter-help {
+  appearance: none; background: transparent;
+  border: 1px solid var(--border);
+  width: 16px; height: 16px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font: 500 10px/1 "Moller", sans-serif;
+  color: var(--muted); cursor: help;
+  position: relative;
+  transition: color .15s, border-color .15s;
+}
+.filter-help:hover { color: var(--ink); border-color: var(--ink); }
+.filter-help::after {
+  content: attr(data-tip);
+  position: absolute; left: 50%; top: calc(100% + 8px);
+  transform: translateX(-50%);
+  background: var(--ink); color: var(--cream-100);
+  font: 400 11.5px/1.4 "Moller", sans-serif;
+  padding: 8px 10px; border-radius: 6px;
+  width: 200px; text-align: left;
+  opacity: 0; pointer-events: none;
+  transition: opacity .15s;
+  z-index: 50;
+  box-shadow: 0 4px 16px rgba(0,25,70,0.15);
+}
+.filter-help::before {
+  content: ''; position: absolute; left: 50%; top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent; border-bottom-color: var(--ink);
+  margin-top: 3px;
+  opacity: 0; pointer-events: none;
+  transition: opacity .15s;
+}
+.filter-help:hover::after,
+.filter-help:hover::before { opacity: 1; }
+
+/* jump-to-message button — quiet text link, not a CTA. No arrow. */
+.filter-jump {
+  appearance: none; background: transparent;
+  border: 0;
+  height: 22px; padding: 0; border-radius: 0;
+  display: inline-flex; align-items: center;
+  cursor: pointer; color: var(--muted);
+  font: 400 12.5px/1 "Moller", sans-serif;
+  letter-spacing: .01em;
+  text-decoration: underline;
+  text-decoration-color: rgba(0,25,70,0.18);
+  text-underline-offset: 3px;
+  transition: color .15s, text-decoration-color .15s, opacity .15s;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.filter-jump:hover:not(:disabled) {
+  color: var(--ink);
+  text-decoration-color: var(--ink);
+}
+.filter-jump:disabled { opacity: 0.30; cursor: not-allowed; text-decoration: none; }
+.filter-jump.has-message { color: var(--accent); }
+.filter-jump.has-message:hover { text-decoration-color: var(--accent); }
+
+/* highlight when chat is jumped to */
+@keyframes msg-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(225,100,75,0.50); }
+  40%  { box-shadow: 0 0 0 8px rgba(225,100,75,0.18); }
+  100% { box-shadow: 0 0 0 0   rgba(225,100,75,0.00); }
+}
+.msg.msg-jumped .bub {
+  animation: msg-pulse 1.6s ease-out;
+  border-color: var(--salmon);
+}
+
+/* sidebar chips are quieter than chat suggestion chips — editing tools, not CTAs */
+.chips-row .chip {
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 400;
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+}
+.chips-row .chip:hover {
+  background: transparent;
+  color: var(--ink);
+  border-color: rgba(0,25,70,0.40);
+}
+.chips-row .chip.on {
+  background: var(--accent);
+  color: var(--cream-100);
+  border-color: var(--accent);
+  font-weight: 500;
+}
+.chips-row .chip.on:hover {
+  background: var(--moller-blue-700);
+  border-color: var(--moller-blue-700);
+}
 
 /* budget dual-handle slider */
 .budget-module { display: flex; flex-direction: column; gap: 10px; }
@@ -879,7 +1094,10 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
     <aside class="side" id="side">
       <div class="side-head">
-        <b>Refine search</b>
+        <div class="side-head-text">
+          <b>What you've told me</b>
+          <span class="side-head-sub">A live recap of what we've covered</span>
+        </div>
         <div class="side-head-actions">
           <button class="side-reset" onclick="resetFilters()">reset</button>
           <button class="btn-apply" id="btnApply" onclick="applyFilters()">Apply</button>
@@ -922,7 +1140,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 <script>
 // ── config ──────────────────────────────────────────────────────────────
-const DEEPSEEK_API_KEY = 'sk-014c7c0d0b8a48d19db2ace18c9b0cce';
+const DEEPSEEK_API_KEY = 'sk-bf6f1b8f40164ef1a4fce0a28a8e7783';
 const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
 
 const SYSTEM_PROMPT = `You are a friendly car advisor at Møller Bil. Help users find the right car through natural conversation.
@@ -935,26 +1153,29 @@ Rules:
 - All prices and budgets are in Norwegian kroner (kr). Format like "350 000 kr" or "~450 000 kr". NEVER use $ or €.
 
 Conversation flow — adaptive, not rigid:
-Before recommending cars, you should have info on these 5 areas:
+Before recommending cars, you should have info on these 6 areas:
 A) Situation/motivation (why they're looking)
 B) Passengers/seats they need
 C) Budget range
 D) Fuel type preference (petrol, diesel, hybrid, electric)
-E) Must-have features (e.g. tow hitch, sunroof, heated seats, AWD)
+E) Brand preference (OPTIONAL — Audi, BMW, Volvo, Toyota, Tesla, Volkswagen, Hyundai, Kia, Peugeot, Renault, Mercedes, Ford, etc., or "no preference / open to anything")
+F) Must-have features (e.g. tow hitch, sunroof, heated seats, AWD)
 
 Rules for the flow:
 - Ask about whatever is the natural next topic given what the user just said. Follow their lead — if they bring up budget, dive into budget; if they mention kids, explore passengers/safety.
 - If a user's earlier message already answered an area (e.g. they said "I need a 7-seater for my family"), DON'T ask that question again — just acknowledge it and move to a different area.
 - Track what's been covered. Skip topics they've already answered, even implicitly.
 - Budget is the one area you should not let them skip entirely. If they avoid it or you've covered other areas without it, gently circle back: "Before I can find the right match, it'd really help to know roughly what budget you're thinking — even a ballpark helps!"
-- Once you have info on all 5 areas (explicitly or implicitly), it's time to recommend.
+- Brand (area E) is OPTIONAL. Ask it ONCE, casually — e.g. "Any brands you already trust, or are you open to anything?" — typically AFTER fuel type and BEFORE must-have features. If they say "no preference" or "open to anything", accept that immediately and move on. NEVER push for a brand if they don't have one. NEVER ask about brand twice.
+- If the user mentions a specific brand at any point ("I had a Toyota before", "I love Volvo's safety"), treat brand as covered and skip the question.
+- Once you have info on areas A, B, C, D, F (E is optional), it's time to recommend.
 
 Handling user input issues:
 - If the user's message looks like a typo, garbled text, or they seem confused (e.g. random characters, an obvious misspelling of a car model, an unrealistic number like "5 kr budget" or "200 passengers"), respond gently with an "Oops, looks like something might have gone wrong there — did you mean…?" tone. Stay warm and helpful, never make them feel bad. Then suggest 2-3 likely interpretations as SUGGESTIONS so they can tap to clarify.
 - If the message is too vague or unclear, ask a soft clarifying question instead of guessing.
 
 Special micro-feature — EV DESIGN SURPRISES:
-- When you ask the "One quick last thing: are there any must-have features..." question (the must-haves area E above), you SHOULD include an EV_SURPRISES block to surface 2-3 modern EV features the user may not know exist. This sparks ideas for what they might want.
+- When you ask the "One quick last thing: are there any must-have features..." question (the must-haves area F above), you SHOULD include an EV_SURPRISES block to surface 2-3 modern EV features the user may not know exist. This sparks ideas for what they might want.
 - Format (place this AFTER your main reply text, before SUGGESTIONS):
 EV_SURPRISES:
 Item1: [feature name] | [one-line description, max 12 words]
@@ -1010,13 +1231,26 @@ let activeTokens = [];
 let activeChips = {};
 let isStreaming = false;
 let pinnedCars = [];
+// topic → DOM message id: explicit anchor of where each filter group was confirmed
+let topicAnchors = {};
+// monotonic counter for assigning ids to chat messages
+let msgCounter = 0;
+function nextMsgId() { return 'msg-' + (++msgCounter); }
 
 // ── filter taxonomy ──────────────────────────────────────────────────────
 const FILTERS = [
-  { key: 'usage',  title: 'Usage',           options: ['Commuting','City driving','Mountain trips','Family use','Road trips','Leisure'] },
-  { key: 'seats',  title: 'Number of seats', options: ['2','4','5','6','7+'] },
-  { key: 'fuel',   title: 'Fuel type',       options: ['Electric','Hybrid','Petrol','Diesel'] },
-  { key: 'size',   title: 'Vehicle size',    options: ['City','Compact','Mid-size','Family','SUV','Van'] },
+  { key: 'usage',  title: 'How you\'ll use it',
+    placeholder: 'Not discussed yet',
+    options: ['Commuting','City driving','Mountain trips','Family use','Road trips','Leisure'] },
+  { key: 'seats',  title: 'Passengers',
+    placeholder: 'Seat count not set',
+    options: ['2','4','5','6','7+'] },
+  { key: 'fuel',   title: 'Powertrain',
+    placeholder: 'Fuel type still open',
+    options: ['Electric','Hybrid','Petrol','Diesel'] },
+  { key: 'size',   title: 'Vehicle size',
+    placeholder: 'Body style undecided',
+    options: ['City','Compact','Mid-size','Family','SUV','Van'] },
 ];
 const BRANDS = ['Audi','BMW','Mercedes','Volkswagen','Toyota','Volvo','Peugeot','Renault','Ford','Kia','Hyundai','Tesla'];
 
@@ -1057,11 +1291,11 @@ let onboardingStep = 0;
 
 function showOnboarding() {
   onboardingStep = 0;
-  const greeting = "Hi there! Looking for a new car can feel overwhelming — I'm here to make it easy. **What's got you thinking about a new car?**";
+  const greeting = "Hi there! Whether you have a brand in mind or no idea yet, I'll help you figure it out. **What's got you thinking about a new car?**";
   const initialSuggestions = [
     "My current car needs replacing",
-    "Buying my first car",
     "Curious about going electric",
+    "I have a brand in mind",
     "Just exploring my options"
   ];
   appendAIMessage(greeting, (msgEl) => {
@@ -1169,15 +1403,202 @@ function finishOnboarding() {
   });
 }
 
+// ── topic ↔ filter group bridge ──────────────────────────────────────────
+// Detect what topic an AI message is about, so the sidebar's jump buttons
+// can scroll the chat back to the relevant question.
+function detectMessageTopic(text) {
+  const t = (text || '').toLowerCase();
+  if (/budget|price|cost|spend|how much|\bkr\b|kroner|afford/i.test(t))                                       return 'budget';
+  if (/passenger|seat|family|kids|children|how many people|how many.*fit|7-seater|7 seater/i.test(t))         return 'seats';
+  if (/electric|hybrid|petrol|diesel|fuel\b|\bev\b|charging|plug-in/i.test(t))                                return 'fuel';
+  if (/\bsize\b|compact|\bsuv\b|\bvan\b|hatchback|sedan|station wagon|small car|big car/i.test(t))            return 'size';
+  if (/\bbrand\b|brands you|particular brand|brand in mind|brand preference|manufacturer|trust.*brand|prefer.*(audi|bmw|mercedes|toyota|volvo|tesla|kia|hyundai|ford|volkswagen|peugeot|renault)/i.test(t)) return 'brand';
+  if (/use it for|drive|commut|trip|city|mountain|leisure|road|daily|weekend/i.test(t))                       return 'usage';
+  return null;
+}
+
+// Per-topic tooltip text shown by the "?" help icon next to each section title.
+const TOPIC_TIPS = {
+  usage:  "Jump to the chat message where the AI asked how you'll use the car.",
+  seats:  "Jump to the chat message where the AI asked about passengers and seats.",
+  fuel:   "Jump to the chat message where the AI asked about fuel type.",
+  size:   "Jump to the chat message where the AI asked about vehicle size.",
+  brand:  "Jump to the chat message where the AI asked about brand preferences.",
+  budget: "Jump to the chat message where the AI asked about your budget.",
+};
+
+// HTML for the small "?" tooltip next to each filter title.
+function helpIconHtml(topic) {
+  const tip = (TOPIC_TIPS[topic] || 'Click the button to jump to the related chat message.')
+    .replace(/"/g, '&quot;');
+  return `<span class="filter-help" data-tip="${tip}">?</span>`;
+}
+
+// HTML for one jump button — always visible, disabled until a matching message exists.
+function jumpButtonHtml(topic) {
+  const has = !!findLatestMessageForTopic(topic);
+  return `<button
+            class="filter-jump${has ? ' has-message' : ''}"
+            ${has ? '' : 'disabled'}
+            onclick="jumpToTopic('${topic}')"
+            title="${has ? 'Jump to the chat message about this' : 'Not discussed yet'}">
+            <span>Jump to chat</span>
+          </button>`;
+}
+
+function findLatestMessageForTopic(topic) {
+  // Primary: explicit anchor stored when this topic was actually confirmed
+  const anchorId = topicAnchors[topic];
+  if (anchorId) {
+    const el = document.getElementById(anchorId);
+    if (el) return el;
+  }
+  // Fallback: text-detected AI question (only used if user hasn't confirmed yet)
+  const stream = document.getElementById('stream');
+  if (!stream) return null;
+  const msgs = stream.querySelectorAll(`.msg.ai[data-topic="${topic}"]`);
+  return msgs.length ? msgs[msgs.length - 1] : null;
+}
+
+function jumpToTopic(topic) {
+  const target = findLatestMessageForTopic(topic);
+  if (!target) { showToast(`No message about this topic yet.`); return; }
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // brief pulse highlight
+  document.querySelectorAll('.msg-jumped').forEach(m => m.classList.remove('msg-jumped'));
+  // re-trigger animation
+  void target.offsetWidth;
+  target.classList.add('msg-jumped');
+  setTimeout(() => target.classList.remove('msg-jumped'), 1700);
+}
+
+// Refresh just the jump-button states (cheap, no full rebuild).
+function refreshJumpButtons() {
+  document.querySelectorAll('.filter-jump').forEach(btn => {
+    const onclick = btn.getAttribute('onclick') || '';
+    const m = onclick.match(/jumpToTopic\('([^']+)'\)/);
+    if (!m) return;
+    const has = !!findLatestMessageForTopic(m[1]);
+    btn.classList.toggle('has-message', has);
+    btn.disabled = !has;
+    btn.title = has
+      ? 'Jump to the chat message about this'
+      : 'No chat about this topic yet';
+  });
+}
+
+// ── summary helpers — what's been confirmed for each topic ───────────────
+function getConfirmedOptionsForGroup(groupKey) {
+  return Object.keys(activeChips)
+    .filter(k => k.startsWith(groupKey + ':'))
+    .map(k => k.split(':').slice(1).join(':'));
+}
+
+function getConfirmedSummary(groupKey) {
+  const opts = getConfirmedOptionsForGroup(groupKey);
+  if (opts.length === 0) return null;
+  if (groupKey === 'seats') {
+    return opts.length === 1 ? `${opts[0]} seats` : opts.join(' or ') + ' seats';
+  }
+  return opts.join(', ');
+}
+
+function getBudgetSummary() {
+  const lo = window._lastBudget?.min ?? null;
+  const hi = window._lastBudget?.max ?? null;
+  if (lo === null || hi === null) return null;
+  const MIN = 50000, MAX = 1500000;
+  if (lo === MIN && hi === MAX) return null;
+  if (lo === MIN) return 'Up to ' + fmtKr(hi);
+  if (hi === MAX) return 'From ' + fmtKr(lo);
+  return fmtKr(lo) + ' – ' + fmtKr(hi);
+}
+
+// HTML for one filter section's status header (dot + title + status word + jump)
+function sectionHeadHtml(topic, title, isConfirmed) {
+  const statusWord = isConfirmed ? 'Confirmed' : 'Pending';
+  return `
+    <div class="filter-label-row">
+      <div class="filter-label-left">
+        <span class="filter-status-dot"></span>
+        <span class="filter-label">${title}</span>
+        <span class="filter-status-text">${statusWord}</span>
+      </div>
+      ${jumpButtonHtml(topic)}
+    </div>`;
+}
+
+// Toggle the .expanded state on a filter section to reveal/hide its chips
+function toggleFilterEdit(btn) {
+  const group = btn.closest('.filter-group');
+  if (!group) return;
+  const expanded = group.classList.toggle('expanded');
+  btn.firstChild.nodeValue = expanded
+    ? 'Hide options'
+    : (group.dataset.state === 'confirmed' ? 'Change' : 'Set it now');
+}
+
+// Update one section's value-text + state without rebuilding (called on chip click)
+function refreshGroupSummary(groupKey) {
+  const group = document.querySelector(`.filter-group[data-key="${groupKey}"]`);
+  if (!group) return;
+  const summary = groupKey === 'budget' ? getBudgetSummary() : getConfirmedSummary(groupKey);
+  const valueEl    = group.querySelector('.filter-value');
+  const statusText = group.querySelector('.filter-status-text');
+  const toggleBtn  = group.querySelector('.filter-change-toggle');
+  const placeholder = group.dataset.placeholder || 'Not set';
+
+  if (summary) {
+    group.dataset.state = 'confirmed';
+    if (valueEl) {
+      valueEl.classList.remove('placeholder');
+      valueEl.textContent = summary;
+    }
+    if (statusText) statusText.textContent = 'Confirmed';
+    if (toggleBtn && !group.classList.contains('expanded')) {
+      toggleBtn.firstChild.nodeValue = 'Change';
+    }
+  } else {
+    group.dataset.state = 'pending';
+    if (valueEl) {
+      valueEl.classList.add('placeholder');
+      valueEl.textContent = placeholder;
+    }
+    if (statusText) statusText.textContent = 'Pending';
+    if (toggleBtn && !group.classList.contains('expanded')) {
+      toggleBtn.firstChild.nodeValue = 'Set it now';
+    }
+  }
+}
+
 // ── sidebar ───────────────────────────────────────────────────────────────
 function buildSidebar() {
   const body = document.getElementById('sideBody');
   body.innerHTML = '';
 
+  // Standard chip-based sections
   FILTERS.forEach(group => {
+    const summary    = getConfirmedSummary(group.key);
+    const isConfirmed = !!summary;
+    const placeholder = group.placeholder || 'Not set';
+
     const div = document.createElement('div');
     div.className = 'filter-group';
-    div.innerHTML = `<div class="filter-label">${group.title}</div><div class="chips-row" id="grp-${group.key}"></div>`;
+    div.dataset.key = group.key;
+    div.dataset.placeholder = placeholder;
+    div.dataset.state = isConfirmed ? 'confirmed' : 'pending';
+
+    div.innerHTML = `
+      ${sectionHeadHtml(group.key, group.title, isConfirmed)}
+      <div class="filter-value${isConfirmed ? '' : ' placeholder'}">${
+        isConfirmed ? escapeHtml(summary) : escapeHtml(placeholder)
+      }</div>
+      <button class="filter-change-toggle" type="button" onclick="toggleFilterEdit(this)">${
+        isConfirmed ? 'Change' : 'Set it now'
+      }</button>
+      <div class="filter-edit">
+        <div class="chips-row" id="grp-${group.key}"></div>
+      </div>`;
     body.appendChild(div);
 
     const row = div.querySelector(`#grp-${group.key}`);
@@ -1192,43 +1613,82 @@ function buildSidebar() {
     });
   });
 
-  const brandGroup = document.createElement('div');
-  brandGroup.className = 'filter-group';
-  brandGroup.innerHTML = `<div class="filter-label">Brand</div><div class="chips-row" id="grp-brand"></div>`;
-  body.appendChild(brandGroup);
+  // Brand section
+  {
+    const brandSummary = getConfirmedSummary('brand');
+    const isConfirmed  = !!brandSummary;
+    const placeholder  = 'No brand preference yet';
 
-  const brandRow = brandGroup.querySelector('#grp-brand');
-  BRANDS.forEach(brand => {
-    const btn = document.createElement('button');
-    btn.className = 'chip';
-    btn.textContent = brand;
-    const key = `brand:${brand}`;
-    if (activeChips[key]) btn.classList.add('on');
-    btn.onclick = () => toggleChip('brand', brand, btn, key);
-    brandRow.appendChild(btn);
-  });
+    const brandGroup = document.createElement('div');
+    brandGroup.className = 'filter-group';
+    brandGroup.dataset.key = 'brand';
+    brandGroup.dataset.placeholder = placeholder;
+    brandGroup.dataset.state = isConfirmed ? 'confirmed' : 'pending';
+    brandGroup.innerHTML = `
+      ${sectionHeadHtml('brand', 'Brand preference', isConfirmed)}
+      <div class="filter-value${isConfirmed ? '' : ' placeholder'}">${
+        isConfirmed ? escapeHtml(brandSummary) : escapeHtml(placeholder)
+      }</div>
+      <button class="filter-change-toggle" type="button" onclick="toggleFilterEdit(this)">${
+        isConfirmed ? 'Change' : 'Set it now'
+      }</button>
+      <div class="filter-edit">
+        <div class="chips-row" id="grp-brand"></div>
+      </div>`;
+    body.appendChild(brandGroup);
 
-  const budgetGroup = document.createElement('div');
-  budgetGroup.className = 'filter-group';
-  const startMin = pendingBudget ? pendingBudget.min : (window._lastBudget?.min ?? 50000);
-  const startMax = pendingBudget ? pendingBudget.max : (window._lastBudget?.max ?? 1500000);
-  budgetGroup.innerHTML = `
-    <div class="filter-label">Budget</div>
-    <div class="budget-module">
-      <div class="budget-vals"><span>50 000 kr</span><span>1 500 000 kr</span></div>
-      <div class="budget-track" id="budgetTrack">
-        <div class="budget-track-fill" id="budgetTrackFill"></div>
-        <input class="budget-input" id="budgetMin" type="range"
-          min="50000" max="1500000" step="25000" value="${startMin}"
-          oninput="onBudgetInput('min')">
-        <input class="budget-input" id="budgetMax" type="range"
-          min="50000" max="1500000" step="25000" value="${startMax}"
-          oninput="onBudgetInput('max')">
+    const brandRow = brandGroup.querySelector('#grp-brand');
+    BRANDS.forEach(brand => {
+      const btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.textContent = brand;
+      const key = `brand:${brand}`;
+      if (activeChips[key]) btn.classList.add('on');
+      btn.onclick = () => toggleChip('brand', brand, btn, key);
+      brandRow.appendChild(btn);
+    });
+  }
+
+  // Budget section (slider, not chips)
+  {
+    const startMin = pendingBudget ? pendingBudget.min : (window._lastBudget?.min ?? 50000);
+    const startMax = pendingBudget ? pendingBudget.max : (window._lastBudget?.max ?? 1500000);
+    const budgetSummary = getBudgetSummary();
+    const isConfirmed = !!budgetSummary;
+    const placeholder = 'No budget set';
+
+    const budgetGroup = document.createElement('div');
+    budgetGroup.className = 'filter-group';
+    budgetGroup.dataset.key = 'budget';
+    budgetGroup.dataset.placeholder = placeholder;
+    budgetGroup.dataset.state = isConfirmed ? 'confirmed' : 'pending';
+    budgetGroup.innerHTML = `
+      ${sectionHeadHtml('budget', 'Budget', isConfirmed)}
+      <div class="filter-value${isConfirmed ? '' : ' placeholder'}">${
+        isConfirmed ? escapeHtml(budgetSummary) : escapeHtml(placeholder)
+      }</div>
+      <button class="filter-change-toggle" type="button" onclick="toggleFilterEdit(this)">${
+        isConfirmed ? 'Adjust' : 'Set it now'
+      }</button>
+      <div class="filter-edit">
+        <div class="budget-module">
+          <div class="budget-vals"><span>50 000 kr</span><span>1 500 000 kr</span></div>
+          <div class="budget-track" id="budgetTrack">
+            <div class="budget-track-fill" id="budgetTrackFill"></div>
+            <input class="budget-input" id="budgetMin" type="range"
+              min="50000" max="1500000" step="25000" value="${startMin}"
+              oninput="onBudgetInput('min')">
+            <input class="budget-input" id="budgetMax" type="range"
+              min="50000" max="1500000" step="25000" value="${startMax}"
+              oninput="onBudgetInput('max')">
+          </div>
+          <span class="budget-selected" id="budgetSelected"></span>
+        </div>
       </div>
-      <span class="budget-selected" id="budgetSelected"></span>
-    </div>
-  `;
-  body.appendChild(budgetGroup);
+    `;
+    body.appendChild(budgetGroup);
+  }
+
   updateBudgetDisplay();
   if (pendingBudget) { pendingManualChange = true; pendingBudget = null; }
   setApplyVisible(pendingManualChange);
@@ -1271,6 +1731,7 @@ function toggleChip(groupKey, opt, btn, key) {
   }
   pendingManualChange = true;
   setApplyVisible(true);
+  refreshGroupSummary(groupKey);
 }
 
 function applyFilters() {
@@ -1344,6 +1805,7 @@ function updateBudgetDisplay() {
     else sel.textContent = fmtKr(lo) + ' – ' + fmtKr(hi);
   }
   window._lastBudget = { min: lo, max: hi };
+  refreshGroupSummary('budget');
 }
 
 // ── sync chat → sidebar filters ──────────────────────────────────────────
@@ -1359,6 +1821,15 @@ function buildFilterLookup() {
 }
 
 function syncFiltersFromText(text) {
+  // Snapshot to detect newly-activated chips after this run
+  const before = Object.assign({}, activeChips);
+
+  // Anchor candidate = the user message that just got appended
+  // (it's the last .msg element since we run AFTER appendUserMessage).
+  const allMsgs = document.querySelectorAll('#stream .msg');
+  const userAnchor = allMsgs.length ? allMsgs[allMsgs.length - 1] : null;
+  const userAnchorId = userAnchor ? userAnchor.id : null;
+
   const lookup = buildFilterLookup();
   const lower = text.toLowerCase();
   let changed = false;
@@ -1414,6 +1885,17 @@ function syncFiltersFromText(text) {
       pendingBudget = budget;
       changed = true;
     }
+    if (userAnchorId) topicAnchors.budget = userAnchorId;
+  }
+
+  // Anchor every group that gained at least one new chip in this run
+  // to the user message that was just sent.
+  if (userAnchorId) {
+    const newGroups = new Set();
+    Object.keys(activeChips).forEach(key => {
+      if (!before[key]) newGroups.add(key.split(':')[0]);
+    });
+    newGroups.forEach(g => { topicAnchors[g] = userAnchorId; });
   }
 
   if (changed) buildSidebar();
@@ -1507,6 +1989,7 @@ function resetFilters() {
   pendingManualChange = false;
   pendingBudget = null;
   window._lastBudget = null;
+  topicAnchors = {};
   setApplyVisible(false);
   renderTokens();
   buildSidebar();
@@ -1561,7 +2044,11 @@ function appendAIMessage(text, onDone) {
   const _bar = document.getElementById('suggestionsBar'); if (_bar) _bar.innerHTML = '';
 
   const msgDiv = document.createElement('div');
+  msgDiv.id = nextMsgId();
   msgDiv.className = 'msg ai';
+  // tag the message with its conversation topic so sidebar jump buttons can find it
+  const topic = detectMessageTopic(text);
+  if (topic) msgDiv.dataset.topic = topic;
   msgDiv.innerHTML = `
     <div class="av ai">AI</div>
     <div class="msg-content">
@@ -1569,6 +2056,8 @@ function appendAIMessage(text, onDone) {
     </div>
   `;
   stream.appendChild(msgDiv);
+  // a new topic message means at least one jump button just became active
+  if (topic) refreshJumpButtons();
 
   const bub = msgDiv.querySelector('.bub');
   const full = formatText(text);
@@ -1609,6 +2098,7 @@ function appendUserMessage(text, tokens) {
   const _bar = document.getElementById('suggestionsBar'); if (_bar) _bar.innerHTML = '';
 
   const msgDiv = document.createElement('div');
+  msgDiv.id = nextMsgId();
   msgDiv.className = 'msg user';
   let tokenHtml = '';
   if (tokens && tokens.length > 0) {
@@ -1650,28 +2140,55 @@ function removeTypingIndicator() {
 function renderQuickChips(suggestions, msgEl) {
   const bar = document.getElementById('suggestionsBar');
   const wrap = document.getElementById('suggestionsWrap');
+  const label = wrap ? wrap.querySelector('.quick-reply-label') : null;
   bar.innerHTML = '';
+  if (label) {
+    label.textContent = 'Quick reply';
+    label.classList.remove('is-loading');
+  }
   if (!suggestions || suggestions.length === 0) {
     wrap.classList.add('empty');
     return;
   }
   wrap.classList.remove('empty');
 
-  suggestions.forEach(label => {
+  suggestions.forEach(s => {
     const btn = document.createElement('button');
     btn.className = 'chip';
-    btn.textContent = label;
-    if (activeTokens.includes(label)) btn.classList.add('on');
+    btn.textContent = s;
+    if (activeTokens.includes(s)) btn.classList.add('on');
     btn.onclick = () => {
       if (btn.classList.contains('on')) {
-        removeToken(label);
+        removeToken(s);
         btn.classList.remove('on');
       } else {
-        addToken(label);
+        addToken(s);
         btn.classList.add('on');
       }
     };
     bar.appendChild(btn);
+  });
+}
+
+// Replace the quick-reply chips with a shimmer skeleton while the AI is generating
+function showChipsLoading() {
+  const bar  = document.getElementById('suggestionsBar');
+  const wrap = document.getElementById('suggestionsWrap');
+  if (!bar || !wrap) return;
+  const label = wrap.querySelector('.quick-reply-label');
+  wrap.classList.remove('empty');
+  if (label) {
+    label.textContent = 'Generating suggestions';
+    label.classList.add('is-loading');
+  }
+  bar.innerHTML = '';
+  // four placeholder chips at varied widths
+  const widths = [150, 120, 180, 130];
+  widths.forEach(w => {
+    const sk = document.createElement('div');
+    sk.className = 'chip-skeleton';
+    sk.style.width = w + 'px';
+    bar.appendChild(sk);
   });
 }
 
@@ -1885,6 +2402,7 @@ Rules:
 async function loadInventory(model, recData) {
   const stream = document.getElementById('stream');
   const msgDiv = appendTypingIndicator();
+  showChipsLoading();
 
   try {
     const toolPromise = runToolStrip([`Searching ${model} inventory`, 'Checking total cost of ownership', 'Ranking by best match']);
@@ -2147,6 +2665,7 @@ async function sendMessage() {
   isStreaming = true;
   document.getElementById('btnSend').disabled = true;
   appendTypingIndicator();
+  showChipsLoading();
 
   try {
     const resp = await fetch(DEEPSEEK_URL, {
@@ -2223,7 +2742,9 @@ async function sendMessage() {
   } catch (err) {
     removeTypingIndicator();
     showToast('Error: ' + err.message);
-    appendAIMessage('Sorry, something went wrong. Please try again.');
+    appendAIMessage('Sorry, something went wrong. Please try again.', (el) => {
+      renderQuickChips(['Try again', 'Start over'], el);
+    });
     messages.pop();
   } finally {
     isStreaming = false;
@@ -2259,6 +2780,9 @@ function defaultSuggestions(aiText) {
   }
   if (/electric|hybrid|petrol|diesel|fuel|ev\b/i.test(lastQuestion)) {
     return ['Electric (EV)', 'Hybrid', 'Petrol or diesel', 'Not sure yet'];
+  }
+  if (/\bbrand\b|brand in mind|particular brand|brands you|manufacturer/i.test(lastQuestion)) {
+    return ['Open to anything', 'Toyota or Volvo', 'German brands', 'Tesla or Polestar'];
   }
   if (/passenger|seat|family|kids|children|how many people/i.test(lastQuestion)) {
     return ['Just me', '2-4 people', '5-7 people', 'Need 7+ seats'];
@@ -2308,6 +2832,8 @@ function resetAll() {
   activeTokens = [];
   activeChips = {};
   pinnedCars = [];
+  topicAnchors = {};
+  msgCounter = 0;
   document.getElementById('stream').innerHTML = '';
   document.getElementById('inputField').value = '';
   renderTokens();
