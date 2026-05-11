@@ -380,9 +380,10 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 /* ── inventory cards ── */
 .inv-block {
-  align-self: flex-start; max-width: 720px; width: 100%;
+  align-self: flex-start; max-width: 1080px; width: 100%;
   display: flex; flex-direction: column; gap: 8px;
 }
+.msg.has-inv { max-width: none; }
 .inv-header {
   font-size: 13px; font-weight: 500; color: var(--eyebrow);
   letter-spacing: .03em;
@@ -1170,15 +1171,23 @@ Handling user input issues:
 - If the user's message looks like a typo, garbled text, or they seem confused (e.g. random characters, an obvious misspelling of a car model, an unrealistic number like "5 kr budget" or "200 passengers"), respond gently with an "Oops, looks like something might have gone wrong there — did you mean…?" tone. Stay warm and helpful, never make them feel bad. Then suggest 2-3 likely interpretations as SUGGESTIONS so they can tap to clarify.
 - If the message is too vague or unclear, ask a soft clarifying question instead of guessing.
 
-Special micro-feature — EV DESIGN SURPRISES:
-- When you ask the "One quick last thing: are there any must-have features..." question (the must-haves area F above), you SHOULD include an EV_SURPRISES block to surface 2-3 modern EV features the user may not know exist. This sparks ideas for what they might want.
-- Format (place this AFTER your main reply text, before SUGGESTIONS):
+Special micro-feature — EV DESIGN SURPRISES (MANDATORY when asking about must-have features):
+- The must-haves question (area F) is THE ONLY question where you MUST emit an EV_SURPRISES block. This is non-negotiable — never skip it when asking about must-haves.
+- The block goes AFTER your main reply text and BEFORE the SUGGESTIONS block.
+- EXACT format (use these EXACT field names — Item1, Item2, Item3 — with a pipe between name and description):
 EV_SURPRISES:
-Item1: [feature name] | [one-line description, max 12 words]
-Item2: [feature name] | [one-line description]
-Item3: [feature name] | [one-line description]
-- Pick 2-3 from: vehicle-to-load power outlets, frunk (front trunk) storage, panoramic glass roofs, ambient interior lighting, regenerative one-pedal driving, heat pump cabin warming, dog mode/camp mode, OTA software updates, vegan eco-leather interiors, AR navigation HUD, massage seats, summon/auto-park, captain's chair second row, integrated dashcam, Matrix LED headlights.
-- Only include this block on the must-haves question, nowhere else.
+Item1: Vehicle-to-Load (V2L) | Power devices from your car — kettle, laptop, even a projector
+Item2: Frunk storage | Front trunk under the bonnet for boots or charging cables
+Item3: One-pedal driving | Lift off the pedal and the car brakes itself, recharging as it slows
+- You may swap items from this pool: vehicle-to-load power outlets, frunk storage, panoramic glass roofs, ambient interior lighting, regenerative one-pedal driving, heat pump cabin warming, dog mode/camp mode, OTA software updates, vegan eco-leather interiors, AR navigation HUD, massage seats, summon/auto-park, captain's chair second row, integrated dashcam, Matrix LED headlights.
+- Pick 3 items most likely to surprise/excite this specific user given the conversation.
+- NEVER include this block on any other question — only on the must-haves question.
+
+Special shortcut — DIRECT INVENTORY REQUEST:
+- If the user EXPLICITLY asks to see inventory/stock of a specific brand+model (e.g. "show me your Volkswagen ID.4", "do you have any Volvo XC90 in stock", "what Tesla Model Y do you have", "I want to see ID.Buzz inventory now"), respond with ONLY this exact line:
+SHOW_INVENTORY: [Brand Model]
+- No TOOLS block, no other text, no SUGGESTIONS — just that one line. The frontend will load real stock listings instantly.
+- Only use this shortcut when the user names a specific brand+model AND asks to see stock/inventory/availability. Otherwise follow normal conversation flow.
 
 IMPORTANT — TOOL STEPS:
 Every reply MUST start with a TOOLS block on the very first line. This tells the user what you did before answering. Format:
@@ -2604,6 +2613,7 @@ async function loadInventory(model, recData) {
         'Book a test drive',
       ], el);
     });
+    msgEl.classList.add('has-inv');
     if (stripEl) {
       const c = msgEl.querySelector('.msg-content');
       c.insertBefore(stripEl, c.firstChild);
@@ -2866,6 +2876,17 @@ async function sendMessage() {
 
     const toolSteps = parseToolSteps(aiRaw);
     const aiText   = stripToolsBlock(aiRaw);
+
+    // Direct inventory shortcut — skip tool strip animation and go straight to listings
+    const invMatch = aiText.match(/SHOW_INVENTORY:\s*([^\n\r]+)/i);
+    if (invMatch) {
+      const stripEl0 = document.getElementById('toolStrip');
+      if (stripEl0) { stripEl0.removeAttribute('id'); stripEl0.parentNode?.removeChild(stripEl0); }
+      removeTypingIndicator();
+      const modelName = invMatch[1].trim().replace(/[.*_`]/g, '');
+      await loadInventory(modelName);
+      return;
+    }
 
     await runToolStrip(toolSteps);
 
