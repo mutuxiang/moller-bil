@@ -316,11 +316,12 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
    ════════════════════════════════════════════════════════════ */
 .recs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 4px;
-  max-width: 720px;
+  max-width: 1080px;
 }
+.msg.has-recs { max-width: none; }
 
 .rec {
   border: 1px solid var(--border);
@@ -2207,21 +2208,44 @@ function parseKr(s) {
 
 function inferBudgetFromText(text) {
   const MIN = 50000, MAX = 1500000;
-  let m = text.match(/between\s+([\d\s,]+k?)\s+(?:and|to|-)\s+([\d\s,]+k?)\s*(?:kr|kroner)?/);
-  if (!m) m = text.match(/([\d\s,]+k?)\s*(?:kr|kroner)?\s*(?:to|-)\s*([\d\s,]+k?)\s*(?:kr|kroner)/);
+
+  // NUM = a number with optional 'k' suffix; (?!r) prevents matching the 'k' in "kr"
+  const NUM = '([\\d][\\d\\s,.]*(?:k(?!r))?)';
+  const CUR = '\\s*(?:kr|kroner)?';
+
+  const isPlausible = v => v != null && v >= 50000 && v <= 3000000;
+  const fuzzy = v => ({
+    min: Math.max(MIN, Math.round(v * 0.85 / 25000) * 25000),
+    max: Math.min(MAX, Math.round(v * 1.15 / 25000) * 25000),
+  });
+
+  let m;
+
+  // Range: "between 400 000 and 600 000 kr"
+  m = text.match(new RegExp(`between\\s+${NUM}\\s+(?:and|to|-|–|—)\\s+${NUM}${CUR}`));
+  // Range: "400 000 – 600 000 kr" / "400k to 600k"
+  if (!m) m = text.match(new RegExp(`${NUM}${CUR}\\s*(?:to|-|–|—)\\s*${NUM}${CUR}`));
   if (m) {
     const a = parseKr(m[1]), b = parseKr(m[2]);
-    if (a && b) return { min: Math.min(a,b), max: Math.max(a,b) };
+    if (isPlausible(a) && isPlausible(b)) return { min: Math.min(a,b), max: Math.max(a,b) };
   }
-  m = text.match(/(?:under|below|max|maximum|up to|less than|no more than)\s+([\d\s,]+k?)\s*(?:kr|kroner)?/);
-  if (m) { const v = parseKr(m[1]); if (v) return { min: MIN, max: v }; }
-  m = text.match(/(?:above|over|at least|min|minimum|more than|from)\s+([\d\s,]+k?)\s*(?:kr|kroner)?/);
-  if (m) { const v = parseKr(m[1]); if (v) return { min: v, max: MAX }; }
-  m = text.match(/(?:around|about|roughly|approximately|~)\s*([\d\s,]+k?)\s*(?:kr|kroner)/);
-  if (m) {
-    const v = parseKr(m[1]);
-    if (v) return { min: Math.max(MIN, Math.round(v * 0.85 / 25000) * 25000), max: Math.min(MAX, Math.round(v * 1.15 / 25000) * 25000) };
-  }
+
+  m = text.match(new RegExp(`(?:under|below|max|maximum|up to|less than|no more than)\\s+${NUM}${CUR}`));
+  if (m) { const v = parseKr(m[1]); if (isPlausible(v)) return { min: MIN, max: v }; }
+
+  m = text.match(new RegExp(`(?:above|over|at least|min|minimum|more than|from)\\s+${NUM}${CUR}`));
+  if (m) { const v = parseKr(m[1]); if (isPlausible(v)) return { min: v, max: MAX }; }
+
+  m = text.match(new RegExp(`(?:around|about|roughly|approximately|~|circa)\\s*${NUM}${CUR}`));
+  if (m) { const v = parseKr(m[1]); if (isPlausible(v)) return fuzzy(v); }
+
+  m = text.match(new RegExp(`(?:budget|price|spend)\\s*(?:is|of|around|:|=)?\\s*${NUM}${CUR}`));
+  if (m) { const v = parseKr(m[1]); if (isPlausible(v)) return fuzzy(v); }
+
+  // Bare amount with explicit "kr" suffix — "500 000 kr"
+  m = text.match(new RegExp(`${NUM}\\s*(?:kr|kroner)\\b`));
+  if (m) { const v = parseKr(m[1]); if (isPlausible(v)) return fuzzy(v); }
+
   return null;
 }
 
@@ -3068,6 +3092,7 @@ async function sendMessage() {
           'Show me different models'
         ], el);
       });
+      msgEl.classList.add('has-recs');
       attachStripTo(msgEl);
     } else {
       const surprises = parseEVSurprises(aiText);
