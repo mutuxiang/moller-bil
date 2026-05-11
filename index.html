@@ -417,6 +417,14 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   font-size: 13px; color: var(--muted);
   flex-shrink: 0;
 }
+.inv-img {
+  width: 100%; height: 240px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  display: block;
+  background: var(--cream-200);
+}
 
 /* Inner padding wrapper for inventory cards */
 .inv-body {
@@ -1128,6 +1136,11 @@ const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
 
 const SYSTEM_PROMPT = `You are a friendly car advisor at Møller Bil. Help users find the right car through natural conversation.
 
+IMPORTANT — inventory and stock:
+- You DO have access to Møller Bil's live inventory. When you recommend a model, the user can click "View inventory" in the interface to instantly see real listings in stock.
+- NEVER say you don't have access to inventory, stock, or listings. NEVER direct users to an external website or offer to "connect them with a sales adviser" to check availability.
+- Your job is to recommend the right MODEL. The interface handles showing the actual cars in stock.
+
 Rules:
 - ONE question per reply. NEVER ask two questions in the same reply, even labeled "1." and "2." or chained with "and". If you've covered topic A and want to move to topic B, save B for the next turn.
 - Keep replies short (2-3 sentences max unless recommending).
@@ -1220,6 +1233,121 @@ let topicAnchors = {};
 let msgCounter = 0;
 function nextMsgId() { return 'msg-' + (++msgCounter); }
 
+// ── real inventory cache ──────────────────────────────────────────────────
+const BRUKTBIL_API = '/api/cars';
+let allInventory = [];
+let inventoryLoaded = false;
+let inventoryLoadPromise = null;
+
+async function fetchAllInventory() {
+  try {
+    // First, get the total count
+    const firstResp = await fetch(`${BRUKTBIL_API}?offset=0&limit=15`);
+    if (!firstResp.ok) throw new Error('API unavailable');
+    const firstData = await firstResp.json();
+    const total = firstData.numCars || 0;
+    allInventory = [...(firstData.cars || [])];
+
+    if (total > 15) {
+      const limit = 100;
+      const remaining = Math.ceil((total - 15) / limit);
+      const requests = Array.from({ length: remaining }, (_, i) =>
+        fetch(`${BRUKTBIL_API}?offset=${15 + i * limit}&limit=${limit}`)
+          .then(r => r.ok ? r.json() : { cars: [] })
+          .then(d => d.cars || [])
+          .catch(() => [])
+      );
+      const pages = await Promise.all(requests);
+      allInventory = allInventory.concat(pages.flat());
+    }
+
+    // Keep only unsold cars
+    allInventory = allInventory.filter(c => !c.isSold);
+    inventoryLoaded = true;
+  } catch (e) {
+    // Silently fall back to AI-generated listings
+    inventoryLoaded = true;
+  }
+}
+
+function formatNOK(n) {
+  return Number(n).toLocaleString('nb-NO') + ' kr';
+}
+function formatKm(n) {
+  return Number(n).toLocaleString('nb-NO') + ' km';
+}
+
+function matchInventory(modelStr) {
+  if (!allInventory.length) return [];
+  const query = modelStr.toLowerCase().trim();
+  // Try to split "Brand Model" — first word is brand
+  const spaceIdx = query.indexOf(' ');
+  const qBrand = spaceIdx > -1 ? query.slice(0, spaceIdx) : query;
+  const qModel = spaceIdx > -1 ? query.slice(spaceIdx + 1) : '';
+
+  let matches = allInventory.filter(car => {
+    const b = (car.brand || '').toLowerCase();
+    const m = (car.model || '').toLowerCase();
+    const brandOk = b.includes(qBrand) || qBrand.includes(b);
+    const modelOk = !qModel || m.includes(qModel) || qModel.includes(m);
+    return brandOk && modelOk;
+  });
+
+  // Sort: prefer lower mileage, then lower price
+  matches.sort((a, b) => (a.mileage || 999999) - (b.mileage || 999999));
+  return matches.slice(0, 3);
+}
+
+function generateEdge(rawItems, idx) {
+  if (rawItems.length < 2) return '';
+  const car = rawItems[idx];
+  const others = rawItems.filter((_, i) => i !== idx);
+
+  const prices  = rawItems.map(c => c.price  || Infinity);
+  const miles   = rawItems.map(c => c.mileage || Infinity);
+  const years   = rawItems.map(c => c.modelYear || 0);
+
+  if (car.price === Math.min(...prices)) {
+    const nextLowest = Math.min(...others.map(o => o.price || Infinity));
+    const diff = nextLowest - car.price;
+    if (diff > 10000) return `Best value — ${formatNOK(diff)} less than the others`;
+    return 'Most affordable of the three';
+  }
+  if (car.mileage === Math.min(...miles)) {
+    return `Lowest mileage — only ${formatKm(car.mileage)}`;
+  }
+  if (car.modelYear === Math.max(...years)) {
+    return 'Newest model year in this selection';
+  }
+  if (car.electricRange) {
+    return `${car.electricRange} km electric range`;
+  }
+  if (car.warranty) {
+    return 'Includes remaining manufacturer warranty';
+  }
+  return `Available at ${(car.departmentName || '').replace('Møller Bil ', '')}`;
+}
+
+function apiCarToItem(car) {
+  const image = (car.carImages && car.carImages.length)
+    ? (car.carImages.find(i => i.sortOrder === 0) || car.carImages[0]).normalUrl
+    : null;
+  return {
+    year:     String(car.modelYear || ''),
+    trim:     car.variant || '',
+    mileage:  car.mileage  ? formatKm(car.mileage)  : '',
+    color:    car.color    || '',
+    price:    car.price    ? formatNOK(car.price)    : '',
+    location: (car.departmentName || '').replace('Møller Bil ', ''),
+    fuel:     car.fuel     || '',
+    range:    car.electricRange ? `${car.electricRange} km range` : '',
+    seats:    car.seats    || '',
+    image,
+    edge:     '',
+    _raw:     car,
+  };
+}
+
 // ── filter taxonomy ──────────────────────────────────────────────────────
 const FILTERS = [
   { key: 'usage',  title: 'How you\'ll use it',
@@ -1246,6 +1374,8 @@ function init() {
   buildSidebar();
   renderCollection();
   showOnboarding();
+  // Start fetching real inventory in the background
+  inventoryLoadPromise = fetchAllInventory();
 }
 
 // ── onboarding ─────────────────────────────────────────────────────────────
@@ -2384,61 +2514,77 @@ Rules:
 - Keep the data plausible for the actual model requested.`;
 
 async function loadInventory(model, recData) {
-  const stream = document.getElementById('stream');
-  const msgDiv = appendTypingIndicator();
+  appendTypingIndicator();
   showChipsLoading();
 
   try {
-    const toolPromise = runToolStrip([`Searching ${model} inventory`, 'Checking total cost of ownership', 'Ranking by best match']);
+    const toolPromise = runToolStrip([`Searching ${model} inventory`, 'Filtering by availability', 'Ranking by best match']);
 
-    const resp = await fetch(DEEPSEEK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        max_tokens: 700,
-        stream: false,
-        messages: [
-          { role: 'system', content: INVENTORY_PROMPT },
-          { role: 'user', content: `Show me used inventory for: ${model}` },
-        ],
-      }),
-    });
-    if (!resp.ok) throw new Error('Inventory request failed');
-    const data = await resp.json();
-    const aiRaw = data.choices?.[0]?.message?.content || '';
+    // Wait for inventory cache if still loading (max 12s)
+    if (!inventoryLoaded && inventoryLoadPromise) {
+      await Promise.race([
+        inventoryLoadPromise,
+        new Promise(r => setTimeout(r, 12000)),
+      ]);
+    }
+
+    // Try real inventory first
+    let items = [];
+    let usingRealData = false;
+
+    const rawMatches = matchInventory(model);
+    if (rawMatches.length > 0) {
+      items = rawMatches.map((car, i) => {
+        const it = apiCarToItem(car);
+        it.edge = generateEdge(rawMatches, i);
+        return it;
+      });
+      usingRealData = true;
+    }
+
+    // Fallback: ask AI to generate plausible listings
+    if (!usingRealData) {
+      const resp = await fetch(DEEPSEEK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${DEEPSEEK_API_KEY}` },
+        body: JSON.stringify({
+          model: 'deepseek-chat', max_tokens: 700, stream: false,
+          messages: [
+            { role: 'system', content: INVENTORY_PROMPT },
+            { role: 'user',   content: `Show me used inventory for: ${model}` },
+          ],
+        }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const aiRaw = data.choices?.[0]?.message?.content || '';
+        const aiItems = parseInventory(aiRaw);
+        if (aiItems && aiItems.length) items = aiItems;
+      }
+    }
 
     await toolPromise;
 
     const stripEl = document.getElementById('toolStrip');
-    if (stripEl) {
-      stripEl.removeAttribute('id');
-      stripEl.parentNode && stripEl.parentNode.removeChild(stripEl);
-    }
+    if (stripEl) { stripEl.removeAttribute('id'); stripEl.parentNode?.removeChild(stripEl); }
     removeTypingIndicator();
 
-    const items = parseInventory(aiRaw);
-    if (!items || items.length === 0) {
-      appendAIMessage(`Sorry, I couldn't find inventory for ${model} right now.`, (el) => {
-        if (stripEl) {
-          const c = el.querySelector('.msg-content');
-          c.insertBefore(stripEl, c.firstChild);
-        }
-      });
+    if (!items.length) {
+      appendAIMessage(`Sorry, I couldn't find inventory for ${model} right now.`);
       return;
     }
 
-    const intro = `Here are the ${model}s currently in our inventory:`;
+    const intro = usingRealData
+      ? `Here are the ${model}s currently in stock:`
+      : `Here are the ${model}s currently in our inventory:`;
+
     const msgEl = appendAIMessage(intro, (el) => {
-      renderInventory(items, model, el);
+      renderInventory(items, model, el, usingRealData);
       renderQuickChips([
         'How does mileage affect me?',
         'Can I finance or lease?',
         "What's included in maintenance?",
-        'Book a test drive'
+        'Book a test drive',
       ], el);
     });
     if (stripEl) {
@@ -2467,14 +2613,14 @@ function parseInventory(text) {
   }).filter(it => it.year && it.price);
 }
 
-function renderInventory(items, model, msgEl) {
+function renderInventory(items, model, msgEl, realData = false) {
   const content = msgEl.querySelector('.msg-content');
   const block = document.createElement('div');
   block.className = 'inv-block';
 
   const header = document.createElement('div');
   header.className = 'inv-header';
-  header.textContent = `IN STOCK · ${model}`;
+  header.textContent = `IN STOCK · ${model.toUpperCase()}`;
   block.appendChild(header);
 
   const grid = document.createElement('div');
@@ -2488,8 +2634,26 @@ function renderInventory(items, model, msgEl) {
     const subParts = [it.trim, it.color, it.mileage].filter(Boolean);
     const subHtml = subParts.map(p => `<span>${escapeHtml(p)}</span>`).join('');
 
+    // Image: real photo or striped placeholder
+    const imageHtml = it.image
+      ? `<img class="inv-img" src="${escapeHtml(it.image)}" alt="${escapeHtml(model)}" loading="lazy">`
+      : `<div class="inv-ph">[ ${escapeHtml(model)} ]</div>`;
+
+    // Second stat: location (real) or TCO (AI-generated)
+    const stat2Html = realData
+      ? `<div class="inv-stat">
+           <span class="inv-stat-label">Location</span>
+           <span class="inv-stat-value">${escapeHtml(it.location || 'Møller Bil')}</span>
+           <span class="inv-stat-note">${escapeHtml(it.fuel || '')}${it.range ? ' · ' + it.range : ''}</span>
+         </div>`
+      : `<div class="inv-stat">
+           <span class="inv-stat-label">Per year</span>
+           <span class="inv-stat-value">${escapeHtml(it.tcoYearly || '')}</span>
+           <span class="inv-stat-note">Insurance, service, tires &amp; repairs</span>
+         </div>`;
+
     card.innerHTML = `
-      <div class="inv-ph">[ ${escapeHtml(model)} ]</div>
+      ${imageHtml}
       <div class="inv-body">
         <div class="inv-head">
           <div class="inv-title">${escapeHtml(it.year)} ${escapeHtml(model)}</div>
@@ -2501,11 +2665,7 @@ function renderInventory(items, model, msgEl) {
             <span class="inv-stat-value">${escapeHtml(it.price)}</span>
             <span class="inv-stat-note">Incl. VAT &amp; registration</span>
           </div>
-          <div class="inv-stat">
-            <span class="inv-stat-label">Per year</span>
-            <span class="inv-stat-value">${escapeHtml(it.tcoYearly)}</span>
-            <span class="inv-stat-note">Insurance, service, tires &amp; repairs</span>
-          </div>
+          ${stat2Html}
         </div>
         ${it.edge ? `<div class="inv-edge"><div class="inv-edge-text"><span class="inv-edge-label">Why this one</span>${escapeHtml(it.edge)}</div></div>` : ''}
         <div class="inv-actions">
@@ -2533,7 +2693,13 @@ function renderInventory(items, model, msgEl) {
     });
 
     card.querySelector('.inv-cta').addEventListener('click', () => {
-      showToast(`Detail page for ${id} — coming soon`);
+      // If real data, open the bruktbil.no listing page
+      const rawId = it._raw?.id;
+      if (rawId) {
+        window.open(`https://www.bruktbil.no/bil/${rawId}`, '_blank');
+      } else {
+        showToast(`Detail page for ${id} — coming soon`);
+      }
     });
 
     grid.appendChild(card);
