@@ -328,7 +328,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   background: var(--cream-100);
   display: flex; flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   transition: border-color 220ms var(--ease-out), box-shadow 220ms var(--ease-out);
 }
 .rec:hover {
@@ -343,16 +343,30 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 }
 
 /* Image placeholder — short side doubled (120→240px) */
-.rec-ph {
+.rec-ph, .rec-img {
   width: 100%; height: 240px;
+  border-bottom: 1px solid var(--border);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  flex-shrink: 0;
+  position: relative;
+  display: block;
+}
+.rec-ph {
   background:
     repeating-linear-gradient(135deg, rgba(0,25,70,.04) 0 8px, rgba(0,0,0,0) 8px 16px),
     var(--cream-200);
-  border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
   font-size: 13px; color: var(--muted); letter-spacing: .02em;
-  flex-shrink: 0;
-  position: relative;
+  text-align: center; padding: 0 24px;
+}
+.rec-img { object-fit: cover; background: var(--cream-200); }
+.rec-ph.rec-ph-empty {
+  background: var(--cream-200);
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+  letter-spacing: 0;
 }
 
 /* Card body — all content below image */
@@ -396,7 +410,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   border: 1px solid var(--border); border-radius: var(--radius-lg);
   background: var(--cream-100);
   display: flex; flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   transition: border-color 220ms var(--ease-out), box-shadow 220ms var(--ease-out);
 }
 .inv-card:hover {
@@ -408,22 +422,23 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   background: var(--bg-surface);
   order: -1;
 }
-.inv-ph {
+.inv-ph, .inv-img {
   width: 100%; height: 240px;
+  border-bottom: 1px solid var(--border);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  flex-shrink: 0;
+  display: block;
+}
+.inv-ph {
   background:
     repeating-linear-gradient(135deg, rgba(0,25,70,.04) 0 8px, rgba(0,0,0,0) 8px 16px),
     var(--cream-200);
-  border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
   font-size: 13px; color: var(--muted);
-  flex-shrink: 0;
 }
 .inv-img {
-  width: 100%; height: 240px;
   object-fit: cover;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  display: block;
   background: var(--cream-200);
 }
 
@@ -1084,12 +1099,21 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 /* error toast */
 .toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  background: #ef4444; color: #fff; font-size: 13.5px; padding: 10px 18px;
-  border-radius: 8px; z-index: 999; opacity: 0; transition: opacity .3s;
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translate(-50%, 16px);
+  background: var(--moller-blue); color: var(--cream-100);
+  font: 400 13.5px/1.4 "Moller", sans-serif;
+  padding: 12px 20px;
+  border-radius: 10px; z-index: 999; opacity: 0;
+  transition: opacity 320ms var(--ease-out), transform 320ms var(--ease-out);
   pointer-events: none;
+  box-shadow: 0 10px 28px rgba(0,25,70,0.22);
+  max-width: 380px;
 }
-.toast.show { opacity: 1; }
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
 </style>
 </head>
 <body>
@@ -2575,8 +2599,29 @@ function renderRecs(recs, msgEl) {
       ? `<span class="rec-badge">${escapeHtml(badge)}</span>`
       : '';
 
+    // Try to pull a real image from our inventory cache for this model
+    const matches = inventoryLoaded ? matchInventory(model) : [];
+    const heroImage = matches.length
+      ? ((matches[0].carImages || []).find(i => i.sortOrder === 0) || (matches[0].carImages || [])[0])?.normalUrl
+      : null;
+    const hasInventory = matches.length > 0;
+
+    let imageHtml;
+    if (heroImage) {
+      imageHtml = `<img class="rec-img" src="${escapeHtml(heroImage)}" alt="${escapeHtml(model)}" loading="lazy">`;
+    } else if (!inventoryLoaded) {
+      // Inventory still fetching — show the striped placeholder
+      imageHtml = `<div class="rec-ph">[ ${escapeHtml(model)} ]</div>`;
+    } else {
+      imageHtml = `<div class="rec-ph rec-ph-empty">No ${escapeHtml(model)} in stock right now — ask me for another model</div>`;
+    }
+
+    const ctaHtml = (inventoryLoaded && !hasInventory)
+      ? `<button class="rec-inv" disabled>Not in stock</button>`
+      : `<button class="rec-inv">View inventory</button>`;
+
     card.innerHTML = `
-      <div class="rec-ph">[ car image ]</div>
+      ${imageHtml}
       <div class="rec-body">
         ${badgeHtml}
         <div class="rec-title">
@@ -2586,21 +2631,23 @@ function renderRecs(recs, msgEl) {
         ${specsHtml}
         ${highlightsHtml}
         <div class="rec-actions">
-          <button class="rec-inv">View inventory</button>
+          ${ctaHtml}
         </div>
       </div>
     `;
 
     const invBtn = card.querySelector('.rec-inv');
-    invBtn.addEventListener('click', () => {
-      if (invBtn.disabled) return;
-      invBtn.disabled = true;
-      invBtn.textContent = 'Loading…';
-      loadInventory(model, r).finally(() => {
-        invBtn.disabled = false;
-        invBtn.textContent = 'View inventory';
+    if (invBtn && !invBtn.disabled) {
+      invBtn.addEventListener('click', () => {
+        if (invBtn.disabled) return;
+        invBtn.disabled = true;
+        invBtn.textContent = 'Loading…';
+        loadInventory(model, r).finally(() => {
+          invBtn.disabled = false;
+          invBtn.textContent = 'View inventory';
+        });
       });
-    });
+    }
 
     recsDiv.appendChild(card);
   });
