@@ -388,7 +388,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   letter-spacing: .03em;
 }
 .inv-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
+  display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 16px; margin-top: 4px;
 }
 .inv-card {
@@ -1328,6 +1328,23 @@ function generateEdge(rawItems, idx) {
   return `Available at ${(car.departmentName || '').replace('Møller Bil ', '')}`;
 }
 
+function cleanLocation(dept) {
+  if (!dept) return '';
+  // Handle formats like:
+  //   "Møller Bil Stavanger"             → "Stavanger"
+  //   "Tønsberg. En avdeling i Møller Bil" → "Tønsberg"
+  //   "Stavanger - Møller Bil"           → "Stavanger"
+  let s = dept
+    .replace(/Møller Bil/gi, '')
+    .replace(/En avdeling i/gi, '')
+    .replace(/[.\-–—,]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  // Take the first word (the city)
+  const firstWord = s.split(' ')[0];
+  return firstWord || dept;
+}
+
 function apiCarToItem(car) {
   const image = (car.carImages && car.carImages.length)
     ? (car.carImages.find(i => i.sortOrder === 0) || car.carImages[0]).normalUrl
@@ -1338,7 +1355,7 @@ function apiCarToItem(car) {
     mileage:  car.mileage  ? formatKm(car.mileage)  : '',
     color:    car.color    || '',
     price:    car.price    ? formatNOK(car.price)    : '',
-    location: (car.departmentName || '').replace('Møller Bil ', ''),
+    location: cleanLocation(car.departmentName),
     fuel:     car.fuel     || '',
     range:    car.electricRange ? `${car.electricRange} km range` : '',
     seats:    car.seats    || '',
