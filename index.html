@@ -427,6 +427,67 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   background: var(--cream-200);
 }
 
+/* ── glossary terms with hover tooltip ── */
+.term {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dotted rgba(0,25,70,0.32);
+}
+.term::after {
+  content: '?';
+  display: inline-block;
+  font-size: 0.65em;
+  vertical-align: super;
+  color: var(--muted);
+  margin-left: 1px;
+  font-weight: 500;
+  line-height: 1;
+}
+.term-tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--moller-blue);
+  color: var(--cream-100);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  width: max-content;
+  max-width: 260px;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 180ms var(--ease-out), visibility 180ms var(--ease-out);
+  z-index: 100;
+  white-space: normal;
+}
+.term-tip::after {
+  content: '';
+  position: absolute;
+  top: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--moller-blue);
+}
+.term:hover .term-tip,
+.term:focus .term-tip { opacity: 1; visibility: visible; }
+
+/* ── collection-button flash on Save ── */
+@keyframes btnFlash {
+  0%   { transform: scale(1);   box-shadow: 0 0 0 0 rgba(225,100,75,0.45); }
+  30%  { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(225,100,75,0); }
+  100% { transform: scale(1); }
+}
+.btn-collection.flash {
+  animation: btnFlash 1s var(--ease-out);
+  border-color: var(--salmon) !important;
+  color: var(--salmon) !important;
+}
+
 /* Inner padding wrapper for inventory cards */
 .inv-body {
   padding: 14px 16px 16px;
@@ -1202,12 +1263,32 @@ TOOLS:["step 1","step 2"]
   - User sends gibberish → TOOLS:["Parsing your message"]
 - TOOLS block must appear BEFORE any text, on its own line. Then your normal reply follows.
 
-CRITICAL — SUGGESTIONS ARE MANDATORY AND MUST MATCH YOUR QUESTION:
-Every single reply (except RECOMMENDATIONS) MUST end with a SUGGESTIONS block. This is non-negotiable. NEVER omit this block. Format:
+CRITICAL — SUGGESTIONS ARE MANDATORY AND MUST DIRECTLY ANSWER YOUR QUESTION:
+Every single reply (except RECOMMENDATIONS and SHOW_INVENTORY) MUST end with a SUGGESTIONS block. Format:
 SUGGESTIONS:["option 1","option 2","option 3","option 4"]
-- Each option must be max 6 words, written as something a user might naturally say.
-- Suggestions MUST be plausible direct answers to the EXACT question you just asked. If you asked about fuel type, suggestions must be fuel options ("Electric", "Hybrid", "Petrol or diesel", "Not sure yet"). If you asked about must-have features, suggestions must be features ("Tow hitch", "Roof rails", "Heated seats", "No specific must-haves"). NEVER mix topics — e.g. don't show budget chips when you asked about fuel.
-- Make them concrete and useful — not generic ("Tell me more" is too vague). Examples: "Yes, that's right", "Show me hybrids instead", "Around 400 000 kr", "Family of 4".
+- Each option max 6 words, written as something a user would literally say.
+- BEFORE writing your suggestions, ask yourself: "Identify the SINGLE main question in my reply. If a user tapped this chip, would it be a sensible literal answer to that question?" If not, rewrite the chip.
+
+❌ NEVER do these mismatches:
+- Reply asks about budget → BAD chips: ["Family car","Going electric","I drive in the city","Show me SUVs"] (these answer different topics, not budget)
+- Reply asks "How many seats?" → BAD chips: ["Tesla Model Y","Around 500k","I road-trip often","Hybrid please"] (none answer seat count)
+- Reply asks about fuel → BAD chips: ["Tow hitch","Need 7 seats","I have kids","Tell me more"] (these answer features/seats/family, not fuel)
+
+✅ Always do this — chips literally answer the question:
+- Reply asks "What's your budget?" → ["Under 350 000 kr","Around 500 000 kr","500 000 – 700 000 kr","Flexible on budget"]
+- Reply asks "How many seats?" → ["Just me or one passenger","Family of 4","Need 6 or 7 seats","Not sure yet"]
+- Reply asks about fuel → ["Electric","Hybrid","Petrol or diesel","Not sure yet"]
+- Reply asks about must-haves → ["Tow hitch","Roof rails","Heated seats","No specific must-haves"]
+
+If your reply has TWO topics (acknowledging + a new question), the chips must answer THE NEW QUESTION, not the previous topic.
+
+TONE — sound like a knowledgeable salesperson, not a survey form:
+- Before asking the next question, add ONE short sentence of context — briefly explain what the options mean, why it matters, or share a quick relevant insight. This makes you feel like an advisor, not a checkbox.
+- Examples of the right tone:
+  - Before fuel: "Electric is cheapest to run if you can charge at home, hybrids are a flexible middle ground, and petrol is simplest for long road trips. What are you leaning toward?"
+  - Before budget: "Used Norwegian cars span a wide range — a solid family car typically lands between 250 000 and 600 000 kr. Roughly what budget feels right for you?"
+  - Before seats: "Most buyers need 5, but if you've got two car seats and a stroller you'll appreciate a larger boot. How many people need to fit comfortably?"
+- Keep it ONE sentence of context, then ONE question. Don't lecture, don't sell hard.
 
 When recommending, also start with a TOOLS block, then a brief intro text, then RECOMMENDATIONS. Recommend 2-3 MODELS (not specific listings) max. The user will then click "View inventory" on a model they like to see the actual used cars in stock. Each must follow this exact format:
 RECOMMENDATIONS:
@@ -1270,8 +1351,20 @@ async function fetchAllInventory() {
       allInventory = allInventory.concat(pages.flat());
     }
 
-    // Keep only unsold cars
-    allInventory = allInventory.filter(c => !c.isSold);
+    // Match what's publicly visible on bruktbil.no:
+    // - exclude sold cars
+    // - exclude cars currently abroad
+    // - exclude cars with a future "availableFromDate"
+    const now = Date.now();
+    allInventory = allInventory.filter(c => {
+      if (c.isSold) return false;
+      if (c.isVehicleAbroad) return false;
+      if (c.availableFromDate) {
+        const t = Date.parse(c.availableFromDate);
+        if (!isNaN(t) && t > now) return false;
+      }
+      return true;
+    });
     inventoryLoaded = true;
   } catch (e) {
     // Silently fall back to AI-generated listings
@@ -2466,7 +2559,7 @@ function renderRecs(recs, msgEl) {
       ? `<div class="rec-specs">${r.specs.map(s => `
           <div class="rec-spec">
             <span class="rec-spec-label">${escapeHtml(cleanField(s.label))}</span>
-            <span class="rec-spec-value">${escapeHtml(cleanField(s.value))}</span>
+            <span class="rec-spec-value">${enrichTerms(escapeHtml(cleanField(s.value)))}</span>
           </div>
         `).join('')}</div>`
       : '';
@@ -2659,7 +2752,7 @@ function renderInventory(items, model, msgEl, realData = false) {
 
     const id = `${model} · ${it.year} ${it.trim || ''}`.trim();
     const subParts = [it.trim, it.color, it.mileage].filter(Boolean);
-    const subHtml = subParts.map(p => `<span>${escapeHtml(p)}</span>`).join('');
+    const subHtml = subParts.map(p => `<span>${enrichTerms(escapeHtml(p))}</span>`).join('');
 
     // Image: real photo or striped placeholder
     const imageHtml = it.image
@@ -2671,7 +2764,7 @@ function renderInventory(items, model, msgEl, realData = false) {
       ? `<div class="inv-stat">
            <span class="inv-stat-label">Location</span>
            <span class="inv-stat-value">${escapeHtml(it.location || 'Møller Bil')}</span>
-           <span class="inv-stat-note">${escapeHtml(it.fuel || '')}${it.range ? ' · ' + it.range : ''}</span>
+           <span class="inv-stat-note">${enrichTerms(escapeHtml(it.fuel || ''))}${it.range ? ' · ' + enrichTerms(escapeHtml(it.range)) : ''}</span>
          </div>`
       : `<div class="inv-stat">
            <span class="inv-stat-label">Per year</span>
@@ -2743,6 +2836,18 @@ function pinCar(rec) {
   if (pinnedCars.some(c => c.model === model)) return;
   pinnedCars.push({ model, year: cleanField(rec.year), badge: cleanField(rec.badge) });
   renderCollection();
+  flashCollectionButton();
+  showToast(`Saved — open “Your Collection” at the top right to view it`);
+}
+
+function flashCollectionButton() {
+  const btn = document.getElementById('btnCollection');
+  if (!btn) return;
+  btn.classList.remove('flash');
+  // force reflow so the animation restarts each save
+  void btn.offsetWidth;
+  btn.classList.add('flash');
+  setTimeout(() => btn.classList.remove('flash'), 1100);
 }
 
 function unpinCar(model) {
@@ -2985,8 +3090,51 @@ function defaultSuggestions(aiText) {
 }
 
 // ── utils ─────────────────────────────────────────────────────────────────
+// ── car-jargon glossary (hover '?' tooltip) ───────────────────────────────
+const GLOSSARY = {
+  'AWD':   'All-Wheel Drive — power goes to all four wheels (better grip in snow, gravel and slippery roads).',
+  'FWD':   'Front-Wheel Drive — only the front wheels are driven. Efficient and good in most conditions.',
+  'RWD':   'Rear-Wheel Drive — only the rear wheels are driven. Sportier feel, slightly less grip in snow.',
+  'WLTP':  'Worldwide Light vehicles Test Procedure — the EU standard for measuring range and fuel economy.',
+  'kWh':   'Kilowatt-hour — the unit for battery capacity. Bigger kWh = more electric range.',
+  'kW':    'Kilowatt — the unit for charging speed (DC fast charging). Higher kW = faster charge.',
+  'V2L':   'Vehicle-to-Load — your car can power external devices (kettle, laptop, projector) through a regular plug.',
+  'PHEV':  'Plug-in Hybrid — has both an electric motor and a petrol engine, and can be charged externally for short electric trips.',
+  'BEV':   'Battery Electric Vehicle — fully electric, no combustion engine.',
+  'OTA':   'Over-the-Air — software updates installed wirelessly, no garage visit needed.',
+  'TCO':   'Total Cost of Ownership — purchase price plus running costs (fuel, insurance, service, tires).',
+  'hk':    'Hestekrefter — Norwegian for horsepower. Engine output.',
+  'hp':    'Horsepower — engine output. 1 hk ≈ 1 hp.',
+  'NCAP':  'European New Car Assessment Programme — independent crash-safety rating (out of 5 stars).',
+  'DC':    'Direct Current — high-power fast charging at public stations.',
+  'AC':    'Alternating Current — slower charging from home outlets or wall boxes.',
+};
+// pre-build the regex once
+const _GLOSSARY_RE = new RegExp(
+  '\\b(' + Object.keys(GLOSSARY)
+    .map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .sort((a, b) => b.length - a.length)  // longer terms first so PHEV beats EV etc.
+    .join('|') + ')\\b',
+  'g'
+);
+
+function enrichTerms(html) {
+  if (!html) return html;
+  // Don't double-wrap and don't touch attribute text — split on tags, only replace in text parts.
+  return html.split(/(<[^>]+>)/).map(part => {
+    if (part.startsWith('<')) return part;
+    return part.replace(_GLOSSARY_RE, (match) => {
+      // Look up case-sensitive first, then case-insensitive
+      const key = GLOSSARY[match] ? match : Object.keys(GLOSSARY).find(k => k.toLowerCase() === match.toLowerCase());
+      if (!key) return match;
+      return `<span class="term" tabindex="0">${match}<span class="term-tip">${escapeHtml(GLOSSARY[key])}</span></span>`;
+    });
+  }).join('');
+}
+
 function formatText(text) {
-  return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  let html = escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  return enrichTerms(html);
 }
 
 function escapeHtml(str) {
