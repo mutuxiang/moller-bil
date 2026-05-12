@@ -791,23 +791,36 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .quick-reply-label.is-update { color: var(--salmon); }
 #suggestionsBar.quick-chips-diff {
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   animation: none;
 }
 .diff-row {
-  display: flex; flex-wrap: wrap; align-items: center;
-  row-gap: 6px; column-gap: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--cream-200);
+  border: 1px solid var(--border);
+  border-radius: 10px;
 }
 .diff-label {
-  font: 500 12px/1 "Moller", sans-serif;
-  letter-spacing: .04em;
+  font: 500 11px/1 "Moller", sans-serif;
+  letter-spacing: .09em;
   text-transform: uppercase;
   color: var(--eyebrow);
-  min-width: 110px;
+  flex-shrink: 0;
   margin-right: 4px;
 }
+.diff-tags-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
 .diff-tag {
-  padding: 4px 11px; border-radius: 999px;
+  padding: 5px 12px;
+  border-radius: 6px;
   font: 400 13px/1.3 "Moller", sans-serif;
   border: 1px solid;
   white-space: nowrap;
@@ -815,19 +828,21 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .diff-tag-old {
   color: var(--muted);
   border-color: rgba(0,25,70,0.20);
-  background: transparent;
+  background: var(--cream-100);
   text-decoration: line-through;
-  text-decoration-color: rgba(0,25,70,0.4);
+  text-decoration-color: rgba(0,25,70,0.45);
 }
 .diff-tag-new {
   color: var(--cream-100);
   background: var(--salmon);
   border-color: var(--salmon);
+  font-weight: 500;
 }
 .diff-arrow {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 16px;
   margin: 0 2px;
+  flex-shrink: 0;
 }
 
 /* Toggle that reveals the editing chips — quiet text link, NO arrow */
@@ -1674,7 +1689,7 @@ const ONBOARDING_STEPS = [
   {
     target: '.side',
     title: 'Your profile, live',
-    body: "This is the most important panel — it shows what I've learned about you so far. Confirmed answers move to the top, and the things still to discuss stay below. You don't need to fill everything — I can recommend cars with just a few key areas confirmed.",
+    body: "This panel shows what I've learned about you so far. Confirmed answers move to the top, and the things still to discuss stay below. You don't need to fill everything — I can recommend cars with just a few key areas confirmed.",
     pos: 'left',
   },
   {
@@ -2271,7 +2286,7 @@ function sameSorted(a, b) {
 }
 
 // Diff-based message that reads like a natural conversational update.
-// Each changed group gets a "now X (was Y)" line so both old and new state are clear.
+// Format: "I want to change X from A to B" — natural for both AI and user to understand.
 function buildSidebarMessage() {
   if (!prevSnapshot) return buildLookingForMessage();
 
@@ -2289,13 +2304,17 @@ function buildSidebarMessage() {
     const curr = optsByGroup(activeChips, gKey);
     if (sameSorted(prev, curr)) return;
 
-    const label   = getGroupLabel(gKey);
+    const label   = getGroupLabel(gKey).toLowerCase();
     const prevStr = prev.length ? prev.join(' or ') : 'nothing';
     const currStr = curr.length ? curr.join(' or ') : 'nothing';
 
-    if (prev.length === 0)      lines.push(`${label}: ${currStr}`);
-    else if (curr.length === 0) lines.push(`${label}: clearing (was ${prevStr})`);
-    else                        lines.push(`${label}: now ${currStr} (was ${prevStr})`);
+    if (prev.length === 0) {
+      lines.push(`set my ${label} to ${currStr}`);
+    } else if (curr.length === 0) {
+      lines.push(`clear my ${label} (was ${prevStr})`);
+    } else {
+      lines.push(`change my ${label} from ${prevStr} to ${currStr}`);
+    }
   });
 
   // Budget
@@ -2304,12 +2323,17 @@ function buildSidebarMessage() {
   if (sMin && sMax && prevSnapshot.budgetMin != null) {
     const lo = parseInt(sMin.value), hi = parseInt(sMax.value);
     if (lo !== prevSnapshot.budgetMin || hi !== prevSnapshot.budgetMax) {
-      lines.push(`Budget: now ${formatNOK(lo)} – ${formatNOK(hi)} (was ${formatNOK(prevSnapshot.budgetMin)} – ${formatNOK(prevSnapshot.budgetMax)})`);
+      lines.push(`change my budget from ${formatNOK(prevSnapshot.budgetMin)} – ${formatNOK(prevSnapshot.budgetMax)} to ${formatNOK(lo)} – ${formatNOK(hi)}`);
     }
   }
 
   if (!lines.length) return '';
-  return `Quick update to my profile:\n• ${lines.join('\n• ')}`;
+
+  // Single change: smooth one-liner
+  if (lines.length === 1) return `I want to ${lines[0]}.`;
+
+  // Multiple changes: header + bullet list
+  return `I want to update a few things:\n• ${lines.join('\n• ')}.`;
 }
 
 function pushSidebarPreviewToInput() {
@@ -2321,7 +2345,11 @@ function pushSidebarPreviewToInput() {
     !current ||
     current.startsWith("I'm looking for:") ||
     current.startsWith("Updating my profile") ||
-    current.startsWith("Quick update to my profile");
+    current.startsWith("Quick update to my profile") ||
+    current.startsWith("I want to update") ||
+    current.startsWith("I want to change") ||
+    current.startsWith("I want to set") ||
+    current.startsWith("I want to clear");
   if (isPreview) {
     input.value = msg;
     if (typeof autoGrow === 'function') autoGrow(input);
@@ -2615,7 +2643,11 @@ function resetFilters() {
   if (input && (
     input.value.startsWith("I'm looking for:") ||
     input.value.startsWith("Updating my profile") ||
-    input.value.startsWith("Quick update to my profile")
+    input.value.startsWith("Quick update to my profile") ||
+    input.value.startsWith("I want to update") ||
+    input.value.startsWith("I want to change") ||
+    input.value.startsWith("I want to set") ||
+    input.value.startsWith("I want to clear")
   )) {
     input.value = '';
     updateSend();
@@ -2867,26 +2899,34 @@ function showUpdateDiff() {
     lbl.textContent = gLabel;
     row.appendChild(lbl);
 
+    // Old tags grouped together
+    const oldGrp = document.createElement('span');
+    oldGrp.className = 'diff-tags-group';
     const oldList = prev.length ? prev : ['—'];
     oldList.forEach(p => {
       const t = document.createElement('span');
       t.className = 'diff-tag diff-tag-old';
       t.textContent = p;
-      row.appendChild(t);
+      oldGrp.appendChild(t);
     });
+    row.appendChild(oldGrp);
 
     const arrow = document.createElement('span');
     arrow.className = 'diff-arrow';
     arrow.textContent = '→';
     row.appendChild(arrow);
 
+    // New tags grouped together
+    const newGrp = document.createElement('span');
+    newGrp.className = 'diff-tags-group';
     const newList = curr.length ? curr : ['—'];
     newList.forEach(c => {
       const t = document.createElement('span');
       t.className = 'diff-tag diff-tag-new';
       t.textContent = c;
-      row.appendChild(t);
+      newGrp.appendChild(t);
     });
+    row.appendChild(newGrp);
 
     bar.appendChild(row);
   });
