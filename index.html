@@ -1039,7 +1039,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .ob-dot { width:6px; height:6px; border-radius:50%; background:rgba(0,25,70,0.16); }
 .ob-dot.active { background:var(--accent); }
 .ob-step-label { font-size:10px; color:var(--muted); letter-spacing:.07em; text-transform:uppercase; margin-bottom:6px; }
-.ob-title { font-size:15px; font-weight:600; color:var(--ink); margin-bottom:8px; line-height:1.3; }
+.ob-title { font-size:15px; font-weight:500; color:var(--ink); margin-bottom:8px; line-height:1.35; }
 .ob-body { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:18px; }
 .ob-actions { display:flex; justify-content:space-between; align-items:center; }
 .ob-skip { font-size:11.5px; color:var(--muted); cursor:pointer; background:none; border:none; font-family:inherit; }
@@ -1256,7 +1256,7 @@ C) Budget range
 D) Fuel type preference (petrol, diesel, hybrid, electric)
 E) Brand preference (OPTIONAL — Audi, BMW, Volvo, Toyota, Tesla, Volkswagen, Hyundai, Kia, Peugeot, Renault, Mercedes, Ford, etc., or "no preference / open to anything")
 F) Must-have features (e.g. tow hitch, sunroof, heated seats, AWD)
-G) Final-detail check — ONE wrap-up question right before recommendations (see "Final-detail check" rule below).
+G) Personal preferences — ONE wrap-up question right before recommendations covering subjective/lifestyle preferences (see "Personal preferences" rule below). This is DIFFERENT from area F (functional must-haves) and DIFFERENT from the EV surprises (cutting-edge features). G is about personal taste and ownership-cost concerns.
 
 Rules for the flow:
 - Ask about whatever is the natural next topic given what the user just said. Follow their lead — if they bring up budget, dive into budget; if they mention kids, explore passengers/safety.
@@ -1267,15 +1267,16 @@ Rules for the flow:
 - If the user mentions a specific brand at any point ("I had a Toyota before", "I love Volvo's safety"), treat brand as covered and skip the question.
 - Once you have info on areas A, B, C, D, F (E is optional), ask Area G (Final-detail check) ONCE, then recommend on the next turn.
 
-FINAL-DETAIL CHECK (Area G — ask exactly ONCE, right before recommending):
-- Phrase it as a friendly "one last quick thing before I show you matches…"
-- Pick the SINGLE most relevant topic from this list, based on what's been discussed so far:
-  • Hidden running costs — "Anything else on your radar — like parking, toll roads, or insurance bands that might matter to you?"
-  • Color preference — "Any colors you'd love or absolutely avoid? Helps me narrow the shortlist."
-  • Trade-in — "Will you be trading in a current car as part of the deal?"
-  • Comfort/luxury extras — "Anything that would feel like a real treat — panoramic roof, premium sound, ventilated seats?"
-  • Test-drive preference — "How important is it that the car's at a dealership near you for a test drive?"
-- ONE wrap-up question only. Then on the next user reply, emit RECOMMENDATIONS regardless of their answer (just acknowledge it briefly in the intro).
+PERSONAL PREFERENCES (Area G — ask exactly ONCE, right before recommending):
+- This is the LAST question before recommendations. It comes AFTER the must-haves question (F, which included the EV_SURPRISES panel) and is CLEARLY different from it:
+  • Area F asked about FUNCTIONAL features (tow hitch, AWD, sunroof, heated seats) and surfaced cutting-edge EV capabilities the user may not know exist.
+  • Area G asks about SUBJECTIVE / LIFESTYLE preferences — things that don't show up on a spec sheet: looks, ownership-cost worries, life situation around the purchase.
+- Phrase it as ONE combined wrap-up question that bundles several personal touches. Example:
+  "One last quick thing before I pull up your matches — any **personal preferences** I should know? Things like preferred (or no-go) colors, ownership costs you're watching (parking, tolls, insurance), trade-in plans, or comfort extras you'd love."
+- Keep it open — invite them to mention whichever of those topics applies, or say "no specific preferences" if none.
+- SUGGESTIONS for this question should be concrete personal-preference answers, e.g.:
+  ["Just no bright colors please", "Trade-in my current car", "Worried about insurance band", "Want premium audio", "No specific preferences"]
+- After the user replies, emit RECOMMENDATIONS on the next turn (acknowledge their personal preferences briefly in the intro sentence).
 
 Handling user input issues:
 - If the user's message looks like a typo, garbled text, or they seem confused (e.g. random characters, an obvious misspelling of a car model, an unrealistic number like "5 kr budget" or "200 passengers"), respond gently with an "Oops, looks like something might have gone wrong there — did you mean…?" tone. Stay warm and helpful, never make them feel bad. Then suggest 2-3 likely interpretations as SUGGESTIONS so they can tap to clarify.
@@ -1371,6 +1372,30 @@ let topicAnchors = {};
 // monotonic counter for assigning ids to chat messages
 let msgCounter = 0;
 function nextMsgId() { return 'msg-' + (++msgCounter); }
+
+// ── conversation mode (shopping vs learning) ──────────────────────────────
+// 'shopping' = looking for a car → sidebar syncs with user input
+// 'learning' = just curious → sidebar stays blank, AI acts as a tutor
+let conversationMode = 'shopping';
+
+function detectMode(userText) {
+  const t = userText.toLowerCase();
+  const userMsgCount = messages.filter(m => m.role === 'user').length;
+  const isFirst = userMsgCount === 0; // about to be appended
+
+  if (isFirst) {
+    if (/\b(just\s+learning|learning\s+for\s+now|just\s+exploring|just\s+browsing|just\s+looking|just\s+curious|research|tutor|teach\s+me|learn\s+(more|about)|how\s+(buying|car-buying|cars))\b/.test(t)) {
+      conversationMode = 'learning';
+    } else {
+      conversationMode = 'shopping';
+    }
+  } else if (conversationMode === 'learning') {
+    // Allow switching back to shopping when intent is clear
+    if (/\b(find\s+(me|a|my|the)|help\s+me\s+find|let'?s\s+find|let'?s\s+start\s+looking|show\s+me\s+(cars|some\s+matches|matches)|now\s+find|help\s+me\s+(shop|buy|choose)|i\s+want\s+to\s+buy|i('m|am)\s+ready|ready\s+to\s+(buy|shop|find)|i\s+need\s+a\s+car)\b/.test(t)) {
+      conversationMode = 'shopping';
+    }
+  }
+}
 
 // ── real inventory cache ──────────────────────────────────────────────────
 const BRUKTBIL_API = '/api/cars';
@@ -1694,6 +1719,76 @@ function finishOnboarding() {
     setTimeout(() => el.remove(), 260);
   });
   try { localStorage.setItem('mollerTourSeen', '1'); } catch (e) {}
+}
+
+// ── filter mini-tour: shown ONCE when the sidebar first gets a confirmed item ─
+let filterTourShown = (() => {
+  try { return !!localStorage.getItem('mollerFilterTourSeen'); } catch (e) { return false; }
+})();
+
+function maybeShowFilterTour() {
+  if (filterTourShown) return;
+  // Don't overlap the main onboarding tour
+  if (document.querySelector('.ob-card')) return;
+  const target = document.querySelector('.filter-group[data-state="confirmed"]');
+  if (!target) return;
+  filterTourShown = true;
+  try { localStorage.setItem('mollerFilterTourSeen', '1'); } catch (e) {}
+  // give the buildSidebar layout a frame to settle
+  setTimeout(() => showFilterTour(target), 250);
+}
+
+function showFilterTour(target) {
+  const rect = target.getBoundingClientRect();
+  const cardW = 320;
+  const gap = 18;
+
+  // Highlight ring around the captured filter group
+  const overlay = document.createElement('div');
+  overlay.className = 'ob-overlay';
+  document.body.appendChild(overlay);
+
+  const ring = document.createElement('div');
+  ring.style.cssText = `
+    position:fixed;
+    top:${rect.top - 6}px; left:${rect.left - 8}px;
+    width:${rect.width + 16}px; height:${rect.height + 12}px;
+    border:2px solid var(--accent); border-radius:10px;
+    box-shadow:0 0 0 9999px rgba(0,25,70,0.30);
+    pointer-events:none; z-index:301;
+    transition: top .25s var(--ease-out);
+  `;
+  overlay.appendChild(ring);
+
+  const card = document.createElement('div');
+  card.className = 'ob-card';
+  // Place card to the LEFT of the sidebar (sidebar is on the right)
+  let left = rect.left - cardW - gap;
+  let top  = Math.max(20, rect.top - 12);
+  if (left < 20) left = 20;
+  card.style.cssText = `top:${top}px; left:${left}px; width:${cardW}px;`;
+  card.innerHTML = `
+    <div class="ob-step-label">First answer captured</div>
+    <div class="ob-title">Three controls to know</div>
+    <div class="ob-body" style="text-align:left;">
+      <div style="margin-bottom:8px;"><b style="color:var(--ink);font-weight:500;">Change</b> — tap to manually adjust what I captured (e.g. tweak your budget by 50 000 kr).</div>
+      <div style="margin-bottom:8px;"><b style="color:var(--ink);font-weight:500;">Show in chat</b> — jumps back to the message where this was confirmed.</div>
+      <div><b style="color:var(--ink);font-weight:500;">Apply</b> — appears after you edit something, so I know your update is intentional.</div>
+    </div>
+    <div class="ob-actions">
+      <span></span>
+      <button class="ob-next" onclick="closeFilterTour()">Got it</button>
+    </div>
+  `;
+  document.body.appendChild(card);
+}
+
+function closeFilterTour() {
+  document.querySelectorAll('.ob-overlay, .ob-card').forEach(el => {
+    el.style.transition = 'opacity .25s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 260);
+  });
 }
 
 // ── topic ↔ filter group bridge ──────────────────────────────────────────
@@ -3058,13 +3153,19 @@ async function sendMessage() {
     : text;
 
   appendUserMessage(text, tokens);
-  syncFiltersFromText(combined);
+  detectMode(combined);
+  if (conversationMode === 'shopping') {
+    syncFiltersFromText(combined);
+  }
   input.value = '';
   autoGrow(input);
   activeTokens = [];
   renderTokens();
   buildSidebar();
   updateSend();
+  // Once the sidebar has its first confirmed item, show a one-time mini-tour
+  // explaining the Change / Show in chat / Apply controls.
+  maybeShowFilterTour();
 
   messages.push({ role: 'user', content: combined });
   isStreaming = true;
