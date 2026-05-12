@@ -443,6 +443,28 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   background: var(--cream-200);
 }
 
+/* ── AI message bullet card ── */
+.msg-notes {
+  display: flex; flex-direction: column; gap: 10px;
+  margin: 10px 0;
+  padding: 14px 16px;
+  background: var(--cream-200);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.msg-note {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: 14px; line-height: 1.5; color: var(--ink);
+}
+.msg-note-icon {
+  flex-shrink: 0;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--moller-blue); color: var(--cream-100);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500; margin-top: 1px;
+}
+.msg-note-text { flex: 1; }
+
 /* ── glossary terms with hover tooltip ── */
 .term {
   position: relative;
@@ -747,16 +769,23 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .filter-value.placeholder {
   font-size: 15px; color: var(--muted); font-weight: 400;
 }
-/* Group has un-sent manual edits — show value + chips in salmon */
+/* Group has un-sent manual edits — value text + status pill turn salmon */
 .filter-group.dirty .filter-value { color: var(--salmon); }
-.filter-group.dirty .chip.on {
-  background: var(--salmon);
-  border-color: var(--salmon);
-  color: var(--cream-100);
-}
 .filter-group.dirty .filter-status-pill {
   background: rgba(225,100,75,0.14);
   color: var(--salmon);
+}
+/* Individual chip that was newly toggled (added or removed) — salmon-tinted */
+.chip.pending {
+  background: var(--salmon) !important;
+  border-color: var(--salmon) !important;
+  color: var(--cream-100) !important;
+}
+.chip.pending.was-on {
+  /* Was on, now off — show as outlined salmon (about to be removed) */
+  background: transparent !important;
+  color: var(--salmon) !important;
+  text-decoration: line-through;
 }
 
 /* Toggle that reveals the editing chips — quiet text link, NO arrow */
@@ -1196,9 +1225,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
           <b>What you've told me</b>
           <span class="side-head-sub">A live recap of what we've covered</span>
         </div>
-        <div class="side-head-actions">
-          <button class="side-reset" onclick="resetFilters()">reset</button>
-        </div>
+        <div class="side-head-actions"></div>
       </div>
       <div class="side-body" id="sideBody"></div>
     </aside>
@@ -1774,8 +1801,7 @@ function showFilterTour(target) {
     <div class="ob-title">How to tweak your profile</div>
     <div class="ob-body" style="text-align:left;">
       <div style="margin-bottom:8px;"><b style="color:var(--ink);font-weight:500;">Change</b> — tap to manually adjust what I captured (e.g. tweak your budget by 50 000 kr).</div>
-      <div style="margin-bottom:8px;"><b style="color:var(--ink);font-weight:500;">Show in chat</b> — jumps back to the message where this was confirmed.</div>
-      <div>When you edit something, the new values turn <span style="color:var(--salmon);font-weight:500;">salmon</span> and a preview drops into the chat box — hit <b style="color:var(--ink);font-weight:500;">Send</b> to apply.</div>
+      <div><b style="color:var(--ink);font-weight:500;">Show in chat</b> — jumps back to the message where this was confirmed.</div>
     </div>
     <div class="ob-actions">
       <span></span>
@@ -2102,17 +2128,34 @@ function buildSidebar() {
 }
 
 // "dirty" = sidebar has un-sent manual edits. Apply button is gone;
-// edits land in the input field as a preview and ship with the next Send.
+// edits land in the input field as a diff preview and ship with the next Send.
 let pendingManualChange = false;
+let prevSnapshot = null;          // state when the current edit-burst began
+let dirtyChipKeys = new Set();    // chips toggled since snapshot
+
+function takeSnapshotIfNeeded() {
+  if (prevSnapshot) return;
+  const sMin = document.getElementById('budgetMin');
+  const sMax = document.getElementById('budgetMax');
+  prevSnapshot = {
+    chips:     { ...activeChips },
+    budgetMin: sMin ? parseInt(sMin.value) : null,
+    budgetMax: sMax ? parseInt(sMax.value) : null,
+  };
+}
 
 function setDirty(v) {
   pendingManualChange = v;
+  if (!v) {
+    prevSnapshot = null;
+    dirtyChipKeys.clear();
+  }
   document.querySelectorAll('.filter-group').forEach(g => g.classList.toggle('dirty', !!v));
 }
-// Kept for backwards compatibility with old call sites; just toggles dirty now
 function setApplyVisible(v) { setDirty(v); }
 
-function buildSidebarMessage() {
+// Fallback simple message when there's no prior state to diff against
+function buildLookingForMessage() {
   const parts = [];
   const grouped = {};
   Object.keys(activeChips).forEach(key => {
@@ -2120,50 +2163,92 @@ function buildSidebarMessage() {
     if (!grouped[groupKey]) grouped[groupKey] = [];
     grouped[groupKey].push(opt);
   });
-
   Object.entries(grouped).forEach(([groupKey, opts]) => {
-    if (groupKey === 'seats') {
-      parts.push(`${opts.join(' or ')} seat${opts.length > 1 ? 's' : ''}`);
-    } else {
-      parts.push(opts.join(' or '));
-    }
+    if (groupKey === 'seats') parts.push(`${opts.join(' or ')} seat${opts.length > 1 ? 's' : ''}`);
+    else parts.push(opts.join(' or '));
   });
-
   const sMin = document.getElementById('budgetMin');
   const sMax = document.getElementById('budgetMax');
   const budgetEl = document.getElementById('budgetSelected');
   if (sMin && sMax && budgetEl) {
     const lo = parseInt(sMin.value), hi = parseInt(sMax.value);
-    if (!(lo === 50000 && hi === 1500000)) {
-      parts.push(budgetEl.textContent.toLowerCase());
-    }
+    if (!(lo === 50000 && hi === 1500000)) parts.push(budgetEl.textContent.toLowerCase());
   }
-
   return parts.length ? `I'm looking for: ${parts.join(', ')}.` : '';
+}
+
+// Diff-based "previous → new" message when there's a snapshot to compare to
+function buildSidebarMessage() {
+  if (!prevSnapshot) return buildLookingForMessage();
+
+  const added   = [];
+  const removed = [];
+  Object.keys(activeChips).forEach(key => {
+    if (!prevSnapshot.chips[key]) added.push(key.split(':')[1]);
+  });
+  Object.keys(prevSnapshot.chips).forEach(key => {
+    if (!activeChips[key]) removed.push(key.split(':')[1]);
+  });
+
+  const sMin = document.getElementById('budgetMin');
+  const sMax = document.getElementById('budgetMax');
+  const newLo = sMin ? parseInt(sMin.value) : null;
+  const newHi = sMax ? parseInt(sMax.value) : null;
+  const budgetChanged =
+    prevSnapshot.budgetMin != null &&
+    (newLo !== prevSnapshot.budgetMin || newHi !== prevSnapshot.budgetMax);
+
+  const lines = [];
+  if (budgetChanged) {
+    lines.push(`Budget: ${formatNOK(prevSnapshot.budgetMin)} – ${formatNOK(prevSnapshot.budgetMax)}  →  ${formatNOK(newLo)} – ${formatNOK(newHi)}`);
+  }
+  if (added.length)   lines.push(`Add: ${added.join(', ')}`);
+  if (removed.length) lines.push(`Remove: ${removed.join(', ')}`);
+
+  if (!lines.length) return '';
+  return `Updating my profile:\n• ${lines.join('\n• ')}`;
 }
 
 function pushSidebarPreviewToInput() {
   const msg = buildSidebarMessage();
   const input = document.getElementById('inputField');
   if (!input) return;
-  // Only overwrite if the field is empty OR currently holds a previous sidebar preview
   const current = input.value;
-  const isPreview = !current || current.startsWith("I'm looking for:");
+  const isPreview =
+    !current ||
+    current.startsWith("I'm looking for:") ||
+    current.startsWith("Updating my profile");
   if (isPreview) {
     input.value = msg;
     if (typeof autoGrow === 'function') autoGrow(input);
   }
+  // If everything reverted back to the snapshot, clear the dirty flag
+  if (!msg && prevSnapshot) setDirty(false);
   updateSend();
 }
 
 function toggleChip(groupKey, opt, btn, key) {
-  if (activeChips[key]) {
-    delete activeChips[key];
-    btn.classList.remove('on');
+  takeSnapshotIfNeeded();
+  const wasOn = !!activeChips[key];
+  if (wasOn) { delete activeChips[key]; btn.classList.remove('on'); }
+  else       { activeChips[key] = true; btn.classList.add('on'); }
+
+  // Toggle the per-chip "pending" marker — if a chip ends up matching snapshot
+  // again (toggled back), drop its pending mark.
+  if (dirtyChipKeys.has(key)) {
+    dirtyChipKeys.delete(key);
+    btn.classList.remove('pending', 'was-on');
   } else {
-    activeChips[key] = true;
-    btn.classList.add('on');
+    dirtyChipKeys.add(key);
+    btn.classList.add('pending');
+    // If this chip was originally ON and is now being turned OFF, flag it visually
+    if (prevSnapshot && prevSnapshot.chips[key] && !activeChips[key]) {
+      btn.classList.add('was-on');
+    } else {
+      btn.classList.remove('was-on');
+    }
   }
+
   setDirty(true);
   refreshGroupSummary(groupKey);
   pushSidebarPreviewToInput();
@@ -2182,6 +2267,7 @@ function applyFilters() {
 function fmtKr(n) { return parseInt(n).toLocaleString('nb-NO').replace(/,/g, ' ') + ' kr'; }
 
 function onBudgetInput(which) {
+  takeSnapshotIfNeeded();
   const sMin = document.getElementById('budgetMin');
   const sMax = document.getElementById('budgetMax');
   let lo = parseInt(sMin.value), hi = parseInt(sMax.value);
@@ -2400,6 +2486,7 @@ function setBudgetRange(min, max, fromChat) {
   const sMin = document.getElementById('budgetMin');
   const sMax = document.getElementById('budgetMax');
   if (!sMin || !sMax) { pendingBudget = { min, max }; return; }
+  if (!fromChat) takeSnapshotIfNeeded();
   sMin.value = min;
   sMax.value = max;
   updateBudgetDisplay();
@@ -3361,9 +3448,45 @@ function enrichTerms(html) {
   }).join('');
 }
 
+// Detect 2+ consecutive bullet lines (• or - or *) and wrap them in a styled card.
+// Runs AFTER escapeHtml / **bold** / enrichTerms so the inner content is already
+// formatted HTML that can be safely inserted.
+function renderBulletCards(html) {
+  const lines = html.split('\n');
+  const out = [];
+  let bullets = [];
+
+  const flushBullets = () => {
+    if (bullets.length >= 2) {
+      const items = bullets.map((b, i) =>
+        `<div class="msg-note"><span class="msg-note-icon">${i + 1}</span><span class="msg-note-text">${b}</span></div>`
+      ).join('');
+      out.push(`<div class="msg-notes">${items}</div>`);
+    } else if (bullets.length === 1) {
+      out.push('• ' + bullets[0]);
+    }
+    bullets = [];
+  };
+
+  for (const line of lines) {
+    const m = line.match(/^\s*[•\-\*]\s+(.+)$/);
+    if (m) {
+      bullets.push(m[1]);
+    } else {
+      flushBullets();
+      // Preserve blank lines as <br>, non-blank as themselves
+      out.push(line);
+    }
+  }
+  flushBullets();
+  return out.join('<br>');
+}
+
 function formatText(text) {
   let html = escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-  return enrichTerms(html);
+  html = enrichTerms(html);
+  html = renderBulletCards(html);
+  return html;
 }
 
 function escapeHtml(str) {
