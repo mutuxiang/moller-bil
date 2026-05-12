@@ -684,6 +684,14 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .btn-apply.active:hover { background: var(--action-hover); border-color: var(--action-hover); }
 
 .side-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+.side-footer-note {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.55;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+}
 
 /* ── filter section: status display first, editing tools second ── */
 .filter-group {
@@ -1235,7 +1243,12 @@ Rules:
 - Always respond in English.
 - All prices and budgets are in Norwegian kroner (kr). Format like "350 000 kr" or "~450 000 kr". NEVER use $ or €.
 
-Conversation flow — adaptive, not rigid:
+OPENING — read the user's mode from their FIRST reply:
+- If they say "Find my next car" / "replace my car" / "compare options" / "shopping" → SHOPPING MODE. Begin the discovery flow below.
+- If they say "Just learning" / "exploring" / "researching" / "want to know more" → LEARNING MODE. Skip the discovery flow. Be a friendly Norwegian car-buying tutor — answer their questions about price ranges, fuel types, financing, ownership costs, what to look for in a used car. Keep replies short and conversational. If they show buying intent later ("OK now help me find one"), smoothly switch to SHOPPING MODE.
+- If they say "Both" or are unclear → ask which they'd like to start with.
+
+Conversation flow (SHOPPING MODE only) — adaptive, not rigid:
 Before recommending cars, you should have info on these 6 areas:
 A) Situation/motivation (why they're looking)
 B) Passengers/seats they need
@@ -1243,6 +1256,7 @@ C) Budget range
 D) Fuel type preference (petrol, diesel, hybrid, electric)
 E) Brand preference (OPTIONAL — Audi, BMW, Volvo, Toyota, Tesla, Volkswagen, Hyundai, Kia, Peugeot, Renault, Mercedes, Ford, etc., or "no preference / open to anything")
 F) Must-have features (e.g. tow hitch, sunroof, heated seats, AWD)
+G) Final-detail check — ONE wrap-up question right before recommendations (see "Final-detail check" rule below).
 
 Rules for the flow:
 - Ask about whatever is the natural next topic given what the user just said. Follow their lead — if they bring up budget, dive into budget; if they mention kids, explore passengers/safety.
@@ -1251,7 +1265,17 @@ Rules for the flow:
 - Budget is the one area you should not let them skip entirely. If they avoid it or you've covered other areas without it, gently circle back: "Before I can find the right match, it'd really help to know roughly what budget you're thinking — even a ballpark helps!"
 - Brand (area E) is OPTIONAL. Ask it ONCE, casually — e.g. "Any brands you already trust, or are you open to anything?" — typically AFTER fuel type and BEFORE must-have features. If they say "no preference" or "open to anything", accept that immediately and move on. NEVER push for a brand if they don't have one. NEVER ask about brand twice.
 - If the user mentions a specific brand at any point ("I had a Toyota before", "I love Volvo's safety"), treat brand as covered and skip the question.
-- Once you have info on areas A, B, C, D, F (E is optional), it's time to recommend.
+- Once you have info on areas A, B, C, D, F (E is optional), ask Area G (Final-detail check) ONCE, then recommend on the next turn.
+
+FINAL-DETAIL CHECK (Area G — ask exactly ONCE, right before recommending):
+- Phrase it as a friendly "one last quick thing before I show you matches…"
+- Pick the SINGLE most relevant topic from this list, based on what's been discussed so far:
+  • Hidden running costs — "Anything else on your radar — like parking, toll roads, or insurance bands that might matter to you?"
+  • Color preference — "Any colors you'd love or absolutely avoid? Helps me narrow the shortlist."
+  • Trade-in — "Will you be trading in a current car as part of the deal?"
+  • Comfort/luxury extras — "Anything that would feel like a real treat — panoramic roof, premium sound, ventilated seats?"
+  • Test-drive preference — "How important is it that the car's at a dealership near you for a test drive?"
+- ONE wrap-up question only. Then on the next user reply, emit RECOMMENDATIONS regardless of their answer (just acknowledge it briefly in the intro).
 
 Handling user input issues:
 - If the user's message looks like a typo, garbled text, or they seem confused (e.g. random characters, an obvious misspelling of a car model, an unrealistic number like "5 kr budget" or "200 passengers"), respond gently with an "Oops, looks like something might have gone wrong there — did you mean…?" tone. Stay warm and helpful, never make them feel bad. Then suggest 2-3 likely interpretations as SUGGESTIONS so they can tap to clarify.
@@ -1520,26 +1544,33 @@ function init() {
   showOnboarding();
   // Start fetching real inventory in the background
   inventoryLoadPromise = fetchAllInventory();
+  // First-time visitors get the guided tour. Stored on localStorage so it
+  // doesn't pop up on every refresh.
+  let tourSeen = false;
+  try { tourSeen = !!localStorage.getItem('mollerTourSeen'); } catch (e) {}
+  if (!tourSeen) {
+    setTimeout(() => renderOnboardingStep(), 700);
+  }
 }
 
 // ── onboarding ─────────────────────────────────────────────────────────────
 const ONBOARDING_STEPS = [
   {
     target: '.chat',
-    title: 'Chat with your advisor',
-    body: "No car knowledge needed. Just talk naturally — about your life, your needs, your budget. The AI will guide you step by step.",
+    title: 'Talk naturally',
+    body: "No car knowledge needed. Just chat — about your life, your needs, your budget. I'll guide you step by step and capture what matters automatically.",
     pos: 'right',
   },
   {
     target: '.side',
-    title: 'Refine with filters',
-    body: "Use these chips to quickly narrow things down by seat count, fuel type, or vehicle size. Your choices are sent straight to the conversation.",
+    title: 'Your profile, live',
+    body: "This is the most important panel — it shows what I've learned about you so far. Confirmed answers move to the top, and the things still to discuss stay below. You don't need to fill everything — I can recommend cars with just a few key areas confirmed.",
     pos: 'left',
   },
   {
     target: '.stream',
-    title: 'Get matched cars',
-    body: "Once the advisor understands your situation, it'll recommend specific models — with reasons tailored to you. You can keep asking questions anytime.",
+    title: 'Real cars, real inventory',
+    body: "When I have enough to go on, I'll suggest 2–3 matched models. Click 'View inventory' to see actual cars in stock at Møller Bil — with photos, prices, and the dealership location.",
     pos: 'right',
   },
 ];
@@ -1548,12 +1579,16 @@ let onboardingStep = 0;
 
 function showOnboarding() {
   onboardingStep = 0;
-  const greeting = "Hi there! Looking for a new car can feel overwhelming — I'm here to make it easy. **What's got you thinking about a new car?**";
+  const greeting =
+    "Hi, welcome! Two quick notes before we begin:\n\n" +
+    "• I pull from **Møller Bil's live used-car inventory** — every recommendation maps to a real car you can go see today.\n" +
+    "• Nothing you tell me is stored or shared — this chat is just between us.\n\n" +
+    "So tell me — **are you here to find your next car, or just to learn more about how car-buying works?**";
   const initialSuggestions = [
-    "My current car needs replacing",
-    "Curious about going electric",
-    "Growing family, need more space",
-    "Just exploring my options"
+    "Find my next car",
+    "Just learning for now",
+    "Compare a few options",
+    "Both — show me around"
   ];
   appendAIMessage(greeting, (msgEl) => {
     renderQuickChips(initialSuggestions, msgEl);
@@ -1658,6 +1693,7 @@ function finishOnboarding() {
     el.style.opacity = '0';
     setTimeout(() => el.remove(), 260);
   });
+  try { localStorage.setItem('mollerTourSeen', '1'); } catch (e) {}
 }
 
 // ── topic ↔ filter group bridge ──────────────────────────────────────────
@@ -1950,6 +1986,22 @@ function buildSidebar() {
   updateBudgetDisplay();
   if (pendingBudget) { pendingManualChange = true; pendingBudget = null; }
   setApplyVisible(pendingManualChange);
+
+  // Sort: confirmed groups first, pending groups after (preserves DOM/event listeners
+  // by moving with appendChild rather than rebuilding HTML)
+  const groups = Array.from(body.querySelectorAll('.filter-group'));
+  groups.sort((a, b) => {
+    const aConf = a.dataset.state === 'confirmed' ? 0 : 1;
+    const bConf = b.dataset.state === 'confirmed' ? 0 : 1;
+    return aConf - bConf;
+  });
+  groups.forEach(el => body.appendChild(el));
+
+  // Helpful footer note — make it clear users don't need to fill everything
+  const note = document.createElement('div');
+  note.className = 'side-footer-note';
+  note.textContent = "You don't need every section filled — I can recommend cars with just a few areas confirmed.";
+  body.appendChild(note);
 }
 
 let pendingManualChange = false;
