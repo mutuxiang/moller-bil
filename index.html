@@ -787,6 +787,12 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   color: var(--salmon) !important;
   text-decoration: line-through;
 }
+/* Disable quick-reply chips while sidebar has un-sent edits */
+body.sidebar-dirty #suggestionsBar .chip {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(40%);
+}
 
 /* Toggle that reveals the editing chips — quiet text link, NO arrow */
 .filter-change-toggle {
@@ -2144,13 +2150,38 @@ function takeSnapshotIfNeeded() {
   };
 }
 
+function getDirtyGroupKeys() {
+  const groups = new Set();
+  dirtyChipKeys.forEach(k => groups.add(k.split(':')[0]));
+  if (prevSnapshot) {
+    const sMin = document.getElementById('budgetMin');
+    const sMax = document.getElementById('budgetMax');
+    if (sMin && sMax) {
+      const lo = parseInt(sMin.value), hi = parseInt(sMax.value);
+      if (lo !== prevSnapshot.budgetMin || hi !== prevSnapshot.budgetMax) {
+        groups.add('budget');
+      }
+    }
+  }
+  return groups;
+}
+
+function refreshDirtyClasses() {
+  const dirty = getDirtyGroupKeys();
+  document.querySelectorAll('.filter-group').forEach(g => {
+    g.classList.toggle('dirty', dirty.has(g.dataset.key));
+  });
+  // body-level class disables quick-reply chips while sidebar has un-sent edits
+  document.body.classList.toggle('sidebar-dirty', dirty.size > 0);
+}
+
 function setDirty(v) {
   pendingManualChange = v;
   if (!v) {
     prevSnapshot = null;
     dirtyChipKeys.clear();
   }
-  document.querySelectorAll('.filter-group').forEach(g => g.classList.toggle('dirty', !!v));
+  refreshDirtyClasses();
 }
 function setApplyVisible(v) { setDirty(v); }
 
@@ -2177,36 +2208,60 @@ function buildLookingForMessage() {
   return parts.length ? `I'm looking for: ${parts.join(', ')}.` : '';
 }
 
-// Diff-based "previous → new" message when there's a snapshot to compare to
+// Lookup the user-facing label for a filter group
+function getGroupLabel(key) {
+  if (key === 'budget') return 'Budget';
+  if (key === 'brand')  return 'Brand preference';
+  const f = (typeof FILTERS !== 'undefined') ? FILTERS.find(f => f.key === key) : null;
+  return f ? f.title : key;
+}
+
+function sameSorted(a, b) {
+  if (a.length !== b.length) return false;
+  const sa = [...a].sort(), sb = [...b].sort();
+  return sa.every((v, i) => v === sb[i]);
+}
+
+// Diff-based message that reads like a natural conversational update.
+// Each changed group gets a "now X (was Y)" line so both old and new state are clear.
 function buildSidebarMessage() {
   if (!prevSnapshot) return buildLookingForMessage();
 
-  const added   = [];
-  const removed = [];
-  Object.keys(activeChips).forEach(key => {
-    if (!prevSnapshot.chips[key]) added.push(key.split(':')[1]);
-  });
-  Object.keys(prevSnapshot.chips).forEach(key => {
-    if (!activeChips[key]) removed.push(key.split(':')[1]);
-  });
+  const optsByGroup = (chips, key) =>
+    Object.keys(chips).filter(k => k.startsWith(key + ':')).map(k => k.split(':')[1]);
 
-  const sMin = document.getElementById('budgetMin');
-  const sMax = document.getElementById('budgetMax');
-  const newLo = sMin ? parseInt(sMin.value) : null;
-  const newHi = sMax ? parseInt(sMax.value) : null;
-  const budgetChanged =
-    prevSnapshot.budgetMin != null &&
-    (newLo !== prevSnapshot.budgetMin || newHi !== prevSnapshot.budgetMax);
+  const allGroups = new Set();
+  Object.keys(activeChips).forEach(k => allGroups.add(k.split(':')[0]));
+  Object.keys(prevSnapshot.chips).forEach(k => allGroups.add(k.split(':')[0]));
 
   const lines = [];
-  if (budgetChanged) {
-    lines.push(`Budget: ${formatNOK(prevSnapshot.budgetMin)} – ${formatNOK(prevSnapshot.budgetMax)}  →  ${formatNOK(newLo)} – ${formatNOK(newHi)}`);
+
+  allGroups.forEach(gKey => {
+    const prev = optsByGroup(prevSnapshot.chips, gKey);
+    const curr = optsByGroup(activeChips, gKey);
+    if (sameSorted(prev, curr)) return;
+
+    const label   = getGroupLabel(gKey);
+    const prevStr = prev.length ? prev.join(' or ') : 'nothing';
+    const currStr = curr.length ? curr.join(' or ') : 'nothing';
+
+    if (prev.length === 0)      lines.push(`${label}: ${currStr}`);
+    else if (curr.length === 0) lines.push(`${label}: clearing (was ${prevStr})`);
+    else                        lines.push(`${label}: now ${currStr} (was ${prevStr})`);
+  });
+
+  // Budget
+  const sMin = document.getElementById('budgetMin');
+  const sMax = document.getElementById('budgetMax');
+  if (sMin && sMax && prevSnapshot.budgetMin != null) {
+    const lo = parseInt(sMin.value), hi = parseInt(sMax.value);
+    if (lo !== prevSnapshot.budgetMin || hi !== prevSnapshot.budgetMax) {
+      lines.push(`Budget: now ${formatNOK(lo)} – ${formatNOK(hi)} (was ${formatNOK(prevSnapshot.budgetMin)} – ${formatNOK(prevSnapshot.budgetMax)})`);
+    }
   }
-  if (added.length)   lines.push(`Add: ${added.join(', ')}`);
-  if (removed.length) lines.push(`Remove: ${removed.join(', ')}`);
 
   if (!lines.length) return '';
-  return `Updating my profile:\n• ${lines.join('\n• ')}`;
+  return `Quick update to my profile:\n• ${lines.join('\n• ')}`;
 }
 
 function pushSidebarPreviewToInput() {
@@ -2217,7 +2272,8 @@ function pushSidebarPreviewToInput() {
   const isPreview =
     !current ||
     current.startsWith("I'm looking for:") ||
-    current.startsWith("Updating my profile");
+    current.startsWith("Updating my profile") ||
+    current.startsWith("Quick update to my profile");
   if (isPreview) {
     input.value = msg;
     if (typeof autoGrow === 'function') autoGrow(input);
@@ -2250,6 +2306,7 @@ function toggleChip(groupKey, opt, btn, key) {
   }
 
   setDirty(true);
+  refreshDirtyClasses();  // re-evaluate which groups are still dirty
   refreshGroupSummary(groupKey);
   pushSidebarPreviewToInput();
 }
@@ -2507,7 +2564,11 @@ function resetFilters() {
   buildSidebar();
   // Clear any sidebar-preview text out of the input
   const input = document.getElementById('inputField');
-  if (input && input.value.startsWith("I'm looking for:")) {
+  if (input && (
+    input.value.startsWith("I'm looking for:") ||
+    input.value.startsWith("Updating my profile") ||
+    input.value.startsWith("Quick update to my profile")
+  )) {
     input.value = '';
     updateSend();
   }
@@ -3247,8 +3308,8 @@ async function sendMessage() {
   if (conversationMode === 'shopping') {
     syncFiltersFromText(combined);
   }
-  // The message just shipped — clear any "un-sent edit" highlight before the rebuild
-  pendingManualChange = false;
+  // The message just shipped — clear any "un-sent edit" highlight and snapshot before the rebuild
+  setDirty(false);
   input.value = '';
   autoGrow(input);
   activeTokens = [];
