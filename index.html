@@ -58,12 +58,93 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .app { display: flex; flex-direction: column; height: 100vh; }
 
 .topbar {
-  height: 80px; border-bottom: 1px solid var(--border);
+  height: 64px;
+  border-bottom: 1px solid var(--border);
   background: var(--bg-surface);
-  display: flex; align-items: center; padding: 0 32px; gap: 14px; flex-shrink: 0;
+  display: flex; align-items: center;
+  padding: 0 32px; gap: 14px;
+  flex-shrink: 0;
+  position: relative;
 }
-.topbar-logo { height: 32px; width: auto; display: block; }
+.topbar-brand {
+  display: inline-flex; align-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.topbar-logo { height: 24px; width: auto; display: block; }
+/* Title sits absolutely centered in the topbar, regardless of brand/button widths */
+.topbar-title {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
 .topbar-spacer { flex: 1; }
+
+/* ── mode toggle — flat editorial tabs with a salmon underline ── */
+.chat-mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg);
+}
+.mode-toggle {
+  display: inline-flex;
+  background: transparent;
+  border: 0;
+  height: auto;
+  margin: 0;
+  position: relative;
+}
+.mode-toggle button {
+  appearance: none; border: 0; background: transparent;
+  position: relative;
+  padding: 16px 4px;
+  margin-right: 28px;
+  font: 400 14px/1 "Moller", sans-serif;
+  color: var(--muted); cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: color 220ms var(--ease-out);
+}
+.mode-toggle button:last-child { margin-right: 0; }
+.mode-toggle button:hover { color: var(--ink); }
+.mode-toggle button.on {
+  color: var(--ink);
+  font-weight: 500;
+}
+.mode-toggle button.on::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  background: var(--salmon);
+  border-radius: 1px;
+}
+.mode-toggle button.locked {
+  color: rgba(0,25,70,0.35);
+  cursor: not-allowed;
+}
+.mode-toggle button.locked:hover { color: rgba(0,25,70,0.35); }
+.mode-toggle button.locked::before {
+  content: '';
+  display: inline-block;
+  width: 9px; height: 11px;
+  margin-right: 6px;
+  vertical-align: -1px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'><path fill='black' d='M7 0a4 4 0 0 0-4 4v3H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V4a4 4 0 0 0-4-4zm-2.5 7V4a2.5 2.5 0 0 1 5 0v3z'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'><path fill='black' d='M7 0a4 4 0 0 0-4 4v3H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V4a4 4 0 0 0-4-4zm-2.5 7V4a2.5 2.5 0 0 1 5 0v3z'/></svg>") center/contain no-repeat;
+}
+
 
 .btn-reset-all,
 .btn-filter,
@@ -143,6 +224,12 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 /* ── messages ── */
 .msg { display: flex; gap: 10px; align-items: flex-start; max-width: 880px; }
+.msg.ai { width: min(100%, 880px); }
+.msg.ai.has-recs,
+.msg.ai.has-inv {
+  width: 100%;
+  max-width: none;
+}
 .msg.user { flex-direction: row-reverse; align-self: flex-end; }
 
 .av { display: none; }
@@ -159,8 +246,14 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   font-size: 16px; line-height: 1.6;
   word-wrap: break-word;
   align-self: flex-start;
-  max-width: 680px;
+  width: fit-content;
+  max-width: min(680px, calc(100vw - 96px));
   color: var(--ink);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  min-width: 0;
+  white-space: normal;
 }
 .msg.user .bub {
   background: var(--bg-surface-2); border-color: transparent; align-self: flex-end;
@@ -168,6 +261,10 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   border-radius: 20px 4px 20px 20px;
 }
 .bub b { font-weight: 500; }
+.msg-gap {
+  display: block;
+  height: 10px;
+}
 
 /* user-bubble filter tags — outlined, not filled */
 .bub-tokens { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-right: 6px; }
@@ -226,7 +323,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 }
 
 /* ── quick chips ── */
-.quick-reply-wrap { padding-bottom: 16px; }
+.quick-reply-wrap { padding-bottom: 16px; width: 100%; }
 .quick-reply-wrap.empty { display: none; }
 .quick-reply-label {
   font-family: "Moller",sans-serif; font-size: 13px; font-weight: 500;
@@ -322,6 +419,11 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   max-width: 1080px;
 }
 .msg.has-recs { max-width: none; }
+.msg.has-recs .msg-content,
+.msg.has-inv .msg-content {
+  width: 100%;
+  flex: 1 1 100%;
+}
 
 .rec {
   border: 1px solid var(--border);
@@ -443,27 +545,28 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   background: var(--cream-200);
 }
 
-/* ── AI message bullet card ── */
+/* ── AI message bullet list — same type-scale as the bubble, light separators ── */
 .msg-notes {
-  display: flex; flex-direction: column; gap: 10px;
-  margin: 10px 0;
-  padding: 14px 16px;
-  background: var(--cream-200);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  display: flex; flex-direction: column;
+  margin: 4px 0;
 }
 .msg-note {
   display: flex; align-items: flex-start; gap: 12px;
-  font-size: 14px; line-height: 1.5; color: var(--ink);
+  font-size: 16px; line-height: 1.6; color: var(--ink);
+  padding: 8px 0;
+}
+.msg-note + .msg-note {
+  border-top: 1px solid var(--border);
 }
 .msg-note-icon {
   flex-shrink: 0;
-  width: 20px; height: 20px; border-radius: 50%;
+  width: 22px; height: 22px; border-radius: 50%;
   background: var(--moller-blue); color: var(--cream-100);
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 500; margin-top: 1px;
+  font-size: 11.5px; font-weight: 500;
+  margin-top: 3px;
 }
-.msg-note-text { flex: 1; }
+.msg-note-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 
 /* ── glossary terms with hover tooltip ── */
 .term {
@@ -787,6 +890,12 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   color: var(--salmon) !important;
   text-decoration: line-through;
 }
+/* Learning mode — hide the right sidebar entirely, the user isn't building a profile */
+body.mode-learning .side,
+body.mode-learning .col-spacer.right {
+  display: none !important;
+}
+
 /* Update-diff layout that replaces the quick-reply chips while sidebar is dirty */
 .quick-reply-label.is-update { color: var(--salmon); }
 #suggestionsBar.quick-chips-diff {
@@ -932,6 +1041,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .filter-jump:disabled { opacity: 0.30; cursor: not-allowed; text-decoration: none; }
 .filter-jump.has-message { color: var(--accent); }
 .filter-jump.has-message:hover { text-decoration-color: var(--accent); }
+.filter-jump.has-message:not(:disabled) { color: var(--accent) !important; }
 
 /* highlight when chat is jumped to */
 @keyframes msg-pulse {
@@ -1129,7 +1239,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .ob-overlay { position:fixed; inset:0; z-index:300; pointer-events:none; }
 .ob-card {
   position:fixed; z-index:400; background:var(--cream-100); border:1px solid var(--border);
-  border-radius:16px; padding:22px 24px; width:280px; box-shadow:0 8px 32px rgba(0,25,70,0.14);
+  border-radius:14px; padding:22px 24px; width:320px; box-shadow:0 8px 32px rgba(0,25,70,0.14);
   font-family:"Moller",system-ui,sans-serif; animation: ob-fadein .28s ease;
 }
 @keyframes ob-fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
@@ -1137,10 +1247,10 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .ob-dot { width:6px; height:6px; border-radius:50%; background:rgba(0,25,70,0.16); }
 .ob-dot.active { background:var(--accent); }
 .ob-step-label { font-size:10px; color:var(--muted); letter-spacing:.07em; text-transform:uppercase; margin-bottom:6px; }
-.ob-title { font-size:15px; font-weight:500; color:var(--ink); margin-bottom:8px; line-height:1.35; }
-.ob-body { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:18px; }
+.ob-title { font-size:16px; font-weight:500; color:var(--ink); margin-bottom:8px; line-height:1.35; }
+.ob-body { font-size:13.5px; color:var(--muted); line-height:1.6; margin-bottom:18px; }
 .ob-actions { display:flex; justify-content:space-between; align-items:center; }
-.ob-skip { font-size:11.5px; color:var(--muted); cursor:pointer; background:none; border:none; font-family:inherit; }
+.ob-skip { font-size:12px; color:var(--muted); cursor:pointer; background:none; border:none; font-family:inherit; }
 .ob-skip:hover { color:var(--ink); }
 .ob-next {
   appearance:none; background:var(--accent); color:var(--cream-100);
@@ -1173,7 +1283,11 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   .bub { font-size: 15px; }
   .chip { font-size: 13.5px; padding: 8px 13px; }
   .quick-chips { gap: 6px; }
-  .topbar { padding: 0 14px; gap: 8px; }
+  .topbar { padding: 0 16px; gap: 10px; height: 60px; }
+  .topbar-title { font-size: 13.5px; }
+  .topbar-logo { height: 22px; }
+  .chat-mode-bar { padding: 0 16px; }
+  .mode-toggle button { font-size: 13px; padding: 14px 4px; margin-right: 20px; }
   .btn-reset-all,
   .btn-collection { height: 32px; padding: 0 12px; font-size: 12.5px; }
   .side {
@@ -1228,7 +1342,9 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 <div class="app">
 
   <div class="topbar">
-    <img class="topbar-logo" src="logo.svg" alt="Møller Bil">
+    <a class="topbar-brand" href="#" aria-label="Møller Bil">
+      <img class="topbar-logo" src="logo.svg" alt="Møller Bil">
+    </a>
     <div class="topbar-spacer"></div>
     <button class="btn-collection" id="btnCollection" onclick="toggleCollection()" title="Saved cars">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -1246,13 +1362,11 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
     <div class="chat">
 
-      <div class="info-banner">
-        <div class="info-banner-text">
-          <span class="eyebrow">Welcome to Møller Bil</span>
-          <b>More than just finding a car</b>
-          <span>Insurance, service plans, financing, trade-ins and more — all in one place.</span>
+      <div class="chat-mode-bar">
+        <div class="mode-toggle" id="modeToggle" role="tablist">
+          <button data-mode="shopping" class="on" onclick="setConversationMode('shopping')">Find a car</button>
+          <button data-mode="learning" class="locked" onclick="showLearningLocked()">Just learning</button>
         </div>
-        <a class="info-banner-link" href="#" target="_blank">Learn more →</a>
       </div>
 
       <div class="stream" id="stream"></div>
@@ -1337,6 +1451,7 @@ Rules:
 - Start by asking something open and easy — like what's prompting them to look for a car, or what their current situation is. Do NOT ask about car usage scenarios first.
 - Always respond in English.
 - All prices and budgets are in Norwegian kroner (kr). Format like "350 000 kr" or "~450 000 kr". NEVER use $ or €.
+- If the user says they are not sure, do not move to a new topic. Briefly explain the options for the current question, then ask the same question again. This applies to fuel, budget, seats, size, brand, usage, must-have features, and personal preferences.
 
 OPENING — read the user's mode from their FIRST reply:
 - If they say "Find my next car" / "replace my car" / "compare options" / "shopping" → SHOPPING MODE. Begin the discovery flow below.
@@ -1344,33 +1459,31 @@ OPENING — read the user's mode from their FIRST reply:
 - If they say "Both" or are unclear → ask which they'd like to start with.
 
 Conversation flow (SHOPPING MODE only) — adaptive, not rigid:
-There are 7 possible areas you can cover, but only 3 are REQUIRED before recommending:
+There are 7 possible areas you can cover. Some are REQUIRED before recommending, others are optional.
 
-REQUIRED (must be answered before you can show RECOMMENDATIONS):
+REQUIRED (must all be covered before you can show RECOMMENDATIONS):
 B) Passengers / seats they need
 C) Budget range
 D) Fuel type / powertrain (petrol, diesel, hybrid, electric)
+F) Must-have features — always ask this ONCE; this is the question where you emit the EV_SURPRISES block (see that rule)
+G) Personal preferences wrap-up — the LAST question, always asked once right before recommending (see PERSONAL PREFERENCES rule)
 
 OPTIONAL (ask only if there's a natural opening — don't gate recommendations on these):
 A) Situation/motivation (why they're looking)
 E) Brand preference (Audi, BMW, Volvo, Toyota, Tesla, Volkswagen, Hyundai, Kia, Peugeot, Renault, Mercedes, Ford, etc., or "no preference / open to anything")
-F) Must-have features (e.g. tow hitch, sunroof, heated seats, AWD)
-G) Personal preferences — color, hidden costs, trade-in, extras (this is the optional wrap-up question; see rule below)
 
 Rules for the flow:
 - Always lead with the user's energy. If they open with "growing family" → ask seats. If they open with budget → dive into budget.
-- B + C + D are the floor. As soon as you have those three confirmed, you CAN recommend — you don't need anything else.
+- Required order: B + C + D (any order) → F (with EV surprises) → G (personal preferences) → RECOMMENDATIONS.
 - A (situation) is a nice warm-up but skip it if the user is impatient or has already implied their motivation.
 - Budget is the one REQUIRED area users sometimes try to dodge. If they avoid it, gently circle back: "Before I can find the right match, it'd really help to know roughly what budget you're thinking — even a ballpark helps!"
 - If a user's earlier message already answered an area (e.g. they said "I need a 7-seater for my family"), DON'T ask that area again.
 - E (brand) is OPTIONAL — ask only ONCE, casually, e.g. "Any brands you already trust?" Accept "no preference" immediately. NEVER push. If the user mentions a brand anywhere, treat E as covered.
-- F (must-haves) is OPTIONAL but useful — this is where you emit the EV_SURPRISES block (see that rule). Ask only if there's room before recommendations.
-- G (personal preferences) is the optional wrap-up — only ask if the conversation has been thorough and you've covered F. If the user wants speed, skip G and recommend right away.
 
 DECISION POINT — when to recommend:
-- Have B + C + D confirmed? → You may recommend now.
-- Optional flow: ask 0–2 of the optional areas (typically F, then G) if there's natural space and the user seems engaged. Then recommend.
-- Don't ask more than ONE optional question per turn. Don't drag the conversation.
+- All of B, C, D, F, G covered? → Emit RECOMMENDATIONS on the next turn.
+- You may weave E in between if there's natural space, but never delay recommendations to ask brand if you already have B+C+D+F+G.
+- Don't ask more than ONE question per turn. Don't drag the conversation.
 
 PERSONAL PREFERENCES (Area G — ask exactly ONCE, right before recommending):
 - This is the LAST question before recommendations. It comes AFTER the must-haves question (F, which included the EV_SURPRISES panel) and is CLEARLY different from it:
@@ -1418,24 +1531,28 @@ TOOLS:["step 1","step 2"]
   - User sends gibberish → TOOLS:["Parsing your message"]
 - TOOLS block must appear BEFORE any text, on its own line. Then your normal reply follows.
 
-CRITICAL — SUGGESTIONS ARE MANDATORY AND MUST DIRECTLY ANSWER YOUR QUESTION:
+CRITICAL — SUGGESTIONS ARE MANDATORY AND MUST DIRECTLY ANSWER YOUR LAST QUESTION:
 Every single reply (except RECOMMENDATIONS and SHOW_INVENTORY) MUST end with a SUGGESTIONS block. Format:
 SUGGESTIONS:["option 1","option 2","option 3","option 4"]
 - Each option max 6 words, written as something a user would literally say.
-- BEFORE writing your suggestions, ask yourself: "Identify the SINGLE main question in my reply. If a user tapped this chip, would it be a sensible literal answer to that question?" If not, rewrite the chip.
 
-❌ NEVER do these mismatches:
-- Reply asks about budget → BAD chips: ["Family car","Going electric","I drive in the city","Show me SUVs"] (these answer different topics, not budget)
-- Reply asks "How many seats?" → BAD chips: ["Tesla Model Y","Around 500k","I road-trip often","Hybrid please"] (none answer seat count)
-- Reply asks about fuel → BAD chips: ["Tow hitch","Need 7 seats","I have kids","Tell me more"] (these answer features/seats/family, not fuel)
+MANDATORY SELF-CHECK before finalizing the SUGGESTIONS block (do this internally):
+Step 1: Find the LAST sentence of your reply ending in "?". This is THE question.
+Step 2: For each chip, ask: "If the user tapped this and sent it as their reply, would it be a literal, sensible answer to THE question identified in step 1?"
+Step 3: If ANY chip fails — REWRITE the entire SUGGESTIONS block before finalizing.
 
-✅ Always do this — chips literally answer the question:
-- Reply asks "What's your budget?" → ["Under 350 000 kr","Around 500 000 kr","500 000 – 700 000 kr","Flexible on budget"]
-- Reply asks "How many seats?" → ["Just me or one passenger","Family of 4","Need 6 or 7 seats","Not sure yet"]
-- Reply asks about fuel → ["Electric","Hybrid","Petrol or diesel","Not sure yet"]
-- Reply asks about must-haves → ["Tow hitch","Roof rails","Heated seats","No specific must-haves"]
+❌ REAL EXAMPLES OF WHAT NEVER TO DO:
+- Reply ends "Any personal preferences I should know? Things like preferred colors, ownership costs, trade-in plans, or comfort extras?"
+  → BAD chips: ["Around 300 000 kr","Around 500 000 kr","Around 700 000 kr","Flexible on budget"] (these are budget answers — the question is about PREFERENCES, not budget)
+  → RIGHT chips: ["Avoid bright colors","Trade in my current car","Worried about insurance","Want premium audio"]
+- Reply ends "What's your budget?"
+  → BAD chips: ["Family car","Going electric"] (these answer topics not asked)
+  → RIGHT chips: ["Under 350 000 kr","Around 500 000 kr","500 000 – 700 000 kr","Flexible on budget"]
+- Reply ends "How many seats?"
+  → BAD chips: ["Tesla Model Y","Around 500k"] (none answer seat count)
+  → RIGHT chips: ["Just me","Family of 4","Need 6 or 7 seats","Not sure yet"]
 
-If your reply has TWO topics (acknowledging + a new question), the chips must answer THE NEW QUESTION, not the previous topic.
+THE QUESTION IS ALWAYS THE LAST "?" — IGNORE EARLIER TOPICS IN THE REPLY. If your reply acknowledges a previous answer AND then asks a new question, the chips MUST answer the NEW question, never the previous topic.
 
 TONE — sound like a knowledgeable salesperson, not a survey form:
 - Before asking the next question, add ONE short sentence of context — briefly explain what the options mean, why it matters, or share a quick relevant insight. This makes you feel like an advisor, not a checkbox.
@@ -1444,6 +1561,8 @@ TONE — sound like a knowledgeable salesperson, not a survey form:
   - Before budget: "Used Norwegian cars span a wide range — a solid family car typically lands between 250 000 and 600 000 kr. Roughly what budget feels right for you?"
   - Before seats: "Most buyers need 5, but if you've got two car seats and a stroller you'll appreciate a larger boot. How many people need to fit comfortably?"
 - Keep it ONE sentence of context, then ONE question. Don't lecture, don't sell hard.
+- Put a blank line between the context sentence and the question whenever you move to the next topic.
+- If the user taps or says "Not sure yet", treat it as a request for explanation of the current topic. Give a short advisor-style explanation and then repeat the same question with matching SUGGESTIONS. Example for fuel: "No worries — diesel is strong for towing, hybrid saves fuel in town, petrol is simple, and electric is cheapest to run if charging fits your life. Which powertrain feels closest for you?"
 
 When recommending, also start with a TOOLS block, then a brief intro text, then RECOMMENDATIONS. Recommend 2-3 MODELS (not specific listings) max. The user will then click "View inventory" on a model they like to see the actual used cars in stock. Each must follow this exact format:
 RECOMMENDATIONS:
@@ -1469,6 +1588,7 @@ Highlight4: [short benefit, max 8 words]
 // ── state ────────────────────────────────────────────────────────────────
 let messages = [];
 let activeTokens = [];
+let activeTokenPayloads = {};
 let activeChips = {};
 let isStreaming = false;
 let pinnedCars = [];
@@ -1500,6 +1620,97 @@ function detectMode(userText) {
       conversationMode = 'shopping';
     }
   }
+  applyConversationMode();
+}
+
+function applyConversationMode() {
+  document.body.classList.toggle('mode-learning', conversationMode === 'learning');
+  document.body.classList.toggle('mode-shopping', conversationMode === 'shopping');
+  document.querySelectorAll('#modeToggle button').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.mode === conversationMode);
+  });
+}
+
+function showLearningLocked() {
+  showToast('"Just learning" mode is still in development — coming soon.');
+}
+
+// User-initiated mode switch (via the topbar segmented control)
+function setConversationMode(mode) {
+  if (conversationMode === mode) return;
+  const wasLearning = conversationMode === 'learning';
+  conversationMode = mode;
+  applyConversationMode();
+  buildSidebar();
+  refreshJumpButtons();
+
+  // If the user hasn't really started chatting yet, swap the opening greeting
+  // to match the new mode (different first sentence + quick replies).
+  const hasUserReplied = messages.some(m => m.role === 'user');
+  if (!hasUserReplied) {
+    replaceOpeningGreeting();
+    refreshJumpButtons();
+  }
+
+  // First time the user switches FROM learning TO shopping — show the sidebar intro
+  // (skip if the main onboarding tour already covered it, controlled by sidebarIntroShown)
+  if (wasLearning && mode === 'shopping' && !sidebarIntroShown && hasUserReplied) {
+    setTimeout(() => showSidebarIntro(), 350);
+  }
+}
+
+// One-time popover explaining the right-hand "What you've told me" panel.
+// Triggered when the user enters shopping mode (manually or by intent).
+let sidebarIntroShown = false;
+function showSidebarIntro() {
+  if (sidebarIntroShown) return;
+  if (document.querySelector('.ob-card')) return; // don't stack on top of another tour
+  const sidebar = document.querySelector('.side');
+  if (!sidebar) return;
+  sidebarIntroShown = true;
+
+  const rect = sidebar.getBoundingClientRect();
+  const cardW = 320;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'ob-overlay';
+
+  const ring = document.createElement('div');
+  ring.style.cssText = `
+    position:fixed;
+    top:${rect.top - 6}px; left:${rect.left - 8}px;
+    width:${rect.width + 16}px; height:${Math.min(rect.height, window.innerHeight - rect.top - 16)}px;
+    border:2px solid var(--accent); border-radius:14px;
+    box-shadow:0 0 0 9999px rgba(0,25,70,0.32);
+    pointer-events:none; z-index:301;
+  `;
+  overlay.appendChild(ring);
+  document.body.appendChild(overlay);
+
+  const card = document.createElement('div');
+  card.className = 'ob-card';
+  let left = rect.left - cardW - 18;
+  if (left < 20) left = 20;
+  card.style.cssText = `top:${Math.max(20, rect.top + 60)}px; left:${left}px; width:${cardW}px;`;
+  card.innerHTML = `
+    <div class="ob-step-label">Shopping mode</div>
+    <div class="ob-title">Your profile, live</div>
+    <div class="ob-body">
+      This panel shows what I've learned about you so far. Confirmed answers move to the top, and items still to discuss stay below. You don't need to fill everything — I can recommend cars with just a few key areas confirmed.
+    </div>
+    <div class="ob-actions">
+      <span></span>
+      <button class="ob-next" onclick="closeSidebarIntro()">Got it</button>
+    </div>
+  `;
+  document.body.appendChild(card);
+}
+function closeSidebarIntro() {
+  document.querySelectorAll('.ob-overlay, .ob-card').forEach(el => {
+    el.style.transition = 'opacity .25s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 260);
+  });
 }
 
 // ── real inventory cache ──────────────────────────────────────────────────
@@ -1556,6 +1767,40 @@ function formatNOK(n) {
 }
 function formatKm(n) {
   return Number(n).toLocaleString('nb-NO') + ' km';
+}
+
+// Models the AI has already recommended in this session (so we can ask it
+// for genuinely DIFFERENT ones when the user requests more options)
+let recommendedModels = [];
+
+// Build a short hint listing available models so the AI never recommends
+// something we don't have in stock.
+function getAvailableModelsHint() {
+  if (!inventoryLoaded || allInventory.length === 0) return null;
+  const counts = new Map();
+  allInventory.forEach(c => {
+    if (!c.brand || !c.model) return;
+    const key = `${c.brand} ${c.model}`;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  const top = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 70)
+    .map(([k, n]) => `${k} (${n})`);
+  let msg = `LIVE INVENTORY at Møller Bil (model name and current stock count):
+${top.join(', ')}.
+
+HARD RULE: Every model you put in a RECOMMENDATIONS block MUST be from this list. Never invent a model that isn't in this list.`;
+
+  if (recommendedModels.length > 0) {
+    msg += `
+
+MODELS ALREADY RECOMMENDED IN THIS CONVERSATION (do NOT repeat these): ${recommendedModels.join(', ')}.
+
+If the user is now asking for "different models", "other options", "show me more", "anything else?", or similar — you MUST pick 2-3 models from the LIVE INVENTORY list that are NOT in this already-recommended list. Even if they don't perfectly match the user's stated requirements, prefer in-stock alternatives over a perfect-fit match that isn't in inventory. If you have to relax one criterion (e.g. broader fuel type, slightly higher budget, different size), acknowledge it briefly in the intro sentence: "These don't all hit your exact budget but they're what we have in stock right now — take a look."`;
+  }
+
+  return msg;
 }
 
 function matchInventory(modelStr) {
@@ -1674,51 +1919,101 @@ function init() {
   showOnboarding();
   // Start fetching real inventory in the background
   inventoryLoadPromise = fetchAllInventory();
-  // Show the guided tour on every page load
-  setTimeout(() => renderOnboardingStep(), 700);
+  // The guided tour now triggers in showOnboarding()'s onDone callback,
+  // so it appears only AFTER the AI greeting has finished typing.
+  applyConversationMode();
 }
 
 // ── onboarding ─────────────────────────────────────────────────────────────
 const ONBOARDING_STEPS = [
   {
     target: '.chat',
-    title: 'Talk naturally',
-    body: "No car knowledge needed. Just chat — about your life, your needs, your budget. I'll guide you step by step and capture what matters automatically.",
+    title: 'Just chat',
+    body: "No car knowledge needed. Tell me about <b>your life</b>, <b>your needs</b>, <b>your budget</b> — I'll capture what matters as we go.",
     pos: 'right',
+  },
+  {
+    target: '#modeToggle',
+    title: 'Two modes',
+    body: "<b>Find a car</b> — full discovery, builds your profile.<br><b>Just learning</b> — tutor mode, coming soon.",
+    pos: 'bottom',
   },
   {
     target: '.side',
     title: 'Your profile, live',
-    body: "This panel shows what I've learned about you so far. Confirmed answers move to the top, and the things still to discuss stay below. You don't need to fill everything — I can recommend cars with just a few key areas confirmed.",
+    body: "Captured answers move to the top. <b>You don't need to fill everything</b> — I can recommend with just a few.",
     pos: 'left',
   },
   {
     target: '.stream',
-    title: 'Real cars, real inventory',
-    body: "When I have enough to go on, I'll suggest 2–3 matched models. Click 'View inventory' to see actual cars in stock at Møller Bil — with photos, prices, and the dealership location.",
+    title: 'Real inventory',
+    body: "I'll suggest 2–3 matched models with <b>real cars in stock</b> — photos, prices, location.",
     pos: 'right',
   },
 ];
 
 let onboardingStep = 0;
 
+// Returns the greeting + initial chips for a given conversation mode
+function getGreetingForMode(mode) {
+  if (mode === 'learning') {
+    return {
+      text:
+        "Hi! Welcome to learning mode. I'm here as your car-buying guide for Norway — no pressure, no selling.\n\n" +
+        "• I draw on **Møller Bil's live inventory** plus general knowledge about used cars in Norway.\n" +
+        "• Nothing you ask is stored or shared.\n\n" +
+        "Ask me anything — pricing, fuel types, financing, what to inspect on a used car. **What would you like to start with?**",
+      chips: [
+        "How much should I budget?",
+        "Electric vs hybrid — pros and cons?",
+        "Tips for buying used in Norway",
+        "How does car financing work?"
+      ],
+    };
+  }
+  // shopping (default)
+  return {
+    text:
+      "Hi, welcome! Two quick notes before we begin:\n\n" +
+      "• I pull from **Møller Bil's live used-car inventory** — every recommendation maps to a real car you can go see today.\n" +
+      "• Nothing you tell me is stored or shared — this chat is just between us.\n\n" +
+      "So — **what's got you thinking about a new car?**",
+    chips: [
+      "My current car needs replacing",
+      "Curious about going electric",
+      "Growing family, need more space",
+      "Just exploring my options"
+    ],
+  };
+}
+
 function showOnboarding() {
   onboardingStep = 0;
-  const greeting =
-    "Hi, welcome! Two quick notes before we begin:\n\n" +
-    "• I pull from **Møller Bil's live used-car inventory** — every recommendation maps to a real car you can go see today.\n" +
-    "• Nothing you tell me is stored or shared — this chat is just between us.\n\n" +
-    "So tell me — **are you here to find your next car, or just to learn more about how car-buying works?**";
-  const initialSuggestions = [
-    "Find my next car",
-    "Just learning for now",
-    "Compare a few options",
-    "Both — show me around"
-  ];
-  appendAIMessage(greeting, (msgEl) => {
-    renderQuickChips(initialSuggestions, msgEl);
+  const { text, chips } = getGreetingForMode(conversationMode);
+  appendAIMessage(text, (msgEl) => {
+    renderQuickChips(chips, msgEl);
+    // Only kick off the guided tour AFTER the greeting has finished typing
+    if (!_onboardingStarted) {
+      _onboardingStarted = true;
+      setTimeout(() => renderOnboardingStep(), 250);
+    }
   });
-  messages.push({ role: 'assistant', content: greeting });
+  messages.push({ role: 'assistant', content: text });
+}
+let _onboardingStarted = false;
+
+// If the conversation hasn't really started, swap out the opening AI message
+// for the new mode's greeting + chips.
+function replaceOpeningGreeting() {
+  const stream = document.getElementById('stream');
+  if (!stream) return;
+  stream.innerHTML = '';
+  messages = [];
+  topicAnchors = {};
+  msgCounter = 0;
+  // Show the chip-skeleton loading state while the new greeting types out
+  showChipsLoading();
+  showOnboarding();
 }
 
 function renderOnboardingStep() {
@@ -1786,14 +2081,33 @@ function renderOnboardingStep() {
 
   if (targetEl) {
     const r = targetEl.getBoundingClientRect();
+    const cardW = 320;
+    const cardH = 260;
+
     if (step.pos === 'right') {
       card.style.left  = (r.right + 16) + 'px';
-      card.style.top   = (r.top + r.height/2 - 120) + 'px';
+      card.style.top   = (r.top + r.height/2 - cardH/2) + 'px';
+    } else if (step.pos === 'bottom') {
+      // Position UNDER the target, horizontally centered on it, then clamp to viewport
+      let left = r.left + r.width/2 - cardW/2;
+      left = Math.max(12, Math.min(left, window.innerWidth - cardW - 12));
+      card.style.left = left + 'px';
+      card.style.top  = (r.bottom + 16) + 'px';
+    } else if (step.pos === 'top') {
+      let left = r.left + r.width/2 - cardW/2;
+      left = Math.max(12, Math.min(left, window.innerWidth - cardW - 12));
+      card.style.left = left + 'px';
+      card.style.top  = Math.max(12, r.top - cardH - 16) + 'px';
     } else {
-      card.style.right = (window.innerWidth - r.left + 16) + 'px';
-      card.style.top   = (r.top + r.height/2 - 120) + 'px';
+      // 'left' (default) — but if no room on the left, fall back to 'right'
+      const leftEdge = window.innerWidth - r.left + 16;
+      if (r.left - cardW - 16 < 12) {
+        card.style.left = (r.right + 16) + 'px';
+      } else {
+        card.style.right = leftEdge + 'px';
+      }
+      card.style.top   = (r.top + r.height/2 - cardH/2) + 'px';
     }
-    const cardH = 260;
     let top = parseFloat(card.style.top);
     if (top < 12) card.style.top = '12px';
     if (top + cardH > window.innerHeight - 12) card.style.top = (window.innerHeight - cardH - 12) + 'px';
@@ -1818,6 +2132,8 @@ function finishOnboarding() {
     el.style.opacity = '0';
     setTimeout(() => el.remove(), 260);
   });
+  // The main tour already covered the sidebar; no need to re-show it on mode switch
+  sidebarIntroShown = true;
 }
 
 // ── filter mini-tour: shown ONCE per page load when the sidebar first gets a confirmed item ─
@@ -1891,6 +2207,10 @@ function closeFilterTour() {
 // can scroll the chat back to the relevant question.
 function detectMessageTopic(text) {
   const t = (text || '').toLowerCase();
+  // Skip the welcome greeting itself — it casually mentions fuel/budget/etc.
+  // as examples but isn't actually asking the user about them.
+  if (/welcome|hi,?\s+welcome|two quick notes|what.s got you thinking|ask me anything/.test(t)) return null;
+
   if (/budget|price|cost|spend|how much|\bkr\b|kroner|afford/i.test(t))                                       return 'budget';
   if (/passenger|seat|family|kids|children|how many people|how many.*fit|7-seater|7 seater/i.test(t))         return 'seats';
   if (/electric|hybrid|petrol|diesel|fuel\b|\bev\b|charging|plug-in/i.test(t))                                return 'fuel';
@@ -2206,8 +2526,9 @@ function takeSnapshotIfNeeded() {
   const sMax = document.getElementById('budgetMax');
   prevSnapshot = {
     chips:     { ...activeChips },
-    budgetMin: sMin ? parseInt(sMin.value) : null,
-    budgetMax: sMax ? parseInt(sMax.value) : null,
+    budgetMin: window._lastBudget?.min ?? (sMin ? parseInt(sMin.value) : null),
+    budgetMax: window._lastBudget?.max ?? (sMax ? parseInt(sMax.value) : null),
+    budgetWasSet: !!getBudgetSummary(),
   };
 }
 
@@ -2323,7 +2644,11 @@ function buildSidebarMessage() {
   if (sMin && sMax && prevSnapshot.budgetMin != null) {
     const lo = parseInt(sMin.value), hi = parseInt(sMax.value);
     if (lo !== prevSnapshot.budgetMin || hi !== prevSnapshot.budgetMax) {
-      lines.push(`change my budget from ${formatNOK(prevSnapshot.budgetMin)} – ${formatNOK(prevSnapshot.budgetMax)} to ${formatNOK(lo)} – ${formatNOK(hi)}`);
+      if (prevSnapshot.budgetWasSet) {
+        lines.push(`change my budget from ${formatNOK(prevSnapshot.budgetMin)} - ${formatNOK(prevSnapshot.budgetMax)} to ${formatNOK(lo)} - ${formatNOK(hi)}`);
+      } else {
+        lines.push(`set my budget to ${formatNOK(lo)} - ${formatNOK(hi)}`);
+      }
     }
   }
 
@@ -2333,7 +2658,7 @@ function buildSidebarMessage() {
   if (lines.length === 1) return `I want to ${lines[0]}.`;
 
   // Multiple changes: header + bullet list
-  return `I want to update a few things:\n• ${lines.join('\n• ')}.`;
+  return `I want to update a few things:\n- ${lines.join('\n- ')}.`;
 }
 
 function pushSidebarPreviewToInput() {
@@ -2632,6 +2957,7 @@ function setBudgetRange(min, max, fromChat) {
 function resetFilters() {
   activeChips = {};
   activeTokens = [];
+  activeTokenPayloads = {};
   pendingBudget = null;
   window._lastBudget = null;
   topicAnchors = {};
@@ -2655,9 +2981,10 @@ function resetFilters() {
 }
 
 // ── tokens ────────────────────────────────────────────────────────────────
-function addToken(label) {
+function addToken(label, payload) {
   if (!activeTokens.includes(label)) {
     activeTokens.push(label);
+    if (payload && payload !== label) activeTokenPayloads[label] = payload;
     renderTokens();
     updateSend();
   }
@@ -2665,6 +2992,7 @@ function addToken(label) {
 
 function removeToken(label) {
   activeTokens = activeTokens.filter(t => t !== label);
+  delete activeTokenPayloads[label];
   Object.keys(activeChips).forEach(key => {
     const [groupKey, opt] = key.split(':');
     if (tokenLabel(groupKey, opt) === label) delete activeChips[key];
@@ -2700,7 +3028,6 @@ function autoGrow(el) {
 // ── chat UI helpers ───────────────────────────────────────────────────────
 function appendAIMessage(text, onDone) {
   const stream = document.getElementById('stream');
-  const _bar = document.getElementById('suggestionsBar'); if (_bar) _bar.innerHTML = '';
 
   const msgDiv = document.createElement('div');
   msgDiv.id = nextMsgId();
@@ -2716,11 +3043,12 @@ function appendAIMessage(text, onDone) {
   `;
   stream.appendChild(msgDiv);
   // a new topic message means at least one jump button just became active
-  if (topic) refreshJumpButtons();
+  refreshJumpButtons(); // always re-evaluate, so cleared chats deactivate stale buttons
 
   const bub = msgDiv.querySelector('.bub');
-  const full = formatText(text);
-  const total = text.length;
+  const displayText = sanitizeAssistantText(text);
+  const full = formatText(displayText);
+  const total = displayText.length;
   const speed = 18;
   let revealed = 0;
 
@@ -2818,6 +3146,9 @@ function renderQuickChips(suggestions, msgEl) {
     return;
   }
   wrap.classList.remove('empty');
+  const topic = msgEl?.dataset?.topic || detectMessageTopic(msgEl?.innerText || '');
+  if (topic) wrap.dataset.topic = topic;
+  else delete wrap.dataset.topic;
 
   suggestions.forEach(s => {
     const btn = document.createElement('button');
@@ -2829,12 +3160,25 @@ function renderQuickChips(suggestions, msgEl) {
         removeToken(s);
         btn.classList.remove('on');
       } else {
-        addToken(s);
+        addToken(s, getQuickReplyPayload(s, topic));
         btn.classList.add('on');
       }
     };
     bar.appendChild(btn);
   });
+}
+
+function getQuickReplyPayload(label, topic) {
+  if (!/not sure|unsure|don't know|do not know/i.test(label || '')) return label;
+  const prompts = {
+    fuel: 'I am not sure yet about fuel type. Please briefly explain petrol, diesel, hybrid, and electric, then ask me again which fuel type I prefer.',
+    budget: 'I am not sure yet about budget. Please briefly explain useful budget ranges for used cars in Norway, then ask me again what budget feels right.',
+    seats: 'I am not sure yet about seats. Please briefly explain how to choose between 5 seats, 6 seats, and 7+ seats, then ask me again how many seats I need.',
+    size: 'I am not sure yet about vehicle size. Please briefly explain compact, family car, SUV, and van tradeoffs, then ask me again which size fits me.',
+    brand: 'I am not sure yet about brand preference. Please briefly explain that I can choose a trusted brand or stay open, then ask me again if I have any brand preference.',
+    usage: 'I am not sure yet about how I will use the car. Please briefly explain why commuting, city driving, family use, road trips, and mountain trips matter, then ask me again how I will use it.',
+  };
+  return prompts[topic] || `I am not sure yet about this question. Please briefly explain the options, then ask me the same question again.`;
 }
 
 // Compute structured diff rows for the update preview
@@ -2953,9 +3297,10 @@ function restoreQuickReplies() {
     btn.className = 'chip';
     btn.textContent = s;
     if (activeTokens.includes(s)) btn.classList.add('on');
+    const topic = wrap.dataset.topic || '';
     btn.onclick = () => {
       if (btn.classList.contains('on')) { removeToken(s); btn.classList.remove('on'); }
-      else                              { addToken(s);    btn.classList.add('on');    }
+      else                              { addToken(s, getQuickReplyPayload(s, topic)); btn.classList.add('on'); }
     };
     bar.appendChild(btn);
   });
@@ -2970,9 +3315,11 @@ function showChipsLoading() {
   wrap.classList.remove('empty');
   if (label) {
     label.textContent = 'Generating suggestions';
+    label.classList.remove('is-update');
     label.classList.add('is-loading');
   }
   bar.innerHTML = '';
+  bar.classList.remove('quick-chips-diff');
   // four placeholder chips at varied widths
   const widths = [150, 120, 180, 130];
   widths.forEach(w => {
@@ -3014,15 +3361,47 @@ async function runToolStrip(steps) {
 
 // ── EV surprises ─────────────────────────────────────────────────────────
 function parseEVSurprises(text) {
-  if (!text.includes('EV_SURPRISES:')) return null;
-  const after = text.split('EV_SURPRISES:')[1] || '';
-  const block = after.split('SUGGESTIONS:')[0];
+  const marker = text.match(/EV_SURPRISES:/i);
+  const itemMarker = text.match(/(?:^|\n)\s*(?:[-*]\s*)?Item\s*1\s*[:.)-]/i);
+  if (!marker && !itemMarker) return null;
+  const after = marker
+    ? text.slice(marker.index + marker[0].length)
+    : text.slice(itemMarker.index);
+  const block = after.split(/SUGGESTIONS:/i)[0];
   const items = [];
   for (let i = 1; i <= 5; i++) {
-    const m = block.match(new RegExp(`Item${i}:\\s*([^|\\n]+)\\|\\s*([^\\n]+)`));
+    const m = block.match(new RegExp(`(?:^|\\n)\\s*(?:[-*]\\s*)?Item\\s*${i}\\s*[:.)-]?\\s*([^|\\n]+?)(?:\\s*\\|\\s*|\\s+-\\s+|:\\s+)([^\\n]+)`, 'i'));
     if (m) items.push({ title: cleanField(m[1]), desc: cleanField(m[2]) });
   }
+  if (!items.length) {
+    block.split(/\n+/).map(line => line.trim()).filter(Boolean).forEach(line => {
+      if (items.length >= 5) return;
+      const cleaned = line
+        .replace(/^[-*]\s*/, '')
+        .replace(/^Item\s*\d+\s*[:.)-]?\s*/i, '')
+        .trim();
+      const parts = cleaned.split(/\s*\|\s*|\s+-\s+|:\s+/);
+      if (parts.length >= 2) {
+        items.push({ title: cleanField(parts.shift()), desc: cleanField(parts.join(' - ')) });
+      }
+    });
+  }
   return items.length ? items : null;
+}
+
+function stripEVSurprisesBlock(text) {
+  let working = String(text || '');
+  working = working.replace(/EV_SURPRISES:[\s\S]*?(?=SUGGESTIONS:|$)/i, '').trim();
+
+  // Some model replies forget the EV_SURPRISES marker and emit raw Item1/2/3
+  // lines after a short intro. Remove those lines so the card renderer owns them.
+  working = working
+    .split('\n')
+    .filter(line => !/^\s*(?:[-*]\s*)?Item\s*\d+\s*[:.)-]/i.test(line))
+    .join('\n')
+    .trim();
+
+  return working;
 }
 
 function renderEVSurprises(items, msgEl) {
@@ -3109,12 +3488,35 @@ function renderRecs(recs, msgEl) {
     const year     = cleanField(r.year);
     const subtitle = cleanField(r.subtitle);
 
+    // Remember this model so the AI doesn't repeat it on "show me more"
+    if (model && !recommendedModels.includes(model)) recommendedModels.push(model);
+
     const subline = (year && subtitle)
       ? `${escapeHtml(year)} · ${escapeHtml(subtitle)}`
       : escapeHtml(year || subtitle);
 
-    const specsHtml = r.specs.length
-      ? `<div class="rec-specs">${r.specs.map(s => `
+    // Try to pull a real image from our inventory cache for this model
+    const matches = inventoryLoaded ? matchInventory(model) : [];
+
+    // If we have real inventory for this model, override AI's estimated price
+    // with the actual minimum price in stock.
+    let realSpecs = r.specs;
+    if (matches.length > 0) {
+      const validPrices = matches.map(m => m.price).filter(p => typeof p === 'number' && p > 0);
+      const minPrice = validPrices.length ? Math.min(...validPrices) : null;
+      if (minPrice != null) {
+        realSpecs = r.specs.map(s => {
+          const labelLower = (s.label || '').toLowerCase();
+          if (labelLower.includes('price') || labelLower.includes('starting') || labelLower.includes('from')) {
+            return { label: 'From', value: `${formatNOK(minPrice)} · ${matches.length} in stock` };
+          }
+          return s;
+        });
+      }
+    }
+
+    const specsHtml = realSpecs.length
+      ? `<div class="rec-specs">${realSpecs.map(s => `
           <div class="rec-spec">
             <span class="rec-spec-label">${escapeHtml(cleanField(s.label))}</span>
             <span class="rec-spec-value">${enrichTerms(escapeHtml(cleanField(s.value)))}</span>
@@ -3132,9 +3534,6 @@ function renderRecs(recs, msgEl) {
     const badgeHtml = badge
       ? `<span class="rec-badge">${escapeHtml(badge)}</span>`
       : '';
-
-    // Try to pull a real image from our inventory cache for this model
-    const matches = inventoryLoaded ? matchInventory(model) : [];
     const heroImage = matches.length
       ? ((matches[0].carImages || []).find(i => i.sortOrder === 0) || (matches[0].carImages || [])[0])?.normalUrl
       : null;
@@ -3510,14 +3909,16 @@ async function sendMessage() {
   const text = input.value.trim();
   const tokens = [...activeTokens];
   if (!text && tokens.length === 0) return;
+  const tokenPayloads = tokens.map(t => activeTokenPayloads[t] || t);
 
-  const combined = tokens.length > 0
-    ? (tokens.join(', ') + (text ? '. ' + text : ''))
+  const combined = tokenPayloads.length > 0
+    ? (tokenPayloads.join(', ') + (text ? '. ' + text : ''))
     : text;
+  const isExplanationRequest = tokenPayloads.some(t => /I am not sure yet about/i.test(t));
 
   appendUserMessage(text, tokens);
   detectMode(combined);
-  if (conversationMode === 'shopping') {
+  if (conversationMode === 'shopping' && !isExplanationRequest) {
     syncFiltersFromText(combined);
   }
   // The message just shipped — clear any "un-sent edit" highlight and snapshot before the rebuild
@@ -3525,6 +3926,7 @@ async function sendMessage() {
   input.value = '';
   autoGrow(input);
   activeTokens = [];
+  activeTokenPayloads = {};
   renderTokens();
   buildSidebar();
   updateSend();
@@ -3548,10 +3950,14 @@ async function sendMessage() {
         model: 'deepseek-chat',
         max_tokens: 800,
         stream: false,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...messages,
-        ],
+        messages: (() => {
+          const inv = getAvailableModelsHint();
+          return [
+            { role: 'system', content: SYSTEM_PROMPT },
+            ...(inv ? [{ role: 'system', content: inv }] : []),
+            ...messages,
+          ];
+        })(),
       }),
     });
 
@@ -3636,20 +4042,47 @@ async function sendMessage() {
 
 function parseSuggestions(text) {
   let working = text;
-  working = working.replace(/^TOOLS:\s*\[.*?\]\s*/m, '').trim();
-  working = working.replace(/EV_SURPRISES:[\s\S]*?(?=SUGGESTIONS:|$)/, '').trim();
+  working = working.replace(/^TOOLS:\s*\[.*?\]\s*/im, '').trim();
+  working = stripEVSurprisesBlock(working);
 
-  const match = working.match(/SUGGESTIONS:\s*(\[.*?\])/s);
+  const match = working.match(/SUGGESTIONS:\s*(\[.*?\])/is);
   if (match) {
     try {
       const suggestions = JSON.parse(match[1]);
-      const cleanText = working.replace(/SUGGESTIONS:\s*\[.*?\]/s, '').trim();
+      const cleanText = sanitizeAssistantText(working.replace(/SUGGESTIONS:\s*\[.*?\]/is, '').trim());
       if (Array.isArray(suggestions) && suggestions.length > 0) {
-        return { cleanText, suggestions };
+        return { cleanText, suggestions: normalizeSuggestionsForQuestion(cleanText, suggestions) };
       }
     } catch(e) {}
   }
-  return { cleanText: working, suggestions: defaultSuggestions(working) };
+  const cleanText = sanitizeAssistantText(working);
+  return { cleanText, suggestions: defaultSuggestions(cleanText) };
+}
+
+function normalizeSuggestionsForQuestion(aiText, suggestions) {
+  const full = (aiText || '');
+  const questions = full.match(/[^.!?]*\?/g) || [];
+  const text = (questions[questions.length - 1] || full).toLowerCase();
+  const joined = (suggestions || []).join(' ').toLowerCase();
+  const fallback = () => defaultSuggestions(aiText);
+
+  if (/electric|hybrid|petrol|diesel|fuel|ev\b/.test(text) &&
+      !/electric|ev|hybrid|petrol|diesel|not sure/.test(joined)) {
+    return fallback();
+  }
+  if (/must.?have|feature|tow hitch|towing package|sunroof|heated|roof rack|roof rail|awd|leather|panoram/.test(text) &&
+      !/tow|roof|heated|must|specific|awd|leather|sunroof|panoram/.test(joined)) {
+    return fallback();
+  }
+  if (/passenger|seat|family|kids|children|how many people/.test(text) &&
+      !/\bseat|people|just me|2-4|5-7|7\+/.test(joined)) {
+    return fallback();
+  }
+  if (/budget|price|cost|spend|how much|\bkr\b/.test(text) &&
+      !/\bkr\b|budget|flexible|\d/.test(joined)) {
+    return fallback();
+  }
+  return suggestions;
 }
 
 function defaultSuggestions(aiText) {
@@ -3657,11 +4090,11 @@ function defaultSuggestions(aiText) {
   const questions = full.match(/[^.!?]*\?/g) || [];
   const lastQuestion = (questions[questions.length - 1] || full).toLowerCase();
 
-  if (/must.?have|feature|tow|sunroof|heated|roof rack|roof rail|awd|leather|panoram/i.test(lastQuestion)) {
-    return ['Tow hitch', 'Roof rails', 'Heated seats', 'No specific must-haves'];
-  }
   if (/electric|hybrid|petrol|diesel|fuel|ev\b/i.test(lastQuestion)) {
     return ['Electric (EV)', 'Hybrid', 'Petrol or diesel', 'Not sure yet'];
+  }
+  if (/must.?have|feature|tow hitch|towing package|sunroof|heated|roof rack|roof rail|awd|leather|panoram/i.test(lastQuestion)) {
+    return ['Tow hitch', 'Roof rails', 'Heated seats', 'No specific must-haves'];
   }
   if (/\bbrand\b|brand in mind|particular brand|brands you|manufacturer/i.test(lastQuestion)) {
     return ['Open to anything', 'Toyota or Volvo', 'German brands', 'Tesla or Polestar'];
@@ -3742,20 +4175,58 @@ function renderBulletCards(html) {
   };
 
   for (const line of lines) {
-    const m = line.match(/^\s*[•\-\*]\s+(.+)$/);
+    const m = line.match(/^\s*(?:[•\-\*]|\d+[.)])\s+(.+)$/);
     if (m) {
       bullets.push(m[1]);
     } else {
       flushBullets();
-      // Preserve blank lines as <br>, non-blank as themselves
-      out.push(line);
+      // Skip empty lines — paragraph spacing is handled by block-level cards
+      if (line.trim() !== '') out.push(line);
+      else out.push('<span class="msg-gap"></span>');
     }
   }
   flushBullets();
-  return out.join('<br>');
+
+  // Insert a single <br> only between consecutive plain-text chunks; bullet
+  // cards are block-level and already supply their own vertical rhythm.
+  let result = '';
+  for (let i = 0; i < out.length; i++) {
+    const cur = out[i];
+    const next = out[i + 1];
+    result += cur;
+    if (next !== undefined) {
+      const curIsCard  = cur.startsWith('<div class="msg-notes"');
+      const nextIsCard = next.startsWith('<div class="msg-notes"');
+      const curIsGap  = cur.startsWith('<span class="msg-gap"');
+      const nextIsGap = next.startsWith('<span class="msg-gap"');
+      if (!curIsCard && !nextIsCard && !curIsGap && !nextIsGap) result += '<br>';
+    }
+  }
+  return result;
+}
+
+function sanitizeAssistantText(text) {
+  return String(text || '')
+    .replace(/<\/?[a-z][\w:-]*[^>]*>/gi, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/`/g, '')
+    .trim();
+}
+
+function addFinalQuestionBreak(text) {
+  let s = String(text || '').trim();
+  if (!s || /\n\s*\n/.test(s)) return s;
+  const questionMatch = s.match(/([.!?])\s+(\*\*[A-Z][^?\n]{12,}\?\*\*|[A-Z][^?\n]{12,}\?)\s*$/);
+  if (!questionMatch || questionMatch.index === 0) return s;
+  const questionStart = questionMatch.index + questionMatch[0].indexOf(questionMatch[2]);
+  const before = s.slice(0, questionStart).trimEnd();
+  const after = s.slice(questionStart).trimStart();
+  if (!before || before.endsWith('\n')) return s;
+  return `${before}\n\n${after}`;
 }
 
 function formatText(text) {
+  text = addFinalQuestionBreak(sanitizeAssistantText(text));
   let html = escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
   html = enrichTerms(html);
   html = renderBulletCards(html);
@@ -3791,9 +4262,11 @@ function updateSend() {
 function resetAll() {
   messages = [];
   activeTokens = [];
+  activeTokenPayloads = {};
   activeChips = {};
   pinnedCars = [];
   topicAnchors = {};
+  recommendedModels = [];
   msgCounter = 0;
   document.getElementById('stream').innerHTML = '';
   document.getElementById('inputField').value = '';
