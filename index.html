@@ -1569,13 +1569,8 @@ function init() {
   showOnboarding();
   // Start fetching real inventory in the background
   inventoryLoadPromise = fetchAllInventory();
-  // First-time visitors get the guided tour. Stored on localStorage so it
-  // doesn't pop up on every refresh.
-  let tourSeen = false;
-  try { tourSeen = !!localStorage.getItem('mollerTourSeen'); } catch (e) {}
-  if (!tourSeen) {
-    setTimeout(() => renderOnboardingStep(), 700);
-  }
+  // Show the guided tour on every page load
+  setTimeout(() => renderOnboardingStep(), 700);
 }
 
 // ── onboarding ─────────────────────────────────────────────────────────────
@@ -1718,13 +1713,10 @@ function finishOnboarding() {
     el.style.opacity = '0';
     setTimeout(() => el.remove(), 260);
   });
-  try { localStorage.setItem('mollerTourSeen', '1'); } catch (e) {}
 }
 
-// ── filter mini-tour: shown ONCE when the sidebar first gets a confirmed item ─
-let filterTourShown = (() => {
-  try { return !!localStorage.getItem('mollerFilterTourSeen'); } catch (e) { return false; }
-})();
+// ── filter mini-tour: shown ONCE per page load when the sidebar first gets a confirmed item ─
+let filterTourShown = false;
 
 function maybeShowFilterTour() {
   if (filterTourShown) return;
@@ -1733,7 +1725,6 @@ function maybeShowFilterTour() {
   const target = document.querySelector('.filter-group[data-state="confirmed"]');
   if (!target) return;
   filterTourShown = true;
-  try { localStorage.setItem('mollerFilterTourSeen', '1'); } catch (e) {}
   // give the buildSidebar layout a frame to settle
   setTimeout(() => showFilterTour(target), 250);
 }
