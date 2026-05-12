@@ -742,9 +742,21 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   font-size: 17px; line-height: 1.4; color: var(--ink);
   font-weight: 500;
   padding-top: 4px;
+  transition: color 220ms var(--ease-out);
 }
 .filter-value.placeholder {
   font-size: 15px; color: var(--muted); font-weight: 400;
+}
+/* Group has un-sent manual edits — show value + chips in salmon */
+.filter-group.dirty .filter-value { color: var(--salmon); }
+.filter-group.dirty .chip.on {
+  background: var(--salmon);
+  border-color: var(--salmon);
+  color: var(--cream-100);
+}
+.filter-group.dirty .filter-status-pill {
+  background: rgba(225,100,75,0.14);
+  color: var(--salmon);
 }
 
 /* Toggle that reveals the editing chips — quiet text link, NO arrow */
@@ -1186,7 +1198,6 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
         </div>
         <div class="side-head-actions">
           <button class="side-reset" onclick="resetFilters()">reset</button>
-          <button class="btn-apply" id="btnApply" onclick="applyFilters()">Apply</button>
         </div>
       </div>
       <div class="side-body" id="sideBody"></div>
@@ -1760,11 +1771,11 @@ function showFilterTour(target) {
   card.style.cssText = `top:${top}px; left:${left}px; width:${cardW}px;`;
   card.innerHTML = `
     <div class="ob-step-label">First answer captured</div>
-    <div class="ob-title">Three controls to know</div>
+    <div class="ob-title">How to tweak your profile</div>
     <div class="ob-body" style="text-align:left;">
       <div style="margin-bottom:8px;"><b style="color:var(--ink);font-weight:500;">Change</b> — tap to manually adjust what I captured (e.g. tweak your budget by 50 000 kr).</div>
       <div style="margin-bottom:8px;"><b style="color:var(--ink);font-weight:500;">Show in chat</b> — jumps back to the message where this was confirmed.</div>
-      <div><b style="color:var(--ink);font-weight:500;">Apply</b> — appears after you edit something, so I know your update is intentional.</div>
+      <div>When you edit something, the new values turn <span style="color:var(--salmon);font-weight:500;">salmon</span> and a preview drops into the chat box — hit <b style="color:var(--ink);font-weight:500;">Send</b> to apply.</div>
     </div>
     <div class="ob-actions">
       <span></span>
@@ -2090,47 +2101,18 @@ function buildSidebar() {
   body.appendChild(note);
 }
 
+// "dirty" = sidebar has un-sent manual edits. Apply button is gone;
+// edits land in the input field as a preview and ship with the next Send.
 let pendingManualChange = false;
 
-function setApplyVisible(v) {
-  const btn   = document.getElementById('btnApply');
-  const input = document.getElementById('inputField');
-  const send  = document.getElementById('btnSend');
-
-  if (btn) {
-    btn.classList.toggle('active', v);
-    btn.disabled = !v;
-  }
-
-  // Lock the chat input when sidebar has un-applied changes
-  if (input) {
-    input.disabled = !!v;
-    input.placeholder = v
-      ? 'Apply your filter changes to continue…'
-      : 'Tell the assistant what you need…';
-    input.style.opacity = v ? '0.4' : '';
-    input.style.cursor  = v ? 'not-allowed' : '';
-  }
-  if (send) {
-    if (v) send.disabled = true;
-    else updateSend();   // re-evaluate normally when unlocked
-  }
+function setDirty(v) {
+  pendingManualChange = v;
+  document.querySelectorAll('.filter-group').forEach(g => g.classList.toggle('dirty', !!v));
 }
+// Kept for backwards compatibility with old call sites; just toggles dirty now
+function setApplyVisible(v) { setDirty(v); }
 
-function toggleChip(groupKey, opt, btn, key) {
-  if (activeChips[key]) {
-    delete activeChips[key];
-    btn.classList.remove('on');
-  } else {
-    activeChips[key] = true;
-    btn.classList.add('on');
-  }
-  pendingManualChange = true;
-  setApplyVisible(true);
-  refreshGroupSummary(groupKey);
-}
-
-function applyFilters() {
+function buildSidebarMessage() {
   const parts = [];
   const grouped = {};
   Object.keys(activeChips).forEach(key => {
@@ -2157,14 +2139,41 @@ function applyFilters() {
     }
   }
 
-  if (parts.length === 0) return;
+  return parts.length ? `I'm looking for: ${parts.join(', ')}.` : '';
+}
 
-  const msg = `I'm looking for: ${parts.join(', ')}.`;
+function pushSidebarPreviewToInput() {
+  const msg = buildSidebarMessage();
+  const input = document.getElementById('inputField');
+  if (!input) return;
+  // Only overwrite if the field is empty OR currently holds a previous sidebar preview
+  const current = input.value;
+  const isPreview = !current || current.startsWith("I'm looking for:");
+  if (isPreview) {
+    input.value = msg;
+    if (typeof autoGrow === 'function') autoGrow(input);
+  }
+  updateSend();
+}
 
-  // Unlock chat first, then populate and send
-  pendingManualChange = false;
-  setApplyVisible(false);
+function toggleChip(groupKey, opt, btn, key) {
+  if (activeChips[key]) {
+    delete activeChips[key];
+    btn.classList.remove('on');
+  } else {
+    activeChips[key] = true;
+    btn.classList.add('on');
+  }
+  setDirty(true);
+  refreshGroupSummary(groupKey);
+  pushSidebarPreviewToInput();
+}
 
+// Legacy alias — the Apply button is gone, but resetFilters etc. still expect this name.
+function applyFilters() {
+  const msg = buildSidebarMessage();
+  if (!msg) return;
+  setDirty(false);
   document.getElementById('inputField').value = msg;
   updateSend();
   sendMessage();
@@ -2179,8 +2188,8 @@ function onBudgetInput(which) {
   if (which === 'min' && lo >= hi) sMin.value = (hi - 25000);
   if (which === 'max' && hi <= lo) sMax.value = (lo + 25000);
   updateBudgetDisplay();
-  pendingManualChange = true;
-  setApplyVisible(true);
+  setDirty(true);
+  pushSidebarPreviewToInput();
 }
 
 function updateBudgetDisplay() {
@@ -2394,24 +2403,27 @@ function setBudgetRange(min, max, fromChat) {
   sMin.value = min;
   sMax.value = max;
   updateBudgetDisplay();
-  // Only flag as pending (and lock input) when the user dragged the slider manually,
-  // NOT when called from chat-based filter sync.
   if (!fromChat) {
-    pendingManualChange = true;
-    setApplyVisible(true);
+    setDirty(true);
+    pushSidebarPreviewToInput();
   }
 }
 
 function resetFilters() {
   activeChips = {};
   activeTokens = [];
-  pendingManualChange = false;
   pendingBudget = null;
   window._lastBudget = null;
   topicAnchors = {};
-  setApplyVisible(false);
+  setDirty(false);
   renderTokens();
   buildSidebar();
+  // Clear any sidebar-preview text out of the input
+  const input = document.getElementById('inputField');
+  if (input && input.value.startsWith("I'm looking for:")) {
+    input.value = '';
+    updateSend();
+  }
 }
 
 // ── tokens ────────────────────────────────────────────────────────────────
@@ -3148,14 +3160,15 @@ async function sendMessage() {
   if (conversationMode === 'shopping') {
     syncFiltersFromText(combined);
   }
+  // The message just shipped — clear any "un-sent edit" highlight before the rebuild
+  pendingManualChange = false;
   input.value = '';
   autoGrow(input);
   activeTokens = [];
   renderTokens();
   buildSidebar();
   updateSend();
-  // Once the sidebar has its first confirmed item, show a one-time mini-tour
-  // explaining the Change / Show in chat / Apply controls.
+  // First-time-only mini-tour for the sidebar controls
   maybeShowFilterTour();
 
   messages.push({ role: 'user', content: combined });
