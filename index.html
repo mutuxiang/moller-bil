@@ -787,11 +787,47 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   color: var(--salmon) !important;
   text-decoration: line-through;
 }
-/* Disable quick-reply chips while sidebar has un-sent edits */
-body.sidebar-dirty #suggestionsBar .chip {
-  opacity: 0.4;
-  pointer-events: none;
-  filter: grayscale(40%);
+/* Update-diff layout that replaces the quick-reply chips while sidebar is dirty */
+.quick-reply-label.is-update { color: var(--salmon); }
+#suggestionsBar.quick-chips-diff {
+  flex-direction: column;
+  gap: 8px;
+  animation: none;
+}
+.diff-row {
+  display: flex; flex-wrap: wrap; align-items: center;
+  row-gap: 6px; column-gap: 6px;
+}
+.diff-label {
+  font: 500 12px/1 "Moller", sans-serif;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--eyebrow);
+  min-width: 110px;
+  margin-right: 4px;
+}
+.diff-tag {
+  padding: 4px 11px; border-radius: 999px;
+  font: 400 13px/1.3 "Moller", sans-serif;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.diff-tag-old {
+  color: var(--muted);
+  border-color: rgba(0,25,70,0.20);
+  background: transparent;
+  text-decoration: line-through;
+  text-decoration-color: rgba(0,25,70,0.4);
+}
+.diff-tag-new {
+  color: var(--cream-100);
+  background: var(--salmon);
+  border-color: var(--salmon);
+}
+.diff-arrow {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 2px;
 }
 
 /* Toggle that reveals the editing chips — quiet text link, NO arrow */
@@ -1293,23 +1329,33 @@ OPENING — read the user's mode from their FIRST reply:
 - If they say "Both" or are unclear → ask which they'd like to start with.
 
 Conversation flow (SHOPPING MODE only) — adaptive, not rigid:
-Before recommending cars, you should have info on these 6 areas:
-A) Situation/motivation (why they're looking)
-B) Passengers/seats they need
+There are 7 possible areas you can cover, but only 3 are REQUIRED before recommending:
+
+REQUIRED (must be answered before you can show RECOMMENDATIONS):
+B) Passengers / seats they need
 C) Budget range
-D) Fuel type preference (petrol, diesel, hybrid, electric)
-E) Brand preference (OPTIONAL — Audi, BMW, Volvo, Toyota, Tesla, Volkswagen, Hyundai, Kia, Peugeot, Renault, Mercedes, Ford, etc., or "no preference / open to anything")
+D) Fuel type / powertrain (petrol, diesel, hybrid, electric)
+
+OPTIONAL (ask only if there's a natural opening — don't gate recommendations on these):
+A) Situation/motivation (why they're looking)
+E) Brand preference (Audi, BMW, Volvo, Toyota, Tesla, Volkswagen, Hyundai, Kia, Peugeot, Renault, Mercedes, Ford, etc., or "no preference / open to anything")
 F) Must-have features (e.g. tow hitch, sunroof, heated seats, AWD)
-G) Personal preferences — ONE wrap-up question right before recommendations covering subjective/lifestyle preferences (see "Personal preferences" rule below). This is DIFFERENT from area F (functional must-haves) and DIFFERENT from the EV surprises (cutting-edge features). G is about personal taste and ownership-cost concerns.
+G) Personal preferences — color, hidden costs, trade-in, extras (this is the optional wrap-up question; see rule below)
 
 Rules for the flow:
-- Ask about whatever is the natural next topic given what the user just said. Follow their lead — if they bring up budget, dive into budget; if they mention kids, explore passengers/safety.
-- If a user's earlier message already answered an area (e.g. they said "I need a 7-seater for my family"), DON'T ask that question again — just acknowledge it and move to a different area.
-- Track what's been covered. Skip topics they've already answered, even implicitly.
-- Budget is the one area you should not let them skip entirely. If they avoid it or you've covered other areas without it, gently circle back: "Before I can find the right match, it'd really help to know roughly what budget you're thinking — even a ballpark helps!"
-- Brand (area E) is OPTIONAL. Ask it ONCE, casually — e.g. "Any brands you already trust, or are you open to anything?" — typically AFTER fuel type and BEFORE must-have features. If they say "no preference" or "open to anything", accept that immediately and move on. NEVER push for a brand if they don't have one. NEVER ask about brand twice.
-- If the user mentions a specific brand at any point ("I had a Toyota before", "I love Volvo's safety"), treat brand as covered and skip the question.
-- Once you have info on areas A, B, C, D, F (E is optional), ask Area G (Final-detail check) ONCE, then recommend on the next turn.
+- Always lead with the user's energy. If they open with "growing family" → ask seats. If they open with budget → dive into budget.
+- B + C + D are the floor. As soon as you have those three confirmed, you CAN recommend — you don't need anything else.
+- A (situation) is a nice warm-up but skip it if the user is impatient or has already implied their motivation.
+- Budget is the one REQUIRED area users sometimes try to dodge. If they avoid it, gently circle back: "Before I can find the right match, it'd really help to know roughly what budget you're thinking — even a ballpark helps!"
+- If a user's earlier message already answered an area (e.g. they said "I need a 7-seater for my family"), DON'T ask that area again.
+- E (brand) is OPTIONAL — ask only ONCE, casually, e.g. "Any brands you already trust?" Accept "no preference" immediately. NEVER push. If the user mentions a brand anywhere, treat E as covered.
+- F (must-haves) is OPTIONAL but useful — this is where you emit the EV_SURPRISES block (see that rule). Ask only if there's room before recommendations.
+- G (personal preferences) is the optional wrap-up — only ask if the conversation has been thorough and you've covered F. If the user wants speed, skip G and recommend right away.
+
+DECISION POINT — when to recommend:
+- Have B + C + D confirmed? → You may recommend now.
+- Optional flow: ask 0–2 of the optional areas (typically F, then G) if there's natural space and the user seems engaged. Then recommend.
+- Don't ask more than ONE optional question per turn. Don't drag the conversation.
 
 PERSONAL PREFERENCES (Area G — ask exactly ONCE, right before recommending):
 - This is the LAST question before recommendations. It comes AFTER the must-haves question (F, which included the EV_SURPRISES panel) and is CLEARLY different from it:
@@ -2171,8 +2217,10 @@ function refreshDirtyClasses() {
   document.querySelectorAll('.filter-group').forEach(g => {
     g.classList.toggle('dirty', dirty.has(g.dataset.key));
   });
-  // body-level class disables quick-reply chips while sidebar has un-sent edits
   document.body.classList.toggle('sidebar-dirty', dirty.size > 0);
+  // Swap quick-reply chips ↔ update-diff display
+  if (dirty.size > 0) showUpdateDiff();
+  else restoreQuickReplies();
 }
 
 function setDirty(v) {
@@ -2716,14 +2764,22 @@ function removeTypingIndicator() {
 }
 
 // ── quick chips ───────────────────────────────────────────────────────────
+// Remember the most recent AI-provided suggestions so we can restore them
+// after the sidebar dirty state clears.
+let lastSuggestions = [];
+
 function renderQuickChips(suggestions, msgEl) {
+  lastSuggestions = Array.isArray(suggestions) ? suggestions.slice() : [];
+  // If sidebar is currently mid-edit, show the update diff instead of fresh chips
+  if (pendingManualChange) { showUpdateDiff(); return; }
   const bar = document.getElementById('suggestionsBar');
   const wrap = document.getElementById('suggestionsWrap');
   const label = wrap ? wrap.querySelector('.quick-reply-label') : null;
   bar.innerHTML = '';
+  bar.classList.remove('quick-chips-diff');
   if (label) {
     label.textContent = 'Quick reply';
-    label.classList.remove('is-loading');
+    label.classList.remove('is-loading', 'is-update');
   }
   if (!suggestions || suggestions.length === 0) {
     wrap.classList.add('empty');
@@ -2744,6 +2800,122 @@ function renderQuickChips(suggestions, msgEl) {
         addToken(s);
         btn.classList.add('on');
       }
+    };
+    bar.appendChild(btn);
+  });
+}
+
+// Compute structured diff rows for the update preview
+function computeDiffStructure() {
+  if (!prevSnapshot) return [];
+  const optsByGroup = (chips, key) =>
+    Object.keys(chips).filter(k => k.startsWith(key + ':')).map(k => k.split(':')[1]);
+
+  const allGroups = new Set();
+  Object.keys(activeChips).forEach(k => allGroups.add(k.split(':')[0]));
+  Object.keys(prevSnapshot.chips).forEach(k => allGroups.add(k.split(':')[0]));
+
+  const rows = [];
+  allGroups.forEach(gKey => {
+    const prev = optsByGroup(prevSnapshot.chips, gKey);
+    const curr = optsByGroup(activeChips, gKey);
+    if (sameSorted(prev, curr)) return;
+    rows.push({ label: getGroupLabel(gKey), prev, curr });
+  });
+
+  const sMin = document.getElementById('budgetMin');
+  const sMax = document.getElementById('budgetMax');
+  if (sMin && sMax && prevSnapshot.budgetMin != null) {
+    const lo = parseInt(sMin.value), hi = parseInt(sMax.value);
+    if (lo !== prevSnapshot.budgetMin || hi !== prevSnapshot.budgetMax) {
+      rows.push({
+        label: 'Budget',
+        prev: [`${formatNOK(prevSnapshot.budgetMin)}–${formatNOK(prevSnapshot.budgetMax)}`],
+        curr: [`${formatNOK(lo)}–${formatNOK(hi)}`],
+      });
+    }
+  }
+  return rows;
+}
+
+// Render the dirty-edit diff in the quick-reply slot
+function showUpdateDiff() {
+  const bar  = document.getElementById('suggestionsBar');
+  const wrap = document.getElementById('suggestionsWrap');
+  if (!bar || !wrap) return;
+  const label = wrap.querySelector('.quick-reply-label');
+
+  const rows = computeDiffStructure();
+  if (rows.length === 0) { restoreQuickReplies(); return; }
+
+  wrap.classList.remove('empty');
+  if (label) {
+    label.textContent = 'Quick update';
+    label.classList.remove('is-loading');
+    label.classList.add('is-update');
+  }
+
+  bar.innerHTML = '';
+  bar.classList.add('quick-chips-diff');
+
+  rows.forEach(({ label: gLabel, prev, curr }) => {
+    const row = document.createElement('div');
+    row.className = 'diff-row';
+
+    const lbl = document.createElement('span');
+    lbl.className = 'diff-label';
+    lbl.textContent = gLabel;
+    row.appendChild(lbl);
+
+    const oldList = prev.length ? prev : ['—'];
+    oldList.forEach(p => {
+      const t = document.createElement('span');
+      t.className = 'diff-tag diff-tag-old';
+      t.textContent = p;
+      row.appendChild(t);
+    });
+
+    const arrow = document.createElement('span');
+    arrow.className = 'diff-arrow';
+    arrow.textContent = '→';
+    row.appendChild(arrow);
+
+    const newList = curr.length ? curr : ['—'];
+    newList.forEach(c => {
+      const t = document.createElement('span');
+      t.className = 'diff-tag diff-tag-new';
+      t.textContent = c;
+      row.appendChild(t);
+    });
+
+    bar.appendChild(row);
+  });
+}
+
+// Put the original quick-reply chips back when dirty state clears
+function restoreQuickReplies() {
+  const bar  = document.getElementById('suggestionsBar');
+  const wrap = document.getElementById('suggestionsWrap');
+  if (!bar || !wrap) return;
+  const label = wrap.querySelector('.quick-reply-label');
+
+  bar.classList.remove('quick-chips-diff');
+  if (label) {
+    label.textContent = 'Quick reply';
+    label.classList.remove('is-update');
+  }
+  // Re-render the cached suggestions exactly the same way renderQuickChips would
+  bar.innerHTML = '';
+  if (!lastSuggestions.length) { wrap.classList.add('empty'); return; }
+  wrap.classList.remove('empty');
+  lastSuggestions.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.textContent = s;
+    if (activeTokens.includes(s)) btn.classList.add('on');
+    btn.onclick = () => {
+      if (btn.classList.contains('on')) { removeToken(s); btn.classList.remove('on'); }
+      else                              { addToken(s);    btn.classList.add('on');    }
     };
     bar.appendChild(btn);
   });
