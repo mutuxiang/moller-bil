@@ -667,8 +667,14 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .inv-stat-note {
   font-size: 12px; color: var(--muted); line-height: 1.4; margin-top: 2px;
   display: flex; flex-direction: column; gap: 1px;
+  /* No overflow:hidden — would clip the glossary tooltips inside */
 }
-.inv-stat-note > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inv-stat-note > span {
+  white-space: nowrap;
+  /* Allow content (including hover tooltips) to escape this row */
+  overflow: visible;
+  position: relative;
+}
 .inv-stat.is-price .inv-stat-note { color: var(--accent-ink); }
 .inv-edge {
   display: flex; align-items: flex-start; gap: 8px;
@@ -1916,8 +1922,8 @@ function apiCarToItem(car) {
     price:    car.price    ? formatNOK(car.price)    : '',
     location: cleanLocation(car.departmentName),
     fuel:     humanFuel(car.fuel),
-    // Clarify "range" as the electric-driving range on a full charge
-    range:    car.electricRange ? `${car.electricRange} km on full charge` : '',
+    // Keep "Range" label short (the term tooltip explains "on a full charge")
+    range:    car.electricRange ? `${car.electricRange} km` : '',
     seats:    car.seats    || '',
     image,
     edge:     '',
@@ -3781,7 +3787,7 @@ function renderInventory(items, model, msgEl, realData = false) {
            <span class="inv-stat-value">${escapeHtml(it.location || 'Møller Bil')}</span>
            <span class="inv-stat-note">
              ${it.fuel  ? `<span>${enrichTerms(escapeHtml(it.fuel))}</span>`   : ''}
-             ${it.range ? `<span>Range: ${enrichTerms(escapeHtml(it.range))}</span>` : ''}
+             ${it.range ? `<span>${enrichTerms('Range: ' + escapeHtml(it.range))}</span>` : ''}
            </span>
          </div>`
       : `<div class="inv-stat">
@@ -4097,18 +4103,26 @@ function parseSuggestions(text) {
   return { cleanText, suggestions: defaultSuggestions(cleanText) };
 }
 
+// Detect the "Area G" personal-preferences wrap-up question, in any phrasing
+function isPersonalPreferencesQuestion(textLower) {
+  return /(personal preference|preferred color|colors? (to avoid|you('?d| would) (love|like|hate))|no-go color|trade-?in|comfort extra|ownership cost|insurance band|before i (pull up|show you) (the )?(match|top pick|recommend)|one last (quick )?thing before i)/i.test(textLower);
+}
+
 function normalizeSuggestionsForQuestion(aiText, suggestions) {
   const full = (aiText || '');
+  const fullLower = full.toLowerCase();
   const questions = full.match(/[^.!?]*\?/g) || [];
   const text = (questions[questions.length - 1] || full).toLowerCase();
   const joined = (suggestions || []).join(' ').toLowerCase();
   const fallback = () => defaultSuggestions(aiText);
 
   // PERSONAL PREFERENCES wrap-up — must come FIRST, because the question
-  // often mentions "ownership costs", "insurance", etc. which would falsely
-  // trigger the budget rule and let bad chips slip through.
-  if (/personal preference|preferred (or no-go )?color|no-go color|trade-in plan|comfort extra|ownership cost/.test(text)) {
-    if (!/color|trade|insurance|premium|comfort|preference|no specific|leather|sunroof|audio|panoram/.test(joined)) {
+  // often mentions "ownership costs", "insurance", "seats", etc. which would
+  // falsely trigger the budget / seats rules and let bad chips slip through.
+  // We check the FULL reply text, not just the last `?` sentence, because
+  // the AI sometimes splits this wrap-up across multiple sentences.
+  if (isPersonalPreferencesQuestion(fullLower) || isPersonalPreferencesQuestion(text)) {
+    if (!/color|trade|insurance|premium|comfort|preference|no specific|leather|sunroof|audio|panoram|extras?\b|family.*(love|like)/i.test(joined)) {
       return fallback();
     }
     return suggestions;
@@ -4135,12 +4149,14 @@ function normalizeSuggestionsForQuestion(aiText, suggestions) {
 
 function defaultSuggestions(aiText) {
   const full = (aiText || '');
+  const fullLower = full.toLowerCase();
   const questions = full.match(/[^.!?]*\?/g) || [];
   const lastQuestion = (questions[questions.length - 1] || full).toLowerCase();
 
   // Personal preferences wrap-up — check FIRST (otherwise the "ownership costs"
-  // keyword would route us into the budget branch below).
-  if (/personal preference|preferred (or no-go )?color|no-go color|trade-in plan|comfort extra|ownership cost/i.test(lastQuestion)) {
+  // keyword would route us into the budget branch below). Check full text + last
+  // question to be robust regardless of how the AI phrases it.
+  if (isPersonalPreferencesQuestion(fullLower) || isPersonalPreferencesQuestion(lastQuestion)) {
     return ['Avoid bright colors', 'Trade in my current car', 'Worried about insurance', 'No specific preferences'];
   }
 
