@@ -417,43 +417,35 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   margin-top: 6px;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
   align-self: stretch;
   width: 100%;
 }
-/* Narrow chat → horizontal scroll so cards never get crushed below 200px */
-@media (max-width: 1200px) {
+/* Narrow viewports → horizontal scroll with chunky cards */
+@media (max-width: 1280px) {
   .fuel-cards {
     overflow-x: auto;
     grid-auto-flow: column;
     grid-template-columns: none;
-    grid-auto-columns: 220px;
+    grid-auto-columns: 240px;
     padding-bottom: 6px;
     scroll-snap-type: x mandatory;
   }
   .fuel-card { scroll-snap-align: start; }
 }
 .fuel-card {
-  appearance: none;
   text-align: left;
   font-family: inherit;
-  cursor: pointer;
   background: var(--cream-200);
   border: 0;
   border-top: 3px solid var(--ink);
   border-radius: 0 0 6px 6px;
-  padding: 14px 14px 12px;
-  display: flex; flex-direction: column; gap: 11px;
+  padding: 18px 18px 16px;
+  display: flex; flex-direction: column; gap: 14px;
   color: var(--ink);
-  transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out), background 180ms var(--ease-out);
 }
 .fuel-card.tinted { background: var(--cream-300); }
 .fuel-card.accent { border-top-color: var(--salmon); }
-.fuel-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(0,25,70,0.10);
-  background: var(--cream-100);
-}
 .fuel-card-head { display: flex; flex-direction: column; gap: 2px; min-height: 44px; }
 .fuel-card .fuel-tag {
   font-size: 10px; font-weight: 500;
@@ -503,19 +495,6 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   font-size: 11.5px; line-height: 1.4;
   color: var(--muted); margin: 0;
 }
-.fuel-pick {
-  align-self: flex-start;
-  font-size: 11.5px; font-weight: 500; letter-spacing: .02em;
-  color: var(--ink);
-  padding: 6px 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  margin-top: 2px;
-  transition: background 180ms var(--ease-out), color 180ms var(--ease-out);
-}
-.fuel-card:hover .fuel-pick { background: var(--ink); color: var(--cream-100); border-color: var(--ink); }
-.fuel-card.accent .fuel-pick { border-color: var(--salmon); color: var(--salmon); }
-.fuel-card.accent:hover .fuel-pick { background: var(--salmon); color: var(--cream-100); }
 
 /* ════════════════════════════════════════════════════════════
    RECOMMENDATION CARDS — redesigned
@@ -527,9 +506,10 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   margin-top: 4px;
   max-width: 1080px;
 }
-.msg.has-recs { max-width: none; }
+.msg.has-recs, .msg.has-fuel { max-width: none; }
 .msg.has-recs .msg-content,
-.msg.has-inv .msg-content {
+.msg.has-inv .msg-content,
+.msg.has-fuel .msg-content {
   width: 100%;
   flex: 1 1 100%;
 }
@@ -4045,10 +4025,8 @@ function renderFuelCards(msgEl) {
   const maxCost = Math.max(...FUEL_CARDS.map(f => f.cost));
   FUEL_CARDS.forEach(f => {
     const pct = Math.round((f.cost / maxCost) * 100);
-    const card = document.createElement('button');
-    card.type = 'button';
+    const card = document.createElement('div');
     card.className = 'fuel-card' + (f.accent ? ' accent' : '') + (f.tinted ? ' tinted' : '');
-    card.onclick = () => pickFuel(f.name);
     card.innerHTML = `
       <div class="fuel-card-head">
         <span class="fuel-tag">${escapeHtml(f.tag)}</span>
@@ -4066,11 +4044,13 @@ function renderFuelCards(msgEl) {
         <div class="fuel-row"><span>CO₂</span><span>${escapeHtml(f.co2)}</span></div>
       </div>
       <p class="fuel-blurb">${escapeHtml(f.blurb)}</p>
-      <span class="fuel-pick">Pick ${escapeHtml(f.name)} →</span>
     `;
     wrap.appendChild(card);
   });
   content.appendChild(wrap);
+  // Break out of the bubble's narrow max-width so cards have room to breathe
+  const msg = msgEl.classList ? msgEl : null;
+  if (msg) msg.classList.add('has-fuel');
   document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
 }
 
@@ -4901,6 +4881,7 @@ const GLOSSARY = {
   'hp':    'Horsepower — engine output. 1 hk ≈ 1 hp.',
   'NCAP':  'European New Car Assessment Programme — independent crash-safety rating (out of 5 stars).',
   'DC':    'Direct Current — high-power fast charging at public stations.',
+  'VAT':   'Value Added Tax — Norway adds 25% on most goods, but full electric cars are exempt at purchase, which is a big reason EVs are popular here.',
   'AC':    'Alternating Current — slower charging from home outlets or wall boxes.',
   'driven':'Total kilometres on the odometer so far — how much the car has been used.',
   'Range': 'How far the car can drive on a single full charge (in real-world conditions, similar to WLTP).',
