@@ -416,13 +416,22 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .fuel-cards {
   margin-top: 6px;
   display: grid;
-  grid-template-columns: repeat(5, minmax(168px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
   align-self: stretch;
-  max-width: 1080px;
+  width: 100%;
 }
-@media (max-width: 1100px) {
-  .fuel-cards { overflow-x: auto; grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 175px; padding-bottom: 6px; }
+/* Narrow chat → horizontal scroll so cards never get crushed below 200px */
+@media (max-width: 1200px) {
+  .fuel-cards {
+    overflow-x: auto;
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: 220px;
+    padding-bottom: 6px;
+    scroll-snap-type: x mandatory;
+  }
+  .fuel-card { scroll-snap-align: start; }
 }
 .fuel-card {
   appearance: none;
@@ -2811,9 +2820,11 @@ function detectMessageTopic(text) {
   // as examples but isn't actually asking the user about them.
   if (/welcome|hi,?\s+welcome|two quick notes|what.s got you thinking|ask me anything/.test(t)) return null;
 
-  if (/budget|price|cost|spend|how much|\bkr\b|kroner|afford/i.test(t))                                       return 'budget';
+  // Check fuel BEFORE budget — words like "affordable" / "petrol cars typically cost…"
+  // can otherwise hijack a fuel-topic reply and pin it as a budget message.
+  if (/electric|hybrid|petrol|diesel|fuel\b|\bev\b|charging|plug-in|powertrain/i.test(t))                     return 'fuel';
+  if (/budget|\bprice\b|\bcost\b|spend|how much|\bkr\b|kroner|\bafford\b/i.test(t))                            return 'budget';
   if (/passenger|seat|family|kids|children|how many people|how many.*fit|7-seater|7 seater/i.test(t))         return 'seats';
-  if (/electric|hybrid|petrol|diesel|fuel\b|\bev\b|charging|plug-in/i.test(t))                                return 'fuel';
   if (/\bsize\b|compact|\bsuv\b|\bvan\b|hatchback|sedan|station wagon|small car|big car/i.test(t))            return 'size';
   if (/\bbrand\b|brands you|particular brand|brand in mind|brand preference|manufacturer|trust.*brand|prefer.*(audi|bmw|mercedes|toyota|volvo|tesla|kia|hyundai|ford|volkswagen|peugeot|renault)/i.test(t)) return 'brand';
   if (/use it for|drive|commut|trip|city|mountain|leisure|road|daily|weekend/i.test(t))                       return 'usage';
