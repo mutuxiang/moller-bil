@@ -412,6 +412,102 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .surprise-title { font-size: 15px; font-weight: 500; color: var(--ink); line-height: 1.3; }
 .surprise-desc { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
 
+/* ── Fuel-type comparison cards (powered by ArtFuelTypes layout) ── */
+.fuel-cards {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(168px, 1fr));
+  gap: 10px;
+  align-self: stretch;
+  max-width: 1080px;
+}
+@media (max-width: 1100px) {
+  .fuel-cards { overflow-x: auto; grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 175px; padding-bottom: 6px; }
+}
+.fuel-card {
+  appearance: none;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--cream-200);
+  border: 0;
+  border-top: 3px solid var(--ink);
+  border-radius: 0 0 6px 6px;
+  padding: 14px 14px 12px;
+  display: flex; flex-direction: column; gap: 11px;
+  color: var(--ink);
+  transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out), background 180ms var(--ease-out);
+}
+.fuel-card.tinted { background: var(--cream-300); }
+.fuel-card.accent { border-top-color: var(--salmon); }
+.fuel-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0,25,70,0.10);
+  background: var(--cream-100);
+}
+.fuel-card-head { display: flex; flex-direction: column; gap: 2px; min-height: 44px; }
+.fuel-card .fuel-tag {
+  font-size: 10px; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted);
+}
+.fuel-card.accent .fuel-tag { color: var(--salmon); }
+.fuel-card .fuel-name {
+  font-size: 17px; font-weight: 500; color: var(--ink); line-height: 1.2;
+}
+.fuel-glyph {
+  height: 54px;
+  display: flex; align-items: center; justify-content: center;
+}
+.fuel-cost { display: flex; flex-direction: column; gap: 4px; }
+.fuel-row-label, .fuel-row span:first-child {
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); font-weight: 500;
+}
+.fuel-bar {
+  height: 7px; background: rgba(0,25,70,0.08); border-radius: 2px;
+  position: relative; overflow: hidden;
+}
+.fuel-bar-fill {
+  position: absolute; inset: 0;
+  width: 0%; background: var(--ink); border-radius: 2px;
+  transition: width 320ms var(--ease-out);
+}
+.fuel-card.accent .fuel-bar-fill { background: var(--salmon); }
+.fuel-cost-num {
+  font-size: 14.5px; font-weight: 500; color: var(--ink); margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.fuel-card.accent .fuel-cost-num { color: var(--salmon); }
+.fuel-stats { display: flex; flex-direction: column; gap: 5px; }
+.fuel-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 1px solid rgba(0,25,70,0.06);
+  padding-bottom: 4px;
+  font-size: 12px;
+}
+.fuel-row span:last-child {
+  color: var(--ink); font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.fuel-blurb {
+  font-size: 11.5px; line-height: 1.4;
+  color: var(--muted); margin: 0;
+}
+.fuel-pick {
+  align-self: flex-start;
+  font-size: 11.5px; font-weight: 500; letter-spacing: .02em;
+  color: var(--ink);
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  margin-top: 2px;
+  transition: background 180ms var(--ease-out), color 180ms var(--ease-out);
+}
+.fuel-card:hover .fuel-pick { background: var(--ink); color: var(--cream-100); border-color: var(--ink); }
+.fuel-card.accent .fuel-pick { border-color: var(--salmon); color: var(--salmon); }
+.fuel-card.accent:hover .fuel-pick { background: var(--salmon); color: var(--cream-100); }
+
 /* ════════════════════════════════════════════════════════════
    RECOMMENDATION CARDS — redesigned
    ════════════════════════════════════════════════════════════ */
@@ -3921,6 +4017,96 @@ function stripEVSurprisesBlock(text) {
   return working;
 }
 
+// ── Fuel-type comparison cards (renders when the AI is asking about fuel) ──
+const FUEL_CARDS = [
+  { tag:'Traditional',   name:'Petrol',          blurb:'Cheap to buy, costliest to refuel over time.', cost:1450, range:'750 km',   fill:'3 min',         co2:'150 g/km', glyph:'fossil' },
+  { tag:'Traditional',   name:'Diesel',          blurb:'Long range, but city tolls bite hardest.',     cost:1280, range:'1 100 km', fill:'3 min',         co2:'135 g/km', glyph:'fossil' },
+  { tag:'Self-charging', name:'Hybrid',          blurb:'Small motor helps in town. Refuel as normal.', cost:1120, range:'900 km',   fill:'3 min',         co2:'105 g/km', glyph:'blend' },
+  { tag:'Plug-in',       name:'Plug-in hybrid',  blurb:'Charge at home, petrol in reserve.',           cost: 870, range:'750 km',   fill:'4 h · 3 min',   co2:'45 g/km',  glyph:'blend',    tinted:true },
+  { tag:'Electric',      name:'EV',              blurb:'Cheapest to run. Needs a charging routine.',   cost: 320, range:'500 km',   fill:'20 min · DC',   co2:'0 g/km',   glyph:'electric', tinted:true, accent:true },
+];
+
+function renderFuelCards(msgEl) {
+  const content = msgEl.querySelector('.msg-content');
+  if (content.querySelector('.fuel-cards')) return; // don't double-render
+  const wrap = document.createElement('div');
+  wrap.className = 'fuel-cards';
+  const maxCost = Math.max(...FUEL_CARDS.map(f => f.cost));
+  FUEL_CARDS.forEach(f => {
+    const pct = Math.round((f.cost / maxCost) * 100);
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'fuel-card' + (f.accent ? ' accent' : '') + (f.tinted ? ' tinted' : '');
+    card.onclick = () => pickFuel(f.name);
+    card.innerHTML = `
+      <div class="fuel-card-head">
+        <span class="fuel-tag">${escapeHtml(f.tag)}</span>
+        <span class="fuel-name">${escapeHtml(f.name)}</span>
+      </div>
+      <div class="fuel-glyph">${fuelGlyphSvg(f.glyph, !!f.accent)}</div>
+      <div class="fuel-cost">
+        <span class="fuel-row-label">Running cost / 1000 km</span>
+        <div class="fuel-bar"><div class="fuel-bar-fill" style="width:${pct}%"></div></div>
+        <span class="fuel-cost-num">${f.cost.toLocaleString('nb-NO')} kr</span>
+      </div>
+      <div class="fuel-stats">
+        <div class="fuel-row"><span>Range</span><span>${escapeHtml(f.range)}</span></div>
+        <div class="fuel-row"><span>Refill / charge</span><span>${escapeHtml(f.fill)}</span></div>
+        <div class="fuel-row"><span>CO₂</span><span>${escapeHtml(f.co2)}</span></div>
+      </div>
+      <p class="fuel-blurb">${escapeHtml(f.blurb)}</p>
+      <span class="fuel-pick">Pick ${escapeHtml(f.name)} →</span>
+    `;
+    wrap.appendChild(card);
+  });
+  content.appendChild(wrap);
+  document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
+}
+
+function pickFuel(name) {
+  const input = document.getElementById('inputField');
+  if (!input) return;
+  input.value = `I'd like ${name}.`;
+  updateSend();
+  sendMessage();
+}
+
+function fuelGlyphSvg(kind, accent) {
+  const c = accent ? 'var(--salmon)' : 'var(--ink)';
+  if (kind === 'fossil') {
+    return `<svg viewBox="0 0 80 80" width="48" height="48" fill="none">
+      <rect x="14" y="14" width="36" height="56" rx="3" stroke="${c}" stroke-width="1.8"/>
+      <rect x="20" y="20" width="24" height="18" rx="1" stroke="${c}" stroke-width="1.4"/>
+      <line x1="14" y1="70" x2="50" y2="70" stroke="${c}" stroke-width="2.5"/>
+      <path d="M 50 28 L 60 28 Q 66 28 66 34 L 66 54 Q 66 60 60 60 L 58 60" stroke="${c}" stroke-width="1.8" stroke-linecap="round"/>
+      <rect x="55" y="58" width="6" height="8" rx="1" stroke="${c}" stroke-width="1.4"/>
+    </svg>`;
+  }
+  if (kind === 'electric') {
+    return `<svg viewBox="0 0 80 80" width="48" height="48" fill="none">
+      <path d="M 26 20 L 26 36 Q 26 50 40 50 Q 54 50 54 36 L 54 20" stroke="${c}" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="32" y1="14" x2="32" y2="22" stroke="${c}" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="48" y1="14" x2="48" y2="22" stroke="${c}" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="40" y1="50" x2="40" y2="60" stroke="${c}" stroke-width="1.8"/>
+      <path d="M 42 62 L 35 70 L 39 70 L 36 78 L 46 68 L 41 68 L 44 62 Z" fill="${c}"/>
+    </svg>`;
+  }
+  // blend (hybrid): pump + plug side by side
+  return `<svg viewBox="0 0 100 80" width="64" height="48" fill="none">
+    <rect x="6" y="14" width="28" height="56" rx="3" stroke="${c}" stroke-width="1.6"/>
+    <rect x="10" y="20" width="20" height="14" rx="1" stroke="${c}" stroke-width="1.2"/>
+    <line x1="6" y1="70" x2="34" y2="70" stroke="${c}" stroke-width="2"/>
+    <text x="40" y="46" font-size="12" fill="${c}" font-weight="500">+</text>
+    <g transform="translate(50 0)">
+      <path d="M 8 20 L 8 36 Q 8 48 20 48 Q 32 48 32 36 L 32 20" stroke="${c}" stroke-width="1.6"/>
+      <line x1="13" y1="14" x2="13" y2="22" stroke="${c}" stroke-width="2" stroke-linecap="round"/>
+      <line x1="27" y1="14" x2="27" y2="22" stroke="${c}" stroke-width="2" stroke-linecap="round"/>
+      <line x1="20" y1="48" x2="20" y2="58" stroke="${c}" stroke-width="1.6"/>
+      <path d="M 22 60 L 16 68 L 19 68 L 17 76 L 26 66 L 22 66 L 25 60 Z" fill="${c}"/>
+    </g>
+  </svg>`;
+}
+
 function renderEVSurprises(items, msgEl) {
   const content = msgEl.querySelector('.msg-content');
   const wrap = document.createElement('div');
@@ -4413,6 +4599,7 @@ function renderCollection() {
 
 // ── Right-side accordion (two sections, only one open) ──
 let toldUpdateCount = 0;
+let toldEverOpened = false;   // true once Told has been opened (auto or manual) at least once
 function openAccSection(key) {
   const target = document.querySelector(`.acc[data-section="${key}"]`);
   if (!target) return;
@@ -4422,13 +4609,19 @@ function openAccSection(key) {
   // …then re-open the target only if it wasn't already open (click-again closes).
   if (!wasOpen) {
     target.classList.add('open');
-    if (key === 'told') clearToldBadge();
+    if (key === 'told') { clearToldBadge(); toldEverOpened = true; }
     if (key === 'recs') buildLiveRecs();
   }
 }
 function bumpToldBadge() {
   const acc = document.getElementById('accTold');
   if (!acc || acc.classList.contains('open')) return; // visible — no badge needed
+  // First-ever update auto-expands so the intro tooltip can introduce the panel.
+  // After that, just bump the badge silently.
+  if (!toldEverOpened) {
+    openAccSection('told');
+    return;
+  }
   toldUpdateCount++;
   const badge = document.getElementById('toldBadge');
   if (badge) { badge.textContent = String(toldUpdateCount); badge.classList.add('show'); }
@@ -4560,8 +4753,10 @@ async function sendMessage() {
     } else {
       const surprises = parseEVSurprises(aiText);
       const { cleanText, suggestions } = parseSuggestions(aiText);
+      const showFuel = detectMessageTopic(cleanText) === 'fuel';
       const msgEl = appendAIMessage(cleanText, (el) => {
         if (surprises && surprises.length > 0) renderEVSurprises(surprises, el);
+        if (showFuel) renderFuelCards(el);
         renderQuickChips(suggestions, el);
       });
       attachStripTo(msgEl);
