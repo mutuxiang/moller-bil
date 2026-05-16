@@ -837,11 +837,25 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .side-recs {
   display: flex;
   flex-direction: column; gap: 14px;
-  padding: 22px 26px 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 22px 26px 22px;
   flex-shrink: 0;
   max-height: 46%;
-  background: var(--bg-surface);
+  /* Slightly warmer surface than the rest of the sidebar */
+  background: var(--cream-300);
+  /* Thick "shelf" of page background creates a clear visual gap below */
+  border-bottom: 10px solid var(--cream-100);
+  position: relative;
+}
+/* Tiny inner top hairline so the panel reads as a distinct surface */
+.side-recs::before {
+  content: '';
+  position: absolute; left: 0; right: 0; top: 0;
+  height: 2px;
+  background: var(--salmon);
+  opacity: 0.85;
+}
+.side-recs-head b {
+  font-size: 17px; font-weight: 500; color: var(--ink); display: block;
 }
 .live-rec-skeleton {
   height: 64px; border-radius: 6px;
@@ -858,7 +872,6 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   padding: 6px 0;
 }
 .side-recs-head { display: flex; flex-direction: column; gap: 3px; }
-.side-recs-head b { font-size: 20px; font-weight: 500; color: var(--ink); display: block; }
 .side-recs-reason {
   font-size: 12.5px; font-weight: 500;
   letter-spacing: .08em; text-transform: uppercase;
@@ -1585,10 +1598,9 @@ body.mode-learning .col-spacer.right {
 
 <script>
 // ── config ──────────────────────────────────────────────────────────────
-// Gemini API
-const GEMINI_API_KEY = 'AIzaSyCrbEFNyBsMkCFkTdsvz_if8-znO-1w-v8';
-const GEMINI_MODEL   = 'gemini-2.5-flash';
-const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+// Gemini API (proxied through /api/gemini so the key stays server-side)
+const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_URL   = `/api/gemini?model=${GEMINI_MODEL}`;
 
 // Convert OpenAI-style {role, content} messages into Gemini's {systemInstruction, contents}
 function toGeminiBody(allMessages, maxTokens) {
@@ -2305,15 +2317,21 @@ const ONBOARDING_STEPS = [
     pos: 'bottom',
   },
   {
-    target: '.side',
+    target: '#sideRecs',
+    title: 'Recommended for you',
+    body: "Live picks from <b>Møller Bil's real inventory</b>, refreshed as we chat. You'll see popular Oslo-area cars right away, then they narrow to match your needs. Tap any card to jump into its stock.",
+    pos: 'left',
+  },
+  {
+    target: '.side-head',
     title: "What you've told me",
-    body: "Your live profile lives here. As we chat, each answer I capture (<b>budget</b>, <b>fuel</b>, <b>seats</b>…) shows up on its own line.",
+    body: "Your live profile lives below. As we chat, each answer I capture (<b>budget</b>, <b>fuel</b>, <b>seats</b>…) shows up on its own line — a few key ones is enough.",
     pos: 'left',
   },
   {
     target: '.stream',
-    title: 'Real inventory',
-    body: "Once we cover a few essentials, I'll suggest 2–3 matched models with <b>real cars in stock</b> — photos, prices, location.",
+    title: 'Real inventory in chat',
+    body: "Once we cover a few essentials, I'll surface 2–3 matched models in the conversation — with <b>real photos, prices, and location</b> from in-stock cars.",
     pos: 'right',
   },
 ];
