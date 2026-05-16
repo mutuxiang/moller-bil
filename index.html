@@ -833,6 +833,80 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 .side-body { padding: 22px 26px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
 
+/* ── Recommended for you (live picks) ── */
+.side-recs {
+  display: flex;
+  flex-direction: column; gap: 14px;
+  padding: 22px 26px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  max-height: 46%;
+  background: var(--bg-surface);
+}
+.live-rec-skeleton {
+  height: 64px; border-radius: 6px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 100%);
+  background-size: 200% 100%;
+  animation: live-rec-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes live-rec-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+.live-rec-empty {
+  font-size: 14px; color: var(--muted); line-height: 1.5;
+  padding: 6px 0;
+}
+.side-recs-head { display: flex; flex-direction: column; gap: 3px; }
+.side-recs-head b { font-size: 20px; font-weight: 500; color: var(--ink); display: block; }
+.side-recs-reason {
+  font-size: 12.5px; font-weight: 500;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--salmon);
+}
+.side-recs-body {
+  display: flex; flex-direction: column; gap: 8px;
+  overflow-y: auto; min-height: 0;
+}
+.live-rec-card {
+  appearance: none; border: 1px solid var(--border);
+  background: var(--cream-50, #FEFDFD);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: var(--ink);
+  transition: border-color 180ms var(--ease-out), background 180ms var(--ease-out);
+}
+.live-rec-card:hover {
+  border-color: rgba(0,0,0,0.18);
+  background: var(--cream-100);
+}
+.live-rec-card:disabled { opacity: .55; cursor: wait; }
+.live-rec-img {
+  width: 76px; height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--cream-200);
+  flex-shrink: 0;
+}
+.live-rec-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.live-rec-name {
+  font-size: 14.5px; font-weight: 500; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.live-rec-meta { font-size: 12.5px; color: var(--muted); }
+.live-rec-arrow {
+  color: var(--muted); font-size: 18px; flex-shrink: 0;
+  transition: color 180ms var(--ease-out), transform 180ms var(--ease-out);
+}
+.live-rec-card:hover .live-rec-arrow {
+  color: var(--action-blue);
+  transform: translateX(2px);
+}
+
 /* ── filter section: status display first, editing tools second ── */
 .filter-group {
   display: flex; flex-direction: column; gap: 6px;
@@ -1461,6 +1535,13 @@ body.mode-learning .col-spacer.right {
     <div class="resize-handle" id="resizeHandle" title="Drag to resize"></div>
 
     <aside class="side" id="side">
+      <div class="side-recs" id="sideRecs">
+        <div class="side-recs-head">
+          <b>Recommended for you</b>
+          <span class="side-recs-reason" id="liveRecsReason">Popular in the Oslo area</span>
+        </div>
+        <div class="side-recs-body" id="liveRecsBody"></div>
+      </div>
       <div class="side-head">
         <div class="side-head-text">
           <b>What you've told me</b>
@@ -1504,8 +1585,38 @@ body.mode-learning .col-spacer.right {
 
 <script>
 // ── config ──────────────────────────────────────────────────────────────
-const DEEPSEEK_API_KEY = 'sk-bd7d969e020d47129c4f4d8e2fafc035';
-const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
+// Gemini API
+const GEMINI_API_KEY = 'AIzaSyCrbEFNyBsMkCFkTdsvz_if8-znO-1w-v8';
+const GEMINI_MODEL   = 'gemini-2.5-flash';
+const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
+// Convert OpenAI-style {role, content} messages into Gemini's {systemInstruction, contents}
+function toGeminiBody(allMessages, maxTokens) {
+  const systemParts = allMessages
+    .filter(m => m.role === 'system')
+    .map(m => m.content)
+    .join('\n\n');
+  const contents = allMessages
+    .filter(m => m.role !== 'system')
+    .map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content || '' }],
+    }));
+  const body = {
+    contents,
+    generationConfig: {
+      maxOutputTokens: maxTokens || 800,
+      temperature: 0.7,
+    },
+  };
+  if (systemParts) body.systemInstruction = { parts: [{ text: systemParts }] };
+  return body;
+}
+
+// Extract text from a Gemini /generateContent response
+function geminiText(data) {
+  return data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+}
 
 const SYSTEM_PROMPT = `You are a friendly car advisor at Møller Bil. Help users find the right car through natural conversation.
 
@@ -1828,6 +1939,7 @@ async function fetchAllInventory() {
       return true;
     });
     inventoryLoaded = true;
+    buildLiveRecs();
   } catch (e) {
     // Silently fall back to AI-generated listings
     inventoryLoaded = true;
@@ -1962,6 +2074,165 @@ function humanFuel(raw) {
     'Diesel': 'Diesel',
   };
   return map[raw] || raw;
+}
+
+// ── Live recommendations (sidebar) ────────────────────────────────────────
+// Adapts to the user's current activeChips. Returns up to 3 "model groups"
+// drawn from the real inventory, plus a one-line "reason" eyebrow.
+function getLiveRecommendations() {
+  if (!inventoryLoaded || allInventory.length === 0) {
+    return { reason: '', cars: [] };
+  }
+
+  const fuels  = (typeof getConfirmedOptionsForGroup === 'function') ? getConfirmedOptionsForGroup('fuel')  : [];
+  const seats  = (typeof getConfirmedOptionsForGroup === 'function') ? getConfirmedOptionsForGroup('seats') : [];
+  const sizes  = (typeof getConfirmedOptionsForGroup === 'function') ? getConfirmedOptionsForGroup('size')  : [];
+  const brands = (typeof getConfirmedOptionsForGroup === 'function') ? getConfirmedOptionsForGroup('brand') : [];
+
+  // Map UI fuel names to API fuel values
+  const fuelMap = {
+    'Electric':  ['electricity', 'electric'],
+    'Hybrid':    ['hybrid'],
+    'Petrol':    ['gasolin', 'petrol'],
+    'Diesel':    ['diesel'],
+  };
+  const sizeMap = {
+    'SUV':      ['sportutilityvehicle', 'suv'],
+    'Van':      ['van'],
+    'Compact':  ['combicoupe', 'hatchback', 'compact'],
+    'Family':   ['stationwagon', 'sedan', 'family'],
+    'Mid-size': ['sedan', 'midsize'],
+    'City':     ['hatchback', 'city', 'minicar'],
+  };
+
+  let pool = allInventory.slice();
+
+  if (fuels.length) {
+    pool = pool.filter(c => {
+      const f = String(c.fuel || '').toLowerCase();
+      return fuels.some(uf => (fuelMap[uf] || [uf.toLowerCase()]).some(k => f.includes(k)));
+    });
+  }
+  if (seats.length) {
+    pool = pool.filter(c => seats.some(s => {
+      const n = parseInt(c.seats || 0, 10);
+      if (s === '7+') return n >= 7;
+      return String(n) === s;
+    }));
+  }
+  if (sizes.length) {
+    pool = pool.filter(c => {
+      const b = String(c.carBody || '').toLowerCase();
+      return sizes.some(s => (sizeMap[s] || [s.toLowerCase()]).some(k => b.includes(k)));
+    });
+  }
+  if (brands.length) {
+    pool = pool.filter(c => brands.some(b => String(c.brand || '').toLowerCase() === b.toLowerCase()));
+  }
+
+  // Budget — if the slider isn't at its full default range
+  const sMin = document.getElementById('budgetMin');
+  const sMax = document.getElementById('budgetMax');
+  if (sMin && sMax) {
+    const lo = parseInt(sMin.value, 10), hi = parseInt(sMax.value, 10);
+    if (!(lo === 50000 && hi === 1500000)) {
+      pool = pool.filter(c => typeof c.price === 'number' && c.price >= lo && c.price <= hi);
+    }
+  }
+
+  // If filters wiped out everything, fall back to the full pool
+  if (pool.length === 0) pool = allInventory.slice();
+
+  // Group by brand+model, sort by stock count desc
+  const groups = new Map();
+  pool.forEach(c => {
+    if (!c.brand || !c.model) return;
+    const key = `${c.brand} ${c.model}`;
+    if (!groups.has(key)) groups.set(key, { name: key, brand: c.brand, model: c.model, cars: [] });
+    groups.get(key).cars.push(c);
+  });
+
+  const top = [...groups.values()]
+    .sort((a, b) => b.cars.length - a.cars.length)
+    .slice(0, 3)
+    .map(g => {
+      const prices = g.cars.map(c => c.price).filter(p => typeof p === 'number' && p > 0);
+      const minPrice = prices.length ? Math.min(...prices) : null;
+      const imgCar = g.cars.find(c => c.carImages && c.carImages.length) || g.cars[0];
+      const hero = imgCar?.carImages?.[0]?.normalUrl || null;
+      return { name: g.name, count: g.cars.length, minPrice, image: hero };
+    });
+
+  // Build a human-readable reason eyebrow
+  const parts = [];
+  if (fuels.length) parts.push(fuels[0].toLowerCase());
+  if (seats.length) parts.push(seats[0] === '7+' ? '7-seater' : `${seats[0]}-seat`);
+  if (sizes.length) parts.push(sizes[0].toLowerCase());
+  if (brands.length) parts.push(brands[0]);
+
+  let reason;
+  if (parts.length === 0)      reason = 'Popular in the Oslo area';
+  else if (parts.length === 1) reason = `Top ${parts[0]} picks near you`;
+  else                          reason = `Top ${parts.slice(0,2).join(' ')} picks`;
+
+  return { reason, cars: top };
+}
+
+function buildLiveRecs() {
+  const wrap = document.getElementById('sideRecs');
+  const body = document.getElementById('liveRecsBody');
+  const reasonEl = document.getElementById('liveRecsReason');
+  if (!wrap || !body || !reasonEl) return;
+
+  // Loading state — inventory still being fetched
+  if (!inventoryLoaded) {
+    reasonEl.textContent = 'Finding picks in stock…';
+    body.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+      const sk = document.createElement('div');
+      sk.className = 'live-rec-skeleton';
+      body.appendChild(sk);
+    }
+    return;
+  }
+
+  const { reason, cars } = getLiveRecommendations();
+
+  // Empty state — inventory loaded but nothing matched (or API failed)
+  if (!cars.length) {
+    reasonEl.textContent = 'Recommended for you';
+    body.innerHTML = `<div class="live-rec-empty">Recommendations will appear here once we have a feel for what you're after.</div>`;
+    return;
+  }
+
+  reasonEl.textContent = reason;
+  body.innerHTML = '';
+
+  cars.forEach(car => {
+    const btn = document.createElement('button');
+    btn.className = 'live-rec-card';
+    btn.type = 'button';
+    btn.onclick = () => {
+      btn.disabled = true;
+      loadInventory(car.name).finally(() => { btn.disabled = false; });
+    };
+    const imgHtml = car.image
+      ? `<img class="live-rec-img" src="${escapeHtml(car.image)}" alt="" loading="lazy">`
+      : `<div class="live-rec-img"></div>`;
+    const priceLabel = car.minPrice
+      ? `From ${formatNOK(car.minPrice)} · ${car.count} in stock`
+      : `${car.count} in stock`;
+    btn.innerHTML = `
+      ${imgHtml}
+      <div class="live-rec-info">
+        <div class="live-rec-name">${escapeHtml(car.name)}</div>
+        <div class="live-rec-meta">${escapeHtml(priceLabel)}</div>
+      </div>
+      <span class="live-rec-arrow" aria-hidden="true">→</span>
+    `;
+    body.appendChild(btn);
+  });
+
 }
 
 function apiCarToItem(car) {
@@ -2659,6 +2930,10 @@ function buildSidebar() {
     empty.textContent = "Nothing captured yet — start chatting and answers will appear here.";
     body.appendChild(empty);
   }
+
+  // Refresh the live "Recommended for you" panel — its picks depend on the
+  // same activeChips that drive the profile sections below.
+  buildLiveRecs();
 }
 
 // "dirty" = sidebar has un-sent manual edits. Apply button is gone;
@@ -3794,20 +4069,17 @@ async function loadInventory(model, recData) {
 
     // Fallback: ask AI to generate plausible listings
     if (!usingRealData) {
-      const resp = await fetch(DEEPSEEK_URL, {
+      const resp = await fetch(GEMINI_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${DEEPSEEK_API_KEY}` },
-        body: JSON.stringify({
-          model: 'deepseek-chat', max_tokens: 700, stream: false,
-          messages: [
-            { role: 'system', content: INVENTORY_PROMPT },
-            { role: 'user',   content: `Show me used inventory for: ${model}` },
-          ],
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(toGeminiBody([
+          { role: 'system', content: INVENTORY_PROMPT },
+          { role: 'user',   content: `Show me used inventory for: ${model}` },
+        ], 700)),
       });
       if (resp.ok) {
         const data = await resp.json();
-        const aiRaw = data.choices?.[0]?.message?.content || '';
+        const aiRaw = geminiText(data);
         const aiItems = parseInventory(aiRaw);
         if (aiItems && aiItems.length) items = aiItems;
       }
@@ -4095,25 +4367,16 @@ async function sendMessage() {
   showChipsLoading();
 
   try {
-    const resp = await fetch(DEEPSEEK_URL, {
+    const inv = getAvailableModelsHint();
+    const allMessages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...(inv ? [{ role: 'system', content: inv }] : []),
+      ...messages,
+    ];
+    const resp = await fetch(GEMINI_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        max_tokens: 800,
-        stream: false,
-        messages: (() => {
-          const inv = getAvailableModelsHint();
-          return [
-            { role: 'system', content: SYSTEM_PROMPT },
-            ...(inv ? [{ role: 'system', content: inv }] : []),
-            ...messages,
-          ];
-        })(),
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(toGeminiBody(allMessages, 800)),
     });
 
     if (!resp.ok) {
@@ -4124,7 +4387,7 @@ async function sendMessage() {
     }
 
     const data = await resp.json();
-    const aiRaw = data.choices?.[0]?.message?.content || '';
+    const aiRaw = geminiText(data);
     if (!aiRaw) throw new Error('Empty response from API');
     messages.push({ role: 'assistant', content: aiRaw });
 
