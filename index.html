@@ -438,14 +438,12 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   font-family: inherit;
   background: var(--cream-200);
   border: 0;
-  border-top: 3px solid var(--ink);
-  border-radius: 0 0 6px 6px;
+  border-radius: 6px;
   padding: 18px 18px 16px;
   display: flex; flex-direction: column; gap: 14px;
   color: var(--ink);
 }
 .fuel-card.tinted { background: var(--cream-300); }
-.fuel-card.accent { border-top-color: var(--salmon); }
 .fuel-card-head { display: flex; flex-direction: column; gap: 2px; min-height: 44px; }
 .fuel-card .fuel-tag {
   font-size: 10px; font-weight: 500;
@@ -506,7 +504,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   margin-top: 4px;
   max-width: 1080px;
 }
-.msg.has-recs, .msg.has-fuel { max-width: none; }
+.msg.has-recs, .msg.has-fuel { max-width: none; width: 100%; }
 .msg.has-recs .msg-content,
 .msg.has-inv .msg-content,
 .msg.has-fuel .msg-content {
@@ -681,13 +679,13 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   transform: translateX(-50%);
   background: var(--moller-blue);
   color: var(--cream-100);
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 400;
-  line-height: 1.45;
+  line-height: 1.5;
   width: max-content;
-  max-width: 260px;
+  max-width: 320px;
   text-align: left;
   opacity: 0;
   visibility: hidden;
