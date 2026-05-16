@@ -834,17 +834,14 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .side-body { padding: 22px 26px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
 
 /* ── Recommended for you (live picks) ── */
-/* ── Right-side accordion: only one section open at a time ── */
-.side { display: flex; flex-direction: column; }
+/* ── Right-side accordion: at most one section open at a time.
+   Both headers stay grouped at top; the open section's body grows under
+   its header without pushing the other header to the bottom. ── */
+.side { display: flex; flex-direction: column; overflow-y: auto; }
 .acc {
   display: flex; flex-direction: column;
   border-bottom: 1px solid var(--border);
-  min-height: 0;
   flex-shrink: 0;
-}
-.acc.open {
-  flex: 1 1 auto;
-  min-height: 0;
 }
 .acc-head {
   appearance: none; border: 0;
@@ -879,7 +876,6 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .acc.open > .acc-body {
   max-height: none;
   opacity: 1;
-  flex: 1 1 auto; min-height: 0;
   display: flex; flex-direction: column;
 }
 
@@ -1605,7 +1601,7 @@ body.mode-learning .col-spacer.right {
 
     <aside class="side" id="side">
       <!-- Accordion: only one section is open at a time -->
-      <section class="acc" id="accRecs" data-section="recs">
+      <section class="acc open" id="accRecs" data-section="recs">
         <button class="acc-head" type="button" onclick="openAccSection('recs')">
           <span class="acc-head-text">
             <b>Recommended for you</b>
@@ -1620,10 +1616,11 @@ body.mode-learning .col-spacer.right {
         </div>
       </section>
 
-      <section class="acc open" id="accTold" data-section="told">
+      <section class="acc" id="accTold" data-section="told">
         <button class="acc-head" type="button" onclick="openAccSection('told')">
           <span class="acc-head-text">
             <b>What you've told me</b>
+            <span class="side-recs-reason">Your live profile</span>
           </span>
           <span class="acc-badge" id="toldBadge" aria-hidden="true">0</span>
           <svg class="acc-chev" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -2283,7 +2280,7 @@ function buildLiveRecs() {
 
   // Empty state — inventory loaded but nothing matched (or API failed)
   if (!cars.length) {
-    reasonEl.textContent = 'Recommended for you';
+    reasonEl.textContent = 'Waiting for your first answers';
     body.innerHTML = `<div class="live-rec-empty">Recommendations will appear here once we have a feel for what you're after.</div>`;
     return;
   }
@@ -4415,12 +4412,17 @@ function renderCollection() {
 // ── Right-side accordion (two sections, only one open) ──
 let toldUpdateCount = 0;
 function openAccSection(key) {
-  document.querySelectorAll('.acc').forEach(sec => {
-    const isTarget = sec.dataset.section === key;
-    sec.classList.toggle('open', isTarget);
-  });
-  if (key === 'told') clearToldBadge();
-  if (key === 'recs') buildLiveRecs();
+  const target = document.querySelector(`.acc[data-section="${key}"]`);
+  if (!target) return;
+  const wasOpen = target.classList.contains('open');
+  // Close every section first…
+  document.querySelectorAll('.acc').forEach(sec => sec.classList.remove('open'));
+  // …then re-open the target only if it wasn't already open (click-again closes).
+  if (!wasOpen) {
+    target.classList.add('open');
+    if (key === 'told') clearToldBadge();
+    if (key === 'recs') buildLiveRecs();
+  }
 }
 function bumpToldBadge() {
   const acc = document.getElementById('accTold');
