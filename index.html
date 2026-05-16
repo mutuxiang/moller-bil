@@ -182,65 +182,6 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   background: var(--accent); color: var(--cream-100);
 }
 
-/* ── Picks for you (topbar button + popover) ── */
-.btn-picks {
-  appearance: none; border: 1px solid var(--border-strong); background: transparent;
-  color: var(--muted); font: 400 16px/1 "Moller",sans-serif;
-  height: 44px; padding: 0 16px;
-  border-radius: 999px; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 8px;
-  transition: color 220ms var(--ease-out), border-color 220ms var(--ease-out), background 220ms var(--ease-out);
-}
-.btn-picks:hover { color: var(--ink); border-color: var(--ink); background: var(--accent-soft); }
-.btn-picks.open { color: var(--ink); border-color: var(--ink); background: var(--accent-soft); }
-
-.picks-backdrop {
-  position: fixed; inset: 0;
-  background: transparent;
-  opacity: 0; pointer-events: none;
-  z-index: 1199;
-}
-.picks-backdrop.open { opacity: 1; pointer-events: all; }
-
-.picks-popover {
-  position: fixed;
-  top: 70px; right: 24px;
-  width: 360px; max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 90px);
-  background: var(--cream-100);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  box-shadow: 0 16px 40px rgba(0,25,70,0.18), 0 2px 8px rgba(0,25,70,0.08);
-  z-index: 1200;
-  display: flex; flex-direction: column;
-  opacity: 0; transform: translateY(-6px) scale(.98);
-  pointer-events: none;
-  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
-}
-.picks-popover.open {
-  opacity: 1; transform: none;
-  pointer-events: all;
-}
-.picks-head {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  gap: 12px;
-  padding: 18px 20px 14px;
-  border-bottom: 1px solid var(--border);
-}
-.picks-head b { font-size: 17px; font-weight: 500; color: var(--ink); display: block; margin-bottom: 4px; }
-.picks-close {
-  appearance: none; background: transparent; border: 1px solid var(--border);
-  width: 28px; height: 28px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: var(--muted); flex-shrink: 0;
-  transition: color .15s, border-color .15s;
-}
-.picks-close:hover { color: var(--ink); border-color: var(--ink); }
-.picks-popover .side-recs-body {
-  padding: 14px 20px 20px;
-  overflow-y: auto;
-}
-
 .main { flex: 1; display: flex; min-height: 0; }
 
 .col-spacer {
@@ -893,21 +834,72 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .side-body { padding: 22px 26px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
 
 /* ── Recommended for you (live picks) ── */
-.side-recs {
-  display: flex;
-  flex-direction: column; gap: 14px;
-  padding: 22px 26px 26px;
+/* ── Right-side accordion: only one section open at a time ── */
+.side { display: flex; flex-direction: column; }
+.acc {
+  display: flex; flex-direction: column;
+  border-bottom: 1px solid var(--border);
+  min-height: 0;
   flex-shrink: 0;
-  max-height: 46%;
-  /* Slightly warmer surface than the rest of the sidebar — the bg-contrast
-     plus a generous bottom gap separates this panel without a colored line */
-  background: var(--cream-300);
-  border-bottom: 16px solid var(--cream-100);
-  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.04);
-  position: relative;
 }
-.side-recs-head b {
-  font-size: 18px; font-weight: 500; color: var(--ink); display: block;
+.acc.open {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.acc-head {
+  appearance: none; border: 0;
+  background: transparent;
+  width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 24px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  color: var(--ink);
+  position: relative;
+  transition: background 180ms var(--ease-out);
+}
+.acc-head:hover { background: var(--cream-200); }
+.acc.open > .acc-head { background: var(--cream-300); }
+.acc-head-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.acc-head-text b { font-size: 18px; font-weight: 500; color: var(--ink); display: block; }
+.acc-chev {
+  color: var(--muted);
+  transition: transform 220ms var(--ease-out);
+  flex-shrink: 0;
+}
+.acc.open > .acc-head .acc-chev { transform: rotate(180deg); color: var(--ink); }
+
+.acc-body {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 260ms var(--ease-out), opacity 180ms var(--ease-out);
+}
+.acc.open > .acc-body {
+  max-height: none;
+  opacity: 1;
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column;
+}
+
+.acc-badge {
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: var(--salmon); color: #fff;
+  border-radius: 999px;
+  font-size: 10.5px; font-weight: 600;
+  display: none;
+  align-items: center; justify-content: center;
+  line-height: 1; flex-shrink: 0;
+}
+.acc-badge.show { display: inline-flex; }
+.acc.open > .acc-head .acc-badge { display: none; }
+
+.side-recs-body {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 6px 24px 22px;
+  overflow-y: auto;
+  min-height: 0;
 }
 .live-rec-skeleton {
   height: 64px; border-radius: 6px;
@@ -1567,12 +1559,6 @@ body.mode-learning .col-spacer.right {
       <img class="topbar-logo" src="logo.svg" alt="Møller Bil">
     </a>
     <div class="topbar-spacer"></div>
-    <button class="btn-picks" id="btnPicks" onclick="togglePicks()" title="Picks for you">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M8 1.5l1.9 4 4.4.5-3.3 3 .9 4.4L8 11.2 4.1 13.4l.9-4.4-3.3-3 4.4-.5L8 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-      </svg>
-      <span>Picks for you</span>
-    </button>
     <button class="btn-collection" id="btnCollection" onclick="toggleCollection()" title="Saved cars">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path d="M3.5 2.5h9v11l-4.5-3-4.5 3v-11z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
@@ -1618,33 +1604,40 @@ body.mode-learning .col-spacer.right {
     <div class="resize-handle" id="resizeHandle" title="Drag to resize"></div>
 
     <aside class="side" id="side">
-      <div class="side-head">
-        <div class="side-head-text">
-          <b>What you've told me</b>
+      <!-- Accordion: only one section is open at a time -->
+      <section class="acc" id="accRecs" data-section="recs">
+        <button class="acc-head" type="button" onclick="openAccSection('recs')">
+          <span class="acc-head-text">
+            <b>Recommended for you</b>
+            <span class="side-recs-reason" id="liveRecsReason">Popular in the Oslo area</span>
+          </span>
+          <svg class="acc-chev" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M3 5.5l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="acc-body">
+          <div class="side-recs-body" id="liveRecsBody"></div>
         </div>
-        <div class="side-head-actions"></div>
-      </div>
-      <div class="side-body" id="sideBody"></div>
+      </section>
+
+      <section class="acc open" id="accTold" data-section="told">
+        <button class="acc-head" type="button" onclick="openAccSection('told')">
+          <span class="acc-head-text">
+            <b>What you've told me</b>
+          </span>
+          <span class="acc-badge" id="toldBadge" aria-hidden="true">0</span>
+          <svg class="acc-chev" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M3 5.5l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="acc-body">
+          <div class="side-body" id="sideBody"></div>
+        </div>
+      </section>
     </aside>
 
     </div><div class="col-spacer right"></div>
   </div>
-</div>
-
-<div class="picks-backdrop" id="picksBackdrop" onclick="closePicks()"></div>
-<div class="picks-popover" id="picksPopover" role="dialog" aria-label="Picks for you">
-  <div class="picks-head">
-    <div>
-      <b>Recommended for you</b>
-      <span class="side-recs-reason" id="liveRecsReason">Popular in the Oslo area</span>
-    </div>
-    <button class="picks-close" onclick="closePicks()" aria-label="Close">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-      </svg>
-    </button>
-  </div>
-  <div class="side-recs-body" id="liveRecsBody"></div>
 </div>
 
 <div class="collection-backdrop" id="collectionBackdrop" onclick="closeCollection()"></div>
@@ -2273,9 +2266,6 @@ function buildLiveRecs() {
   const body = document.getElementById('liveRecsBody');
   const reasonEl = document.getElementById('liveRecsReason');
   if (!body || !reasonEl) return;
-  // Reflect "has picks" state on the topbar button so users notice
-  const btn = document.getElementById('btnPicks');
-  if (btn) btn.classList.toggle('ready', !!inventoryLoaded);
 
   // Loading state — inventory still being fetched
   if (!inventoryLoaded) {
@@ -3371,7 +3361,7 @@ function syncFiltersFromText(text) {
     newGroups.forEach(g => { topicAnchors[g] = userAnchorId; });
   }
 
-  if (changed) buildSidebar();
+  if (changed) { buildSidebar(); bumpToldBadge(); }
 }
 
 let pendingBudget = null;
@@ -4422,19 +4412,27 @@ function renderCollection() {
   });
 }
 
-function togglePicks() {
-  const pop = document.getElementById('picksPopover');
-  const back = document.getElementById('picksBackdrop');
-  const btn = document.getElementById('btnPicks');
-  const isOpen = pop.classList.toggle('open');
-  back.classList.toggle('open', isOpen);
-  btn.classList.toggle('open', isOpen);
-  if (isOpen) buildLiveRecs();
+// ── Right-side accordion (two sections, only one open) ──
+let toldUpdateCount = 0;
+function openAccSection(key) {
+  document.querySelectorAll('.acc').forEach(sec => {
+    const isTarget = sec.dataset.section === key;
+    sec.classList.toggle('open', isTarget);
+  });
+  if (key === 'told') clearToldBadge();
+  if (key === 'recs') buildLiveRecs();
 }
-function closePicks() {
-  document.getElementById('picksPopover').classList.remove('open');
-  document.getElementById('picksBackdrop').classList.remove('open');
-  document.getElementById('btnPicks')?.classList.remove('open');
+function bumpToldBadge() {
+  const acc = document.getElementById('accTold');
+  if (!acc || acc.classList.contains('open')) return; // visible — no badge needed
+  toldUpdateCount++;
+  const badge = document.getElementById('toldBadge');
+  if (badge) { badge.textContent = String(toldUpdateCount); badge.classList.add('show'); }
+}
+function clearToldBadge() {
+  toldUpdateCount = 0;
+  const badge = document.getElementById('toldBadge');
+  if (badge) { badge.classList.remove('show'); badge.textContent = '0'; }
 }
 
 function toggleCollection() {
