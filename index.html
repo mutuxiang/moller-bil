@@ -924,9 +924,9 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .live-rec-card {
   appearance: none; border: 1px solid var(--border);
   background: var(--cream-50, #FEFDFD);
-  border-radius: 6px;
-  padding: 10px 12px;
-  display: flex; align-items: center; gap: 12px;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex; align-items: center; gap: 14px;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
@@ -939,26 +939,26 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 }
 .live-rec-card:disabled { opacity: .55; cursor: wait; }
 .live-rec-img {
-  width: 76px; height: 56px;
+  width: 96px; height: 68px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 6px;
   background: var(--cream-200);
   flex-shrink: 0;
 }
-.live-rec-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.live-rec-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .live-rec-name {
-  font-size: 14.5px; font-weight: 500; color: var(--ink);
+  font-size: 17px; font-weight: 500; color: var(--ink); line-height: 1.25;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.live-rec-meta { font-size: 12.5px; color: var(--muted); }
+.live-rec-meta { font-size: 14px; color: var(--muted); line-height: 1.35; }
 .live-rec-cta {
   flex-shrink: 0;
-  font-size: 12px; font-weight: 500;
+  font-size: 13px; font-weight: 500;
   color: var(--ink);
   background: transparent;
   border: 1px solid var(--border-strong);
   border-radius: 999px;
-  padding: 5px 12px;
+  padding: 7px 14px;
   letter-spacing: .02em;
   transition: background 180ms var(--ease-out), color 180ms var(--ease-out), border-color 180ms var(--ease-out);
 }
@@ -968,11 +968,11 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 /* ── filter section: status display first, editing tools second ── */
 .filter-group {
-  display: flex; flex-direction: column; gap: 6px;
-  padding: 16px 0;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 0;
   border-bottom: 1px solid var(--border);
 }
-.filter-group:first-of-type { padding-top: 4px; }
+.filter-group:first-of-type { padding-top: 6px; }
 .filter-group:last-of-type { border-bottom: 0; padding-bottom: 4px; }
 
 .filter-label-row {
@@ -986,9 +986,9 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 /* Section title — eyebrow accent (salmon) so the topic stands as metadata */
 .filter-label {
-  font-size: 14.5px; font-weight: 500;
+  font-size: 12px; font-weight: 600;
   color: var(--eyebrow);
-  letter-spacing: .14em;
+  letter-spacing: .12em;
   text-transform: uppercase;
 }
 
@@ -1012,13 +1012,13 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 /* The CONFIRMED VALUE — focal point of the panel */
 .filter-value {
-  font-size: 20px; line-height: 1.4; color: var(--ink);
+  font-size: 17px; line-height: 1.4; color: var(--ink);
   font-weight: 500;
-  padding-top: 4px;
+  padding-top: 2px;
   transition: color 220ms var(--ease-out);
 }
 .filter-value.placeholder {
-  font-size: 15px; color: var(--muted); font-weight: 400;
+  font-size: 14.5px; color: var(--muted); font-weight: 400;
 }
 /* Group has un-sent manual edits — value text + status pill turn salmon */
 .filter-group.dirty .filter-value { color: var(--salmon); }
@@ -1119,15 +1119,15 @@ body.mode-learning .col-spacer.right {
   flex-shrink: 0;
 }
 
-/* Toggle that reveals the editing chips — pill button, clearly clickable */
+/* Toggle that reveals the editing chips — small pill, secondary action */
 .filter-change-toggle {
   appearance: none;
   background: transparent;
-  border: 1px solid var(--border-strong);
-  font: 400 14.5px/1 "Moller", sans-serif;
-  color: var(--ink);
+  border: 1px solid var(--border);
+  font: 400 12.5px/1 "Moller", sans-serif;
+  color: var(--muted);
   display: inline-flex; align-items: center;
-  padding: 10px 18px;
+  padding: 6px 12px;
   margin-top: 6px;
   border-radius: 999px;
   cursor: pointer;
@@ -1135,9 +1135,9 @@ body.mode-learning .col-spacer.right {
   transition: background 180ms var(--ease-out), color 180ms var(--ease-out), border-color 180ms var(--ease-out);
 }
 .filter-change-toggle:hover {
-  background: var(--action-blue);
-  color: var(--white, #fff);
-  border-color: var(--action-blue);
+  background: var(--ink);
+  color: var(--cream-100);
+  border-color: var(--ink);
 }
 
 /* Hidden by default; shown when user clicks Change */
@@ -2385,15 +2385,15 @@ const ONBOARDING_STEPS = [
     pos: 'bottom',
   },
   {
-    target: '#btnPicks',
+    target: '#accRecs .acc-head',
     title: 'Recommended for you',
     body: "Live picks from <b>Møller Bil's real inventory</b>, refreshed as we chat. You'll see popular Oslo-area cars right away, then they narrow to match your needs. Tap any card to jump into its stock.",
     pos: 'left',
   },
   {
-    target: '.side-head',
+    target: '#accTold .acc-head',
     title: "What you've told me",
-    body: "Your live profile lives below. As we chat, each answer I capture (<b>budget</b>, <b>fuel</b>, <b>seats</b>…) shows up on its own line — a few key ones is enough.",
+    body: "Your live profile lives in the second drawer. Click the header to open it — only one drawer is open at a time, and a small badge appears here when new answers are captured.",
     pos: 'left',
   },
   {
