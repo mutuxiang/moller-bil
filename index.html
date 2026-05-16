@@ -811,7 +811,7 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
 }
 .side-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.side-head b { font-size: 22px; font-weight: 500; color: var(--ink); display: block; }
+.side-head b { font-size: 18px; font-weight: 500; color: var(--ink); display: block; }
 .side-head-sub { font-size: 13px; color: var(--muted); }
 .side-head-actions { display: flex; align-items: center; gap: 8px; }
 .side-reset {
@@ -837,25 +837,18 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .side-recs {
   display: flex;
   flex-direction: column; gap: 14px;
-  padding: 22px 26px 22px;
+  padding: 22px 26px 26px;
   flex-shrink: 0;
   max-height: 46%;
-  /* Slightly warmer surface than the rest of the sidebar */
+  /* Slightly warmer surface than the rest of the sidebar — the bg-contrast
+     plus a generous bottom gap separates this panel without a colored line */
   background: var(--cream-300);
-  /* Thick "shelf" of page background creates a clear visual gap below */
-  border-bottom: 10px solid var(--cream-100);
+  border-bottom: 16px solid var(--cream-100);
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.04);
   position: relative;
 }
-/* Tiny inner top hairline so the panel reads as a distinct surface */
-.side-recs::before {
-  content: '';
-  position: absolute; left: 0; right: 0; top: 0;
-  height: 2px;
-  background: var(--salmon);
-  opacity: 0.85;
-}
 .side-recs-head b {
-  font-size: 17px; font-weight: 500; color: var(--ink); display: block;
+  font-size: 18px; font-weight: 500; color: var(--ink); display: block;
 }
 .live-rec-skeleton {
   height: 64px; border-radius: 6px;
@@ -911,13 +904,19 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .live-rec-meta { font-size: 12.5px; color: var(--muted); }
-.live-rec-arrow {
-  color: var(--muted); font-size: 18px; flex-shrink: 0;
-  transition: color 180ms var(--ease-out), transform 180ms var(--ease-out);
+.live-rec-cta {
+  flex-shrink: 0;
+  font-size: 12px; font-weight: 500;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 5px 12px;
+  letter-spacing: .02em;
+  transition: background 180ms var(--ease-out), color 180ms var(--ease-out), border-color 180ms var(--ease-out);
 }
-.live-rec-card:hover .live-rec-arrow {
-  color: var(--action-blue);
-  transform: translateX(2px);
+.live-rec-card:hover .live-rec-cta {
+  background: var(--ink); color: var(--cream-100); border-color: var(--ink);
 }
 
 /* ── filter section: status display first, editing tools second ── */
@@ -1313,6 +1312,12 @@ body.mode-learning .col-spacer.right {
   width: 72px; flex-shrink: 0; align-self: stretch;
   background: repeating-linear-gradient(135deg,rgba(0,25,70,.05) 0 4px,rgba(0,0,0,0) 4px 8px), var(--bg);
   border: 1px solid var(--border); border-radius: var(--radius-card);
+}
+.coll-card-img {
+  width: 96px; flex-shrink: 0; align-self: stretch;
+  object-fit: cover; object-position: center;
+  border: 1px solid var(--border); border-radius: var(--radius-card);
+  background: var(--cream-200);
 }
 .coll-card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .coll-card-name { font-size: 15px; font-weight: 500; line-height: 1.3; padding-right: 24px; color: var(--ink); }
@@ -2240,7 +2245,7 @@ function buildLiveRecs() {
         <div class="live-rec-name">${escapeHtml(car.name)}</div>
         <div class="live-rec-meta">${escapeHtml(priceLabel)}</div>
       </div>
-      <span class="live-rec-arrow" aria-hidden="true">→</span>
+      <span class="live-rec-cta">View</span>
     `;
     body.appendChild(btn);
   });
@@ -3084,8 +3089,11 @@ function buildSidebarMessage() {
   if (sMin && sMax && prevSnapshot.budgetMin != null) {
     const lo = parseInt(sMin.value), hi = parseInt(sMax.value);
     if (lo !== prevSnapshot.budgetMin || hi !== prevSnapshot.budgetMax) {
+      // NOTE: don't include the old "from X-Y" prefix — the AI/parser only sees
+      // the new range, so inferBudgetFromText won't accidentally lock in the
+      // outdated values when this message is re-parsed after send.
       if (prevSnapshot.budgetWasSet) {
-        lines.push(`change my budget from ${formatNOK(prevSnapshot.budgetMin)} - ${formatNOK(prevSnapshot.budgetMax)} to ${formatNOK(lo)} - ${formatNOK(hi)}`);
+        lines.push(`change my budget to ${formatNOK(lo)} - ${formatNOK(hi)}`);
       } else {
         lines.push(`set my budget to ${formatNOK(lo)} - ${formatNOK(hi)}`);
       }
@@ -4231,7 +4239,7 @@ function renderInventory(items, model, msgEl, realData = false) {
       saveBtn.classList.toggle('on', wasPinned);
       saveBtn.textContent = wasPinned ? 'Saved' : 'Save';
       if (wasPinned) {
-        pinCar({ model: id, year: it.year, badge: it.price });
+        pinCar({ model: id, year: it.year, badge: it.price, image: it.image });
       } else {
         unpinCar(id);
       }
@@ -4259,7 +4267,7 @@ function renderInventory(items, model, msgEl, realData = false) {
 function pinCar(rec) {
   const model = cleanField(rec.model);
   if (pinnedCars.some(c => c.model === model)) return;
-  pinnedCars.push({ model, year: cleanField(rec.year), badge: cleanField(rec.badge) });
+  pinnedCars.push({ model, year: cleanField(rec.year), badge: cleanField(rec.badge), image: rec.image || null });
   renderCollection();
   flashCollectionButton();
   showToast(`Saved — open “Your Collection” at the top right to view it`);
@@ -4317,8 +4325,11 @@ function renderCollection() {
     const card = document.createElement('div');
     card.className = 'coll-card';
     const matchLabel = c.badge || 'Matched';
+    const thumbHtml = c.image
+      ? `<img class="coll-card-img" src="${escapeHtml(c.image)}" alt="" loading="lazy">`
+      : `<div class="coll-card-ph"></div>`;
     card.innerHTML = `
-      <div class="coll-card-ph"></div>
+      ${thumbHtml}
       <div class="coll-card-info">
         <div class="coll-card-name">${escapeHtml(c.model)}</div>
         <div class="coll-card-match">${escapeHtml(matchLabel)}</div>
