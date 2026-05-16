@@ -984,11 +984,12 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   flex: 1; min-width: 0;
 }
 
-/* Section title — eyebrow accent (salmon) so the topic stands as metadata */
+/* Section title — eyebrow accent (salmon) so the topic stands as metadata.
+   Kept visually quieter than the drawer title so the hierarchy reads top-down. */
 .filter-label {
-  font-size: 12px; font-weight: 600;
+  font-size: 10.5px; font-weight: 500;
   color: var(--eyebrow);
-  letter-spacing: .12em;
+  letter-spacing: .14em;
   text-transform: uppercase;
 }
 
@@ -1119,19 +1120,20 @@ body.mode-learning .col-spacer.right {
   flex-shrink: 0;
 }
 
-/* Toggle that reveals the editing chips — small pill, secondary action */
+/* Toggle that reveals the editing chips — matches the View pill on rec cards */
 .filter-change-toggle {
   appearance: none;
   background: transparent;
-  border: 1px solid var(--border);
-  font: 400 12.5px/1 "Moller", sans-serif;
-  color: var(--muted);
+  border: 1px solid var(--border-strong);
+  font: 500 13px/1 "Moller", sans-serif;
+  color: var(--ink);
   display: inline-flex; align-items: center;
-  padding: 6px 12px;
+  padding: 7px 14px;
   margin-top: 6px;
   border-radius: 999px;
   cursor: pointer;
   align-self: flex-start;
+  letter-spacing: .02em;
   transition: background 180ms var(--ease-out), color 180ms var(--ease-out), border-color 180ms var(--ease-out);
 }
 .filter-change-toggle:hover {
@@ -2393,7 +2395,7 @@ const ONBOARDING_STEPS = [
   {
     target: '#accTold .acc-head',
     title: "What you've told me",
-    body: "Your live profile lives in the second drawer. Click the header to open it — only one drawer is open at a time, and a small badge appears here when new answers are captured.",
+    body: "Your live profile lives in this drawer. As we chat, each answer I capture (<b>budget</b>, <b>fuel</b>, <b>seats</b>…) shows up on its own line — a small badge here flags new updates.",
     pos: 'left',
   },
   {
