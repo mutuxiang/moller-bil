@@ -637,13 +637,12 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 }
 .size-scene-person {
   position: absolute;
-  left: 0; top: 0; bottom: 4px;
+  left: 0; top: 0;
   z-index: 2;
   background: var(--cream-200);
   pointer-events: none;
-  display: flex; align-items: stretch;
 }
-.size-scene-person svg { display: block; height: 100%; }
+.size-scene-person svg { display: block; }
 /* fade so cars sliding past the person don't visually crash into it */
 .size-scene-person::after {
   content: '';
@@ -4386,11 +4385,12 @@ function buildSizePersonSvg() {
   const personX = padL + personW / 2;
   const headR = PERSON_H * 0.062;
   const personBody = `M ${-PERSON_H * 0.10} ${-PERSON_H * 0.85} Q ${-PERSON_H * 0.12} ${-PERSON_H * 0.78} ${-PERSON_H * 0.10} ${-PERSON_H * 0.55} L ${-PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${-PERSON_H * 0.075} 0 L ${-PERSON_H * 0.015} 0 L ${-PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} 0 L ${PERSON_H * 0.075} 0 L ${PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${PERSON_H * 0.10} ${-PERSON_H * 0.55} Q ${PERSON_H * 0.12} ${-PERSON_H * 0.78} ${PERSON_H * 0.10} ${-PERSON_H * 0.85} Z`;
+  const widthPx = Math.round(widthCm * SCALE);
+  const heightPx = Math.round(vbH * SCALE);
   return {
     svg: `
-      <svg viewBox="0 0 ${widthCm} ${vbH}" preserveAspectRatio="xMidYMid meet">
+      <svg viewBox="0 0 ${widthCm} ${vbH}" width="${widthPx}" height="${heightPx}" preserveAspectRatio="xMinYMin meet">
         <line x1="0" y1="${ground}" x2="${widthCm}" y2="${ground}" stroke="${navy}" stroke-opacity="0.45" stroke-width="1"/>
-        <line x1="${personX - 22}" y1="${ground - PERSON_H}" x2="${widthCm}" y2="${ground - PERSON_H}" stroke="${salmon}" stroke-opacity="0.5" stroke-dasharray="3 5" stroke-width="1"/>
         <text x="${personX - 26}" y="${ground - PERSON_H - 8}" font-size="13" fill="${salmon}" font-weight="500">175 cm</text>
         <g transform="translate(${personX} ${ground})">
           <circle cx="0" cy="${-PERSON_H * 0.93 + headR * 0.2}" r="${headR}" fill="${navy}"/>
@@ -4399,7 +4399,7 @@ function buildSizePersonSvg() {
         </g>
       </svg>
     `,
-    widthPx: Math.round(widthCm * SCALE),
+    widthPx, heightPx,
   };
 }
 
@@ -4446,9 +4446,10 @@ function buildSizeCarsSvg() {
   }).join('');
 
   return `
-    <svg viewBox="0 0 ${totalCm} ${vbH}" width="${svgW}" height="${svgH}" preserveAspectRatio="xMidYMid meet">
+    <svg viewBox="0 0 ${totalCm} ${vbH}" width="${svgW}" height="${svgH}" preserveAspectRatio="xMinYMin meet">
       <line x1="0" y1="${ground}" x2="${totalCm}" y2="${ground}" stroke="${navy}" stroke-opacity="0.45" stroke-width="1"/>
       ${ticks.join('')}
+      <line x1="0" y1="${SIZE_SCENE.ground - SIZE_SCENE.PERSON_H}" x2="${totalCm}" y2="${SIZE_SCENE.ground - SIZE_SCENE.PERSON_H}" stroke="${'var(--salmon)'}" stroke-opacity="0.45" stroke-dasharray="3 5" stroke-width="1"/>
       ${cars}
     </svg>
   `;
