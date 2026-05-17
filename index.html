@@ -609,6 +609,81 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 }
 .budget-card.accent .budget-stock-num { color: var(--cream-100); }
 
+/* ── Size visualization (human-scale comparison, no specific models) ── */
+.size-panel {
+  margin-top: 6px;
+  width: 100%;
+  background: var(--cream-200);
+  border-radius: 6px;
+  padding: 24px 26px 22px;
+  display: flex; flex-direction: column; gap: 16px;
+  align-self: stretch;
+}
+.size-panel-head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+  flex-wrap: wrap;
+}
+.size-panel-title {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--salmon);
+}
+.size-panel-sub {
+  font-size: 13.5px; color: var(--muted); line-height: 1.4;
+}
+.size-scene {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.size-scene svg { display: block; min-width: 100%; height: 200px; }
+.size-options {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 980px) {
+  .size-options {
+    overflow-x: auto;
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: 160px;
+    padding-bottom: 6px;
+    scroll-snap-type: x mandatory;
+  }
+  .size-option { scroll-snap-align: start; }
+}
+.size-option {
+  appearance: none;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--cream-100);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+  color: var(--ink);
+  transition: border-color 180ms var(--ease-out), background 180ms var(--ease-out);
+}
+.size-option:hover {
+  border-color: rgba(0,0,0,0.22);
+  background: var(--cream-50, #FEFDFD);
+}
+.size-option-tag {
+  font-size: 11px; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted);
+}
+.size-option-name {
+  font-size: 16px; font-weight: 500; color: var(--ink); line-height: 1.2;
+}
+.size-option-dim {
+  font-size: 13px; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
 /* ════════════════════════════════════════════════════════════
    RECOMMENDATION CARDS — redesigned
    ════════════════════════════════════════════════════════════ */
@@ -619,11 +694,12 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   margin-top: 4px;
   max-width: 1080px;
 }
-.msg.has-recs, .msg.has-fuel, .msg.has-budget { max-width: none; width: 100%; }
+.msg.has-recs, .msg.has-fuel, .msg.has-budget, .msg.has-size { max-width: none; width: 100%; }
 .msg.has-recs .msg-content,
 .msg.has-inv .msg-content,
 .msg.has-fuel .msg-content,
-.msg.has-budget .msg-content {
+.msg.has-budget .msg-content,
+.msg.has-size .msg-content {
   width: 100%;
   flex: 1 1 100%;
 }
@@ -1927,6 +2003,7 @@ REQUIRED (must all be covered before you can show RECOMMENDATIONS):
 B) Passengers / seats they need
 C) Budget range
 D) Fuel type / powertrain (petrol, diesel, hybrid, electric)
+H) Vehicle size / body type (compact, hatchback, sedan / wagon, SUV, 7-seater SUV / van) — show the human-scale size cards in the UI
 F) Must-have features — always ask this ONCE; this is the question where you emit the EV_SURPRISES block (see that rule)
 G) Personal preferences wrap-up — the LAST question, always asked once right before recommending (see PERSONAL PREFERENCES rule)
 
@@ -1936,15 +2013,16 @@ E) Brand preference (Audi, BMW, Volvo, Toyota, Tesla, Volkswagen, Hyundai, Kia, 
 
 Rules for the flow:
 - Always lead with the user's energy. If they open with "growing family" → ask seats. If they open with budget → dive into budget.
-- Required order: B + C + D (any order) → F (with EV surprises) → G (personal preferences) → RECOMMENDATIONS.
+- Required order: B + C + D + H (any order) → F (with EV surprises) → G (personal preferences) → RECOMMENDATIONS.
+- For H (size), introduce it briefly — Norwegian roads & parking — then ask: "**Which size feels right for you?**" The UI will surface size-comparison cards next to a 175 cm person silhouette so the user can actually FEEL the dimensions. Don't list specific models; talk in categories only (compact, hatchback, sedan/wagon, SUV, 7-seater).
 - A (situation) is a nice warm-up but skip it if the user is impatient or has already implied their motivation.
 - Budget is the one REQUIRED area users sometimes try to dodge. If they avoid it, gently circle back: "Before I can find the right match, it'd really help to know roughly what budget you're thinking — even a ballpark helps!"
 - If a user's earlier message already answered an area (e.g. they said "I need a 7-seater for my family"), DON'T ask that area again.
 - E (brand) is OPTIONAL — ask only ONCE, casually, e.g. "Any brands you already trust?" Accept "no preference" immediately. NEVER push. If the user mentions a brand anywhere, treat E as covered.
 
 DECISION POINT — when to recommend:
-- All of B, C, D, F, G covered? → Emit RECOMMENDATIONS on the next turn.
-- You may weave E in between if there's natural space, but never delay recommendations to ask brand if you already have B+C+D+F+G.
+- All of B, C, D, H, F, G covered? → Emit RECOMMENDATIONS on the next turn.
+- You may weave E in between if there's natural space, but never delay recommendations to ask brand if you already have B+C+D+H+F+G.
 - Don't ask more than ONE question per turn. Don't drag the conversation.
 
 PERSONAL PREFERENCES (Area G — ask exactly ONCE, right before recommending):
@@ -4277,6 +4355,134 @@ function renderBudgetCards(msgEl) {
   document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
 }
 
+// ── Size visualization (ArtHumanScale, distilled — no specific models) ──
+const SIZE_OPTIONS = [
+  { key: 'Compact',     label: 'Compact',      tag: 'City',        length: 405, height: 145, type: 'compact'  },
+  { key: 'Mid-size',    label: 'Hatchback',    tag: 'Daily',       length: 428, height: 149, type: 'hatch'    },
+  { key: 'Family',      label: 'Sedan / Wagon', tag: 'Long trips', length: 469, height: 147, type: 'wagon'    },
+  { key: 'SUV',         label: 'SUV',          tag: 'Mixed roads', length: 458, height: 163, type: 'suv'      },
+  { key: 'Van',         label: '7-seater SUV', tag: 'Big family',  length: 476, height: 166, type: 'largesuv' },
+];
+
+function carSideSvgPath(length, height, type) {
+  const t = ({
+    compact:  { rs: 0.26, re: 0.66, hf: 0.55 },
+    hatch:    { rs: 0.28, re: 0.75, hf: 0.54 },
+    sedan:    { rs: 0.32, re: 0.68, hf: 0.50 },
+    wagon:    { rs: 0.30, re: 0.86, hf: 0.55 },
+    suv:      { rs: 0.27, re: 0.78, hf: 0.52 },
+    largesuv: { rs: 0.25, re: 0.80, hf: 0.50 },
+  })[type] || { rs: 0.30, re: 0.78, hf: 0.55 };
+  const L = length, H = height;
+  const hY = -H * t.hf;
+  const rY = -H;
+  const rX1 = L * t.rs;
+  const rX2 = L * t.re;
+  const sill = -28;
+  const body = `M 4 ${sill} L 4 ${hY + 10} Q 4 ${hY - 2} 16 ${hY - 4} L ${rX1} ${hY - 4} Q ${rX1 + 14} ${hY - 6} ${rX1 + 28} ${rY + 6} Q ${rX1 + 36} ${rY} ${rX1 + 48} ${rY} L ${rX2 - 18} ${rY} Q ${rX2 - 4} ${rY} ${rX2 + 10} ${rY + 10} Q ${rX2 + 20} ${hY - 6} ${rX2 + 34} ${hY - 4} L ${L - 14} ${hY - 4} Q ${L - 2} ${hY - 2} ${L - 2} ${hY + 14} L ${L - 2} ${sill} Z`;
+  const glass = `M ${rX1 + 12} ${hY - 2} L ${rX1 + 34} ${rY + 8} L ${rX2 - 22} ${rY + 8} L ${rX2 + 6} ${hY - 2} Z`;
+  const wheelR = 30, wxF = L * 0.19, wxR = L * 0.82;
+  return { body, glass, wheelR, wxF, wxR, hY, rY };
+}
+
+function buildSizeSceneSvg() {
+  const PERSON_H = 175;
+  const gapCm = 70;
+  const padL = 40, padR = 40;
+  const personW = PERSON_H * 0.32;
+  const totalCm = padL + personW + gapCm + SIZE_OPTIONS.reduce((s, c) => s + c.length, 0) + gapCm * (SIZE_OPTIONS.length - 1) + padR;
+  const vbH = 240;
+  const ground = vbH - 28;
+  const navy = 'var(--ink)';
+  const salmon = 'var(--salmon)';
+  const personX = padL + personW / 2;
+
+  let x = padL + personW + gapCm;
+  const positions = SIZE_OPTIONS.map(c => { const p = x; x += c.length + gapCm; return p; });
+
+  const personBody = `M ${-PERSON_H * 0.10} ${-PERSON_H * 0.85} Q ${-PERSON_H * 0.12} ${-PERSON_H * 0.78} ${-PERSON_H * 0.10} ${-PERSON_H * 0.55} L ${-PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${-PERSON_H * 0.075} 0 L ${-PERSON_H * 0.015} 0 L ${-PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} 0 L ${PERSON_H * 0.075} 0 L ${PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${PERSON_H * 0.10} ${-PERSON_H * 0.55} Q ${PERSON_H * 0.12} ${-PERSON_H * 0.78} ${PERSON_H * 0.10} ${-PERSON_H * 0.85} Z`;
+  const headR = PERSON_H * 0.062;
+
+  const ticks = [];
+  for (let i = 0; i <= Math.floor(totalCm / 100); i++) {
+    ticks.push(`<line x1="${i * 100}" y1="${ground}" x2="${i * 100}" y2="${ground + 6}" stroke="${navy}" stroke-opacity="${i % 5 === 0 ? 0.45 : 0.2}" stroke-width="1"/>`);
+  }
+
+  const cars = SIZE_OPTIONS.map((c, i) => {
+    const x0 = positions[i];
+    const p = carSideSvgPath(c.length, c.height, c.type);
+    return `
+      <g transform="translate(${x0} ${ground})">
+        <path d="${p.body}" fill="${navy}"/>
+        <path d="${p.glass}" fill="rgba(255,255,255,0.18)"/>
+        <g><circle cx="${p.wxF}" cy="${-p.wheelR + 4}" r="${p.wheelR}" fill="#0a1530"/><circle cx="${p.wxF}" cy="${-p.wheelR + 4}" r="${p.wheelR * 0.42}" fill="${navy}"/></g>
+        <g><circle cx="${p.wxR}" cy="${-p.wheelR + 4}" r="${p.wheelR}" fill="#0a1530"/><circle cx="${p.wxR}" cy="${-p.wheelR + 4}" r="${p.wheelR * 0.42}" fill="${navy}"/></g>
+      </g>
+      <g stroke="${navy}" stroke-opacity="0.6">
+        <line x1="${x0}" y1="${ground + 22}" x2="${x0 + c.length}" y2="${ground + 22}" stroke-width="1"/>
+        <line x1="${x0}" y1="${ground + 16}" x2="${x0}" y2="${ground + 28}" stroke-width="1"/>
+        <line x1="${x0 + c.length}" y1="${ground + 16}" x2="${x0 + c.length}" y2="${ground + 28}" stroke-width="1"/>
+      </g>
+      <text x="${x0 + c.length / 2}" y="${ground + 42}" font-size="14" text-anchor="middle" fill="${navy}" font-weight="500">${escapeHtml(c.label)}</text>
+      <text x="${x0 + c.length / 2}" y="${ground + 58}" font-size="11" text-anchor="middle" fill="${navy}" opacity="0.55">${(c.length / 100).toFixed(2)} m</text>
+    `;
+  }).join('');
+
+  return `
+    <svg viewBox="0 0 ${totalCm} ${vbH + 40}" preserveAspectRatio="xMidYMid meet">
+      <line x1="0" y1="${ground}" x2="${totalCm}" y2="${ground}" stroke="${navy}" stroke-opacity="0.45" stroke-width="1"/>
+      ${ticks.join('')}
+      <line x1="${personX - 18}" y1="${ground - PERSON_H}" x2="${totalCm - 20}" y2="${ground - PERSON_H}" stroke="${salmon}" stroke-opacity="0.35" stroke-dasharray="3 5" stroke-width="1"/>
+      <text x="${personX - 22}" y="${ground - PERSON_H - 6}" font-size="11" fill="${salmon}" font-weight="500">175 cm</text>
+      <g transform="translate(${personX} ${ground})">
+        <circle cx="0" cy="${-PERSON_H * 0.93 + headR * 0.2}" r="${headR}" fill="${navy}"/>
+        <rect x="${-PERSON_H * 0.018}" y="${-PERSON_H * 0.87}" width="${PERSON_H * 0.036}" height="${PERSON_H * 0.04}" fill="${navy}"/>
+        <path d="${personBody}" fill="${navy}"/>
+      </g>
+      ${cars}
+    </svg>
+  `;
+}
+
+function renderSizeCards(msgEl) {
+  const content = msgEl.querySelector('.msg-content');
+  if (content.querySelector('.size-panel')) return;
+  const panel = document.createElement('div');
+  panel.className = 'size-panel';
+  panel.innerHTML = `
+    <div class="size-panel-head">
+      <span class="size-panel-title">Sized next to a 175 cm person</span>
+      <span class="size-panel-sub">All bodies drawn to one scale. Lengths in real centimetres so you can feel what fits the parking spot.</span>
+    </div>
+    <div class="size-scene">${buildSizeSceneSvg()}</div>
+    <div class="size-options"></div>
+  `;
+  const optsRow = panel.querySelector('.size-options');
+  SIZE_OPTIONS.forEach(c => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'size-option';
+    btn.onclick = () => pickSize(c.key, c.label);
+    btn.innerHTML = `
+      <span class="size-option-tag">${escapeHtml(c.tag)}</span>
+      <span class="size-option-name">${escapeHtml(c.label)}</span>
+      <span class="size-option-dim">≈ ${(c.length / 100).toFixed(2)} m long</span>
+    `;
+    optsRow.appendChild(btn);
+  });
+  content.appendChild(panel);
+  msgEl.classList.add('has-size');
+  document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
+}
+
+function pickSize(key, label) {
+  const input = document.getElementById('inputField');
+  if (!input) return;
+  input.value = `A ${label.toLowerCase()} fits me.`;
+  updateSend();
+  sendMessage();
+}
+
 function renderEVSurprises(items, msgEl) {
   const content = msgEl.querySelector('.msg-content');
   const wrap = document.createElement('div');
@@ -4928,6 +5134,7 @@ async function sendMessage() {
         if (surprises && surprises.length > 0) renderEVSurprises(surprises, el);
         if (aiTopic === 'fuel')   renderFuelCards(el);
         if (aiTopic === 'budget') renderBudgetCards(el);
+        if (aiTopic === 'size')   renderSizeCards(el);
         renderQuickChips(suggestions, el);
       });
       attachStripTo(msgEl);
