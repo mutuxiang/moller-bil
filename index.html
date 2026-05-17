@@ -632,18 +632,35 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   font-size: 13.5px; color: var(--muted); line-height: 1.4;
 }
 .size-scene {
+  position: relative;
   width: 100%;
+}
+.size-scene-person {
+  position: absolute;
+  left: 0; top: 0; bottom: 4px;
+  z-index: 2;
+  background: var(--cream-200);
+  pointer-events: none;
+  display: flex; align-items: stretch;
+}
+.size-scene-person svg { display: block; height: 100%; }
+/* fade so cars sliding past the person don't visually crash into it */
+.size-scene-person::after {
+  content: '';
+  position: absolute;
+  right: -22px; top: 0; bottom: 0; width: 22px;
+  background: linear-gradient(to right, var(--cream-200), transparent);
+  pointer-events: none;
+}
+.size-scene-scroll {
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: 4px;
   scroll-snap-type: x mandatory;
 }
-.size-scene svg { display: block; }
-.size-hit { cursor: pointer; }
-.size-hit:hover ~ .size-hit-bg,
-.size-car-group:hover .size-car-bg {
-  fill: rgba(0,25,70,0.05);
-}
+.size-scene-scroll svg { display: block; }
+.size-car-group { cursor: pointer; }
+.size-car-group:hover .size-car-bg { fill: rgba(0,25,70,0.05); }
 
 /* ════════════════════════════════════════════════════════════
    RECOMMENDATION CARDS — redesigned
@@ -4346,34 +4363,61 @@ function carSideSvgPath(length, height, type) {
   return { body, glass, wheelR, wxF, wxR, hY, rY };
 }
 
-function buildSizeSceneSvg() {
+// Shared scene geometry (cm units, then scaled to pixels for both panels)
+const SIZE_SCENE = (() => {
   const PERSON_H = 175;
-  const gapCm = 80;
-  const padL = 30, padR = 60;
   const personW = PERSON_H * 0.32;
-  const totalCm = padL + personW + gapCm + SIZE_OPTIONS.reduce((s, c) => s + c.length, 0) + gapCm * (SIZE_OPTIONS.length - 1) + padR;
-  const labelTop = 90;   // top band for tag + name labels above each car
-  const vbH = labelTop + 250 + 60; // labels + scene + length text below
-  const ground = labelTop + 220;
+  const gapCm = 90;
+  const padL = 24, padR = 60;
+  const labelTop = 64;          // top band for tag + name labels above each car
+  const vbH = labelTop + 220 + 56; // labels + scene + length below
+  const ground = labelTop + 200;
+  // Aim for ~2 cars visible at ~860px (chat ≈ 1000px minus the fixed person column)
+  // 2 × 470cm + gap = 1030cm; 0.83 px/cm ≈ 855px → fits.
+  const SCALE = 0.83;
+  return { PERSON_H, personW, gapCm, padL, padR, labelTop, vbH, ground, SCALE };
+})();
+
+function buildSizePersonSvg() {
+  const { PERSON_H, personW, padL, vbH, ground, SCALE } = SIZE_SCENE;
   const navy = 'var(--ink)';
   const salmon = 'var(--salmon)';
+  const widthCm = padL + personW + 36;  // room for "175 cm" label on the right of head
   const personX = padL + personW / 2;
+  const headR = PERSON_H * 0.062;
+  const personBody = `M ${-PERSON_H * 0.10} ${-PERSON_H * 0.85} Q ${-PERSON_H * 0.12} ${-PERSON_H * 0.78} ${-PERSON_H * 0.10} ${-PERSON_H * 0.55} L ${-PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${-PERSON_H * 0.075} 0 L ${-PERSON_H * 0.015} 0 L ${-PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} 0 L ${PERSON_H * 0.075} 0 L ${PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${PERSON_H * 0.10} ${-PERSON_H * 0.55} Q ${PERSON_H * 0.12} ${-PERSON_H * 0.78} ${PERSON_H * 0.10} ${-PERSON_H * 0.85} Z`;
+  return {
+    svg: `
+      <svg viewBox="0 0 ${widthCm} ${vbH}" preserveAspectRatio="xMidYMid meet">
+        <line x1="0" y1="${ground}" x2="${widthCm}" y2="${ground}" stroke="${navy}" stroke-opacity="0.45" stroke-width="1"/>
+        <line x1="${personX - 22}" y1="${ground - PERSON_H}" x2="${widthCm}" y2="${ground - PERSON_H}" stroke="${salmon}" stroke-opacity="0.5" stroke-dasharray="3 5" stroke-width="1"/>
+        <text x="${personX - 26}" y="${ground - PERSON_H - 8}" font-size="13" fill="${salmon}" font-weight="500">175 cm</text>
+        <g transform="translate(${personX} ${ground})">
+          <circle cx="0" cy="${-PERSON_H * 0.93 + headR * 0.2}" r="${headR}" fill="${navy}"/>
+          <rect x="${-PERSON_H * 0.018}" y="${-PERSON_H * 0.87}" width="${PERSON_H * 0.036}" height="${PERSON_H * 0.04}" fill="${navy}"/>
+          <path d="${personBody}" fill="${navy}"/>
+        </g>
+      </svg>
+    `,
+    widthPx: Math.round(widthCm * SCALE),
+  };
+}
 
-  // Pixel scale: aim for ~2 cars visible inside an ~1000px container
-  // 2*470cm + 80cm gap = 1020cm. At 0.95 px/cm that's ~970px on screen.
-  const SCALE = 1.3; // a touch more so cars feel chunky; container scrolls
+function buildSizeCarsSvg() {
+  const { gapCm, padR, vbH, ground, SCALE } = SIZE_SCENE;
+  const navy = 'var(--ink)';
+  const padInner = 24;
+  // x-positions for cars (no person; cars start at padInner)
+  let x = padInner;
+  const positions = SIZE_OPTIONS.map(c => { const p = x; x += c.length + gapCm; return p; });
+  const totalCm = x - gapCm + padR;
   const svgW = Math.round(totalCm * SCALE);
   const svgH = Math.round(vbH * SCALE);
 
-  let x = padL + personW + gapCm;
-  const positions = SIZE_OPTIONS.map(c => { const p = x; x += c.length + gapCm; return p; });
-
-  const personBody = `M ${-PERSON_H * 0.10} ${-PERSON_H * 0.85} Q ${-PERSON_H * 0.12} ${-PERSON_H * 0.78} ${-PERSON_H * 0.10} ${-PERSON_H * 0.55} L ${-PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${-PERSON_H * 0.075} 0 L ${-PERSON_H * 0.015} 0 L ${-PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} 0 L ${PERSON_H * 0.075} 0 L ${PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${PERSON_H * 0.10} ${-PERSON_H * 0.55} Q ${PERSON_H * 0.12} ${-PERSON_H * 0.78} ${PERSON_H * 0.10} ${-PERSON_H * 0.85} Z`;
-  const headR = PERSON_H * 0.062;
-
   const ticks = [];
   for (let i = 0; i <= Math.floor(totalCm / 100); i++) {
-    ticks.push(`<line x1="${i * 100}" y1="${ground}" x2="${i * 100}" y2="${ground + 6}" stroke="${navy}" stroke-opacity="${i % 5 === 0 ? 0.45 : 0.2}" stroke-width="1"/>`);
+    const tx = i * 100;
+    ticks.push(`<line x1="${tx}" y1="${ground}" x2="${tx}" y2="${ground + 6}" stroke="${navy}" stroke-opacity="${i % 5 === 0 ? 0.45 : 0.2}" stroke-width="1"/>`);
   }
 
   const cars = SIZE_OPTIONS.map((c, i) => {
@@ -4381,10 +4425,10 @@ function buildSizeSceneSvg() {
     const cx = x0 + c.length / 2;
     const p = carSideSvgPath(c.length, c.height, c.type);
     return `
-      <g class="size-car-group" data-key="${escapeHtml(c.filterKey)}" data-label="${escapeHtml(c.label)}" style="cursor:pointer">
+      <g class="size-car-group" data-key="${escapeHtml(c.filterKey)}" data-label="${escapeHtml(c.label)}">
         <rect class="size-car-bg" x="${x0 - gapCm / 2}" y="0" width="${c.length + gapCm}" height="${vbH}" fill="transparent" rx="8"/>
-        <text x="${cx}" y="32" font-size="18" letter-spacing="3.4" text-anchor="middle" fill="${navy}" opacity="0.55" font-weight="500">${escapeHtml(c.tag.toUpperCase())}</text>
-        <text x="${cx}" y="68" font-size="30" text-anchor="middle" fill="${navy}" font-weight="500">${escapeHtml(c.label)}</text>
+        <text x="${cx}" y="24" font-size="13" letter-spacing="2" text-anchor="middle" fill="${navy}" opacity="0.55" font-weight="500">${escapeHtml(c.tag.toUpperCase())}</text>
+        <text x="${cx}" y="50" font-size="22" text-anchor="middle" fill="${navy}" font-weight="500">${escapeHtml(c.label)}</text>
         <g transform="translate(${x0} ${ground})">
           <path d="${p.body}" fill="${navy}"/>
           <path d="${p.glass}" fill="rgba(255,255,255,0.18)"/>
@@ -4392,11 +4436,11 @@ function buildSizeSceneSvg() {
           <g><circle cx="${p.wxR}" cy="${-p.wheelR + 4}" r="${p.wheelR}" fill="#0a1530"/><circle cx="${p.wxR}" cy="${-p.wheelR + 4}" r="${p.wheelR * 0.42}" fill="${navy}"/></g>
         </g>
         <g stroke="${navy}" stroke-opacity="0.6">
-          <line x1="${x0}" y1="${ground + 24}" x2="${x0 + c.length}" y2="${ground + 24}" stroke-width="1"/>
-          <line x1="${x0}" y1="${ground + 18}" x2="${x0}" y2="${ground + 30}" stroke-width="1"/>
-          <line x1="${x0 + c.length}" y1="${ground + 18}" x2="${x0 + c.length}" y2="${ground + 30}" stroke-width="1"/>
+          <line x1="${x0}" y1="${ground + 22}" x2="${x0 + c.length}" y2="${ground + 22}" stroke-width="1"/>
+          <line x1="${x0}" y1="${ground + 16}" x2="${x0}" y2="${ground + 28}" stroke-width="1"/>
+          <line x1="${x0 + c.length}" y1="${ground + 16}" x2="${x0 + c.length}" y2="${ground + 28}" stroke-width="1"/>
         </g>
-        <text x="${cx}" y="${ground + 48}" font-size="16" text-anchor="middle" fill="${navy}" opacity="0.6">${(c.length / 100).toFixed(2)} m long</text>
+        <text x="${cx}" y="${ground + 44}" font-size="13" text-anchor="middle" fill="${navy}" opacity="0.6">${(c.length / 100).toFixed(2)} m long</text>
       </g>
     `;
   }).join('');
@@ -4405,13 +4449,6 @@ function buildSizeSceneSvg() {
     <svg viewBox="0 0 ${totalCm} ${vbH}" width="${svgW}" height="${svgH}" preserveAspectRatio="xMidYMid meet">
       <line x1="0" y1="${ground}" x2="${totalCm}" y2="${ground}" stroke="${navy}" stroke-opacity="0.45" stroke-width="1"/>
       ${ticks.join('')}
-      <line x1="${personX - 18}" y1="${ground - PERSON_H}" x2="${totalCm - 20}" y2="${ground - PERSON_H}" stroke="${salmon}" stroke-opacity="0.35" stroke-dasharray="3 5" stroke-width="1"/>
-      <text x="${personX - 22}" y="${ground - PERSON_H - 8}" font-size="14" fill="${salmon}" font-weight="500">175 cm</text>
-      <g transform="translate(${personX} ${ground})">
-        <circle cx="0" cy="${-PERSON_H * 0.93 + headR * 0.2}" r="${headR}" fill="${navy}"/>
-        <rect x="${-PERSON_H * 0.018}" y="${-PERSON_H * 0.87}" width="${PERSON_H * 0.036}" height="${PERSON_H * 0.04}" fill="${navy}"/>
-        <path d="${personBody}" fill="${navy}"/>
-      </g>
       ${cars}
     </svg>
   `;
@@ -4422,12 +4459,16 @@ function renderSizeCards(msgEl) {
   if (content.querySelector('.size-panel')) return;
   const panel = document.createElement('div');
   panel.className = 'size-panel';
+  const person = buildSizePersonSvg();
   panel.innerHTML = `
     <div class="size-panel-head">
       <span class="size-panel-title">Sized next to a 175 cm person</span>
       <span class="size-panel-sub">Scroll right to compare. Tap a body to pick it.</span>
     </div>
-    <div class="size-scene">${buildSizeSceneSvg()}</div>
+    <div class="size-scene">
+      <div class="size-scene-person" style="width:${person.widthPx}px">${person.svg}</div>
+      <div class="size-scene-scroll" style="padding-left:${person.widthPx + 16}px">${buildSizeCarsSvg()}</div>
+    </div>
   `;
   // Each car group inside the SVG is the click target — no separate option row
   panel.querySelectorAll('.size-car-group').forEach(g => {
