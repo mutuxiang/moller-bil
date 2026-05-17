@@ -634,54 +634,15 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .size-scene {
   width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   padding-bottom: 4px;
+  scroll-snap-type: x mandatory;
 }
-.size-scene svg { display: block; min-width: 100%; height: 200px; }
-.size-options {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-}
-@media (max-width: 980px) {
-  .size-options {
-    overflow-x: auto;
-    grid-auto-flow: column;
-    grid-template-columns: none;
-    grid-auto-columns: 160px;
-    padding-bottom: 6px;
-    scroll-snap-type: x mandatory;
-  }
-  .size-option { scroll-snap-align: start; }
-}
-.size-option {
-  appearance: none;
-  text-align: left;
-  font-family: inherit;
-  cursor: pointer;
-  background: var(--cream-100);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 12px 14px 14px;
-  display: flex; flex-direction: column; gap: 4px;
-  color: var(--ink);
-  transition: border-color 180ms var(--ease-out), background 180ms var(--ease-out);
-}
-.size-option:hover {
-  border-color: rgba(0,0,0,0.22);
-  background: var(--cream-50, #FEFDFD);
-}
-.size-option-tag {
-  font-size: 11px; font-weight: 500;
-  letter-spacing: .14em; text-transform: uppercase;
-  color: var(--muted);
-}
-.size-option-name {
-  font-size: 16px; font-weight: 500; color: var(--ink); line-height: 1.2;
-}
-.size-option-dim {
-  font-size: 13px; color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  margin-top: 2px;
+.size-scene svg { display: block; }
+.size-hit { cursor: pointer; }
+.size-hit:hover ~ .size-hit-bg,
+.size-car-group:hover .size-car-bg {
+  fill: rgba(0,25,70,0.05);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -4357,11 +4318,11 @@ function renderBudgetCards(msgEl) {
 
 // ── Size visualization (ArtHumanScale, distilled — no specific models) ──
 const SIZE_OPTIONS = [
-  { key: 'Compact',     label: 'Compact',      tag: 'City',        length: 405, height: 145, type: 'compact'  },
-  { key: 'Mid-size',    label: 'Hatchback',    tag: 'Daily',       length: 428, height: 149, type: 'hatch'    },
-  { key: 'Family',      label: 'Sedan / Wagon', tag: 'Long trips', length: 469, height: 147, type: 'wagon'    },
-  { key: 'SUV',         label: 'SUV',          tag: 'Mixed roads', length: 458, height: 163, type: 'suv'      },
-  { key: 'Van',         label: '7-seater SUV', tag: 'Big family',  length: 476, height: 166, type: 'largesuv' },
+  { filterKey: 'Compact',  label: 'Compact',       tag: 'City',        length: 405, height: 145, type: 'compact'  },
+  { filterKey: 'Mid-size', label: 'Hatchback',     tag: 'Daily',       length: 428, height: 149, type: 'hatch'    },
+  { filterKey: 'Family',   label: 'Sedan / Wagon', tag: 'Long trips',  length: 469, height: 147, type: 'wagon'    },
+  { filterKey: 'SUV',      label: 'SUV',           tag: 'Mixed roads', length: 458, height: 163, type: 'suv'      },
+  { filterKey: 'Van',      label: '7-seater SUV',  tag: 'Big family',  length: 476, height: 166, type: 'largesuv' },
 ];
 
 function carSideSvgPath(length, height, type) {
@@ -4387,15 +4348,22 @@ function carSideSvgPath(length, height, type) {
 
 function buildSizeSceneSvg() {
   const PERSON_H = 175;
-  const gapCm = 70;
-  const padL = 40, padR = 40;
+  const gapCm = 80;
+  const padL = 30, padR = 60;
   const personW = PERSON_H * 0.32;
   const totalCm = padL + personW + gapCm + SIZE_OPTIONS.reduce((s, c) => s + c.length, 0) + gapCm * (SIZE_OPTIONS.length - 1) + padR;
-  const vbH = 240;
-  const ground = vbH - 28;
+  const labelTop = 90;   // top band for tag + name labels above each car
+  const vbH = labelTop + 250 + 60; // labels + scene + length text below
+  const ground = labelTop + 220;
   const navy = 'var(--ink)';
   const salmon = 'var(--salmon)';
   const personX = padL + personW / 2;
+
+  // Pixel scale: aim for ~2 cars visible inside an ~1000px container
+  // 2*470cm + 80cm gap = 1020cm. At 0.95 px/cm that's ~970px on screen.
+  const SCALE = 1.3; // a touch more so cars feel chunky; container scrolls
+  const svgW = Math.round(totalCm * SCALE);
+  const svgH = Math.round(vbH * SCALE);
 
   let x = padL + personW + gapCm;
   const positions = SIZE_OPTIONS.map(c => { const p = x; x += c.length + gapCm; return p; });
@@ -4410,30 +4378,35 @@ function buildSizeSceneSvg() {
 
   const cars = SIZE_OPTIONS.map((c, i) => {
     const x0 = positions[i];
+    const cx = x0 + c.length / 2;
     const p = carSideSvgPath(c.length, c.height, c.type);
     return `
-      <g transform="translate(${x0} ${ground})">
-        <path d="${p.body}" fill="${navy}"/>
-        <path d="${p.glass}" fill="rgba(255,255,255,0.18)"/>
-        <g><circle cx="${p.wxF}" cy="${-p.wheelR + 4}" r="${p.wheelR}" fill="#0a1530"/><circle cx="${p.wxF}" cy="${-p.wheelR + 4}" r="${p.wheelR * 0.42}" fill="${navy}"/></g>
-        <g><circle cx="${p.wxR}" cy="${-p.wheelR + 4}" r="${p.wheelR}" fill="#0a1530"/><circle cx="${p.wxR}" cy="${-p.wheelR + 4}" r="${p.wheelR * 0.42}" fill="${navy}"/></g>
+      <g class="size-car-group" data-key="${escapeHtml(c.filterKey)}" data-label="${escapeHtml(c.label)}" style="cursor:pointer">
+        <rect class="size-car-bg" x="${x0 - gapCm / 2}" y="0" width="${c.length + gapCm}" height="${vbH}" fill="transparent" rx="8"/>
+        <text x="${cx}" y="32" font-size="18" letter-spacing="3.4" text-anchor="middle" fill="${navy}" opacity="0.55" font-weight="500">${escapeHtml(c.tag.toUpperCase())}</text>
+        <text x="${cx}" y="68" font-size="30" text-anchor="middle" fill="${navy}" font-weight="500">${escapeHtml(c.label)}</text>
+        <g transform="translate(${x0} ${ground})">
+          <path d="${p.body}" fill="${navy}"/>
+          <path d="${p.glass}" fill="rgba(255,255,255,0.18)"/>
+          <g><circle cx="${p.wxF}" cy="${-p.wheelR + 4}" r="${p.wheelR}" fill="#0a1530"/><circle cx="${p.wxF}" cy="${-p.wheelR + 4}" r="${p.wheelR * 0.42}" fill="${navy}"/></g>
+          <g><circle cx="${p.wxR}" cy="${-p.wheelR + 4}" r="${p.wheelR}" fill="#0a1530"/><circle cx="${p.wxR}" cy="${-p.wheelR + 4}" r="${p.wheelR * 0.42}" fill="${navy}"/></g>
+        </g>
+        <g stroke="${navy}" stroke-opacity="0.6">
+          <line x1="${x0}" y1="${ground + 24}" x2="${x0 + c.length}" y2="${ground + 24}" stroke-width="1"/>
+          <line x1="${x0}" y1="${ground + 18}" x2="${x0}" y2="${ground + 30}" stroke-width="1"/>
+          <line x1="${x0 + c.length}" y1="${ground + 18}" x2="${x0 + c.length}" y2="${ground + 30}" stroke-width="1"/>
+        </g>
+        <text x="${cx}" y="${ground + 48}" font-size="16" text-anchor="middle" fill="${navy}" opacity="0.6">${(c.length / 100).toFixed(2)} m long</text>
       </g>
-      <g stroke="${navy}" stroke-opacity="0.6">
-        <line x1="${x0}" y1="${ground + 22}" x2="${x0 + c.length}" y2="${ground + 22}" stroke-width="1"/>
-        <line x1="${x0}" y1="${ground + 16}" x2="${x0}" y2="${ground + 28}" stroke-width="1"/>
-        <line x1="${x0 + c.length}" y1="${ground + 16}" x2="${x0 + c.length}" y2="${ground + 28}" stroke-width="1"/>
-      </g>
-      <text x="${x0 + c.length / 2}" y="${ground + 42}" font-size="14" text-anchor="middle" fill="${navy}" font-weight="500">${escapeHtml(c.label)}</text>
-      <text x="${x0 + c.length / 2}" y="${ground + 58}" font-size="11" text-anchor="middle" fill="${navy}" opacity="0.55">${(c.length / 100).toFixed(2)} m</text>
     `;
   }).join('');
 
   return `
-    <svg viewBox="0 0 ${totalCm} ${vbH + 40}" preserveAspectRatio="xMidYMid meet">
+    <svg viewBox="0 0 ${totalCm} ${vbH}" width="${svgW}" height="${svgH}" preserveAspectRatio="xMidYMid meet">
       <line x1="0" y1="${ground}" x2="${totalCm}" y2="${ground}" stroke="${navy}" stroke-opacity="0.45" stroke-width="1"/>
       ${ticks.join('')}
       <line x1="${personX - 18}" y1="${ground - PERSON_H}" x2="${totalCm - 20}" y2="${ground - PERSON_H}" stroke="${salmon}" stroke-opacity="0.35" stroke-dasharray="3 5" stroke-width="1"/>
-      <text x="${personX - 22}" y="${ground - PERSON_H - 6}" font-size="11" fill="${salmon}" font-weight="500">175 cm</text>
+      <text x="${personX - 22}" y="${ground - PERSON_H - 8}" font-size="14" fill="${salmon}" font-weight="500">175 cm</text>
       <g transform="translate(${personX} ${ground})">
         <circle cx="0" cy="${-PERSON_H * 0.93 + headR * 0.2}" r="${headR}" fill="${navy}"/>
         <rect x="${-PERSON_H * 0.018}" y="${-PERSON_H * 0.87}" width="${PERSON_H * 0.036}" height="${PERSON_H * 0.04}" fill="${navy}"/>
@@ -4452,33 +4425,32 @@ function renderSizeCards(msgEl) {
   panel.innerHTML = `
     <div class="size-panel-head">
       <span class="size-panel-title">Sized next to a 175 cm person</span>
-      <span class="size-panel-sub">All bodies drawn to one scale. Lengths in real centimetres so you can feel what fits the parking spot.</span>
+      <span class="size-panel-sub">Scroll right to compare. Tap a body to pick it.</span>
     </div>
     <div class="size-scene">${buildSizeSceneSvg()}</div>
-    <div class="size-options"></div>
   `;
-  const optsRow = panel.querySelector('.size-options');
-  SIZE_OPTIONS.forEach(c => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'size-option';
-    btn.onclick = () => pickSize(c.key, c.label);
-    btn.innerHTML = `
-      <span class="size-option-tag">${escapeHtml(c.tag)}</span>
-      <span class="size-option-name">${escapeHtml(c.label)}</span>
-      <span class="size-option-dim">≈ ${(c.length / 100).toFixed(2)} m long</span>
-    `;
-    optsRow.appendChild(btn);
+  // Each car group inside the SVG is the click target — no separate option row
+  panel.querySelectorAll('.size-car-group').forEach(g => {
+    g.addEventListener('click', () => pickSize(g.dataset.key, g.dataset.label));
   });
   content.appendChild(panel);
   msgEl.classList.add('has-size');
   document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
 }
 
-function pickSize(key, label) {
+function pickSize(filterKey, label) {
+  // 1) Mirror into the sidebar profile so "What you've told me" updates immediately
+  Object.keys(activeChips).forEach(k => {
+    if (k.startsWith('size:')) delete activeChips[k];     // single-select
+  });
+  activeChips[`size:${filterKey}`] = true;
+  buildSidebar();
+  bumpToldBadge();
+
+  // 2) Send a natural-language confirmation so the AI moves on
   const input = document.getElementById('inputField');
   if (!input) return;
-  input.value = `A ${label.toLowerCase()} fits me.`;
+  input.value = `A ${label.toLowerCase()} fits me best.`;
   updateSend();
   sendMessage();
 }
