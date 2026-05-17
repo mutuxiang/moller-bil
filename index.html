@@ -4389,8 +4389,9 @@ function buildSizePersonSvg() {
   const heightPx = Math.round(vbH * SCALE);
   return {
     svg: `
-      <svg viewBox="0 0 ${widthCm} ${vbH}" width="${widthPx}" height="${heightPx}" preserveAspectRatio="xMinYMin meet">
+      <svg viewBox="0 0 ${widthCm} ${vbH}" width="${widthPx}" height="${heightPx}" preserveAspectRatio="xMinYMin meet" style="overflow:visible">
         <line x1="0" y1="${ground}" x2="${widthCm}" y2="${ground}" stroke="${navy}" stroke-opacity="0.45" stroke-width="1"/>
+        <line x1="${personX - 22}" y1="${ground - PERSON_H}" x2="${widthCm + 36}" y2="${ground - PERSON_H}" stroke="${salmon}" stroke-opacity="0.45" stroke-dasharray="3 5" stroke-width="1"/>
         <text x="${personX - 26}" y="${ground - PERSON_H - 8}" font-size="13" fill="${salmon}" font-weight="500">175 cm</text>
         <g transform="translate(${personX} ${ground})">
           <circle cx="0" cy="${-PERSON_H * 0.93 + headR * 0.2}" r="${headR}" fill="${navy}"/>
