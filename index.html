@@ -609,19 +609,10 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   position: relative;
   width: 100%;
 }
-.size-scene-person {
-  position: absolute;
-  left: 0; top: 0;
-  z-index: 3;
-  background: transparent;
-  pointer-events: none;
-}
-.size-scene-person svg { display: block; overflow: visible; }
 .size-scene-scroll {
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: 4px;
-  scroll-snap-type: x mandatory;
 }
 .size-scene-scroll svg { display: block; }
 .size-car-group { cursor: pointer; }
@@ -2282,9 +2273,16 @@ body.mode-learning .col-spacer.right {
 }
 /* tip is always positioned inline below the row, no override needed */
 .hero-told-item:last-child { border-bottom: 0; }
+/* New layout: label+value stacked on the LEFT, actions on the RIGHT */
 .hero-told-item-top {
-  display: flex; justify-content: space-between; align-items: baseline;
+  display: flex; justify-content: space-between; align-items: flex-start;
   gap: 16px;
+}
+.hero-told-item-text {
+  display: flex; flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
 }
 .hero-told-item-label {
   font-size: 16px; font-weight: 500;
@@ -2294,12 +2292,13 @@ body.mode-learning .col-spacer.right {
 .hero-told-item-value {
   font-size: 22px; font-weight: 500;
   color: var(--cream-100);
-  text-align: right;
-  max-width: 60%;
+  text-align: left;
 }
 .hero-told-item-actions {
   display: flex; gap: 14px;
-  margin-top: 0;
+  flex-shrink: 0;
+  align-items: center;
+  padding-top: 4px;
 }
 .hero-told-action {
   appearance: none; border: 0; background: transparent;
@@ -4066,15 +4065,17 @@ function updateHeroToldPanel() {
         return `
         <div class="hero-told-item${editing ? ' editing' : ''}${isNew ? ' is-new' : ''}">
           <div class="hero-told-item-top">
-            <span class="hero-told-item-label">${escapeHtml(r.label)}</span>
-            <span class="hero-told-item-value">${escapeHtml(r.value)}</span>
-          </div>
-          <div class="hero-told-item-actions">
-            <button class="hero-told-action" type="button"
-              onclick="heroToldChange('${r.key}')">${editing ? 'Cancel' : 'Change'}</button>
-            <button class="hero-told-action muted" type="button"
-              ${hasMsg ? '' : 'disabled'}
-              onclick="heroToldJump('${r.key}')">Show in chat</button>
+            <div class="hero-told-item-text">
+              <span class="hero-told-item-label">${escapeHtml(r.label)}</span>
+              <span class="hero-told-item-value">${escapeHtml(r.value)}</span>
+            </div>
+            <div class="hero-told-item-actions">
+              <button class="hero-told-action" type="button"
+                onclick="heroToldChange('${r.key}')">${editing ? 'Cancel' : 'Change'}</button>
+              <button class="hero-told-action muted" type="button"
+                ${hasMsg ? '' : 'disabled'}
+                onclick="heroToldJump('${r.key}')">Show in chat</button>
+            </div>
           </div>
           <div class="hero-told-edit">${editorHtml}</div>
           ${showTip ? `
@@ -5470,12 +5471,35 @@ function buildSizePersonSvg() {
 }
 
 function buildSizeCarsSvg() {
-  const { gapCm, padR, vbH, ground, SCALE } = SIZE_SCENE;
+  const { PERSON_H, personW, gapCm, padR, vbH, ground, SCALE } = SIZE_SCENE;
   const navy = 'var(--ink)';
+  const salmon = 'var(--salmon)';
   const padInner = 24;
-  // x-positions for cars (no person; cars start at padInner)
+  // Insert the person between car index 2 (Sedan/Wagon) and index 3 (SUV) →
+  // 3 cars on the LEFT (smaller-to-mid), 2 cars on the RIGHT (bigger), with
+  // the 175 cm human reference dead-center between them. This makes left/right
+  // size comparisons against the person trivial at a glance.
+  const PERSON_INSERT_AT = 3;
+  const personSlotW = personW + gapCm; // give the figure breathing room on both sides
+
+  // Lay out the cars, inserting a person-slot at the chosen index
   let x = padInner;
-  const positions = SIZE_OPTIONS.map(c => { const p = x; x += c.length + gapCm; return p; });
+  const positions = [];
+  let personX = 0;
+  SIZE_OPTIONS.forEach((c, i) => {
+    if (i === PERSON_INSERT_AT) {
+      // Reserve the person slot here
+      personX = x + personSlotW / 2;
+      x += personSlotW;
+    }
+    positions.push(x);
+    x += c.length + gapCm;
+  });
+  // Edge case: if PERSON_INSERT_AT >= cars.length, append the slot at the end
+  if (PERSON_INSERT_AT >= SIZE_OPTIONS.length) {
+    personX = x + personSlotW / 2;
+    x += personSlotW;
+  }
   const totalCm = x - gapCm + padR;
   const svgW = Math.round(totalCm * SCALE);
   const svgH = Math.round(vbH * SCALE);
@@ -5485,6 +5509,20 @@ function buildSizeCarsSvg() {
     const tx = i * 100;
     ticks.push(`<line x1="${tx}" y1="${ground}" x2="${tx}" y2="${ground + 6}" stroke="${navy}" stroke-opacity="${i % 5 === 0 ? 0.45 : 0.2}" stroke-width="1"/>`);
   }
+
+  // The person figure — same proportions as buildSizePersonSvg, inlined here
+  const headR = PERSON_H * 0.062;
+  const personBody = `M ${-PERSON_H * 0.10} ${-PERSON_H * 0.85} Q ${-PERSON_H * 0.12} ${-PERSON_H * 0.78} ${-PERSON_H * 0.10} ${-PERSON_H * 0.55} L ${-PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${-PERSON_H * 0.075} 0 L ${-PERSON_H * 0.015} 0 L ${-PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} 0 L ${PERSON_H * 0.075} 0 L ${PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${PERSON_H * 0.10} ${-PERSON_H * 0.55} Q ${PERSON_H * 0.12} ${-PERSON_H * 0.78} ${PERSON_H * 0.10} ${-PERSON_H * 0.85} Z`;
+  const personSvg = `
+    <g class="size-person-group">
+      <text x="${personX}" y="${ground - PERSON_H - 14}" font-size="13" fill="${salmon}" font-weight="500" text-anchor="middle">175 cm</text>
+      <g transform="translate(${personX} ${ground})">
+        <circle cx="0" cy="${-PERSON_H * 0.93 + headR * 0.2}" r="${headR}" fill="${salmon}"/>
+        <rect x="${-PERSON_H * 0.018}" y="${-PERSON_H * 0.87}" width="${PERSON_H * 0.036}" height="${PERSON_H * 0.04}" fill="${salmon}"/>
+        <path d="${personBody}" fill="${salmon}"/>
+      </g>
+    </g>
+  `;
 
   const cars = SIZE_OPTIONS.map((c, i) => {
     const x0 = positions[i];
@@ -5511,12 +5549,14 @@ function buildSizeCarsSvg() {
     `;
   }).join('');
 
+  // Marker for JS scroll-to-person
   return `
-    <svg viewBox="0 0 ${totalCm} ${vbH}" width="${svgW}" height="${svgH}" preserveAspectRatio="xMinYMin meet">
+    <svg viewBox="0 0 ${totalCm} ${vbH}" width="${svgW}" height="${svgH}" preserveAspectRatio="xMinYMin meet" data-person-x="${personX}" data-scale="${SCALE}">
       <line x1="0" y1="${ground}" x2="${totalCm}" y2="${ground}" stroke="${navy}" stroke-opacity="0.45" stroke-width="1"/>
       ${ticks.join('')}
-      <line x1="0" y1="${SIZE_SCENE.ground - SIZE_SCENE.PERSON_H}" x2="${totalCm}" y2="${SIZE_SCENE.ground - SIZE_SCENE.PERSON_H}" stroke="${'var(--salmon)'}" stroke-opacity="0.45" stroke-dasharray="3 5" stroke-width="1"/>
+      <line x1="0" y1="${SIZE_SCENE.ground - SIZE_SCENE.PERSON_H}" x2="${totalCm}" y2="${SIZE_SCENE.ground - SIZE_SCENE.PERSON_H}" stroke="${salmon}" stroke-opacity="0.45" stroke-dasharray="3 5" stroke-width="1"/>
       ${cars}
+      ${personSvg}
     </svg>
   `;
 }
@@ -5526,14 +5566,12 @@ function renderSizeCards(msgEl) {
   if (content.querySelector('.size-panel')) return;
   const panel = document.createElement('div');
   panel.className = 'size-panel';
-  const person = buildSizePersonSvg();
   panel.innerHTML = `
     <div class="size-panel-head">
       <span class="size-panel-title">Sized next to a 175 cm person</span>
-      <span class="size-panel-sub">Scroll right to compare. Tap a body to pick it.</span>
+      <span class="size-panel-sub">Scroll left or right to compare. Tap a body to pick it.</span>
     </div>
     <div class="size-scene">
-      <div class="size-scene-person" style="width:${person.widthPx}px">${person.svg}</div>
       <div class="size-scene-scroll">${buildSizeCarsSvg()}</div>
     </div>
   `;
@@ -5544,6 +5582,20 @@ function renderSizeCards(msgEl) {
   content.appendChild(panel);
   msgEl.classList.add('has-size');
   document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
+
+  // Auto-scroll the scene so the person silhouette starts centered in view.
+  // The user can then scroll either direction to compare against bigger or
+  // smaller cars relative to the human reference.
+  requestAnimationFrame(() => {
+    const scroller = panel.querySelector('.size-scene-scroll');
+    const svg      = panel.querySelector('.size-scene-scroll svg');
+    if (!scroller || !svg) return;
+    const personXcm = parseFloat(svg.getAttribute('data-person-x'));
+    const scale     = parseFloat(svg.getAttribute('data-scale'));
+    if (!isFinite(personXcm) || !isFinite(scale)) return;
+    const personXpx = personXcm * scale;
+    scroller.scrollLeft = Math.max(0, personXpx - scroller.clientWidth / 2);
+  });
 }
 
 function pickSize(filterKey, label) {
