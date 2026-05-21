@@ -2401,35 +2401,38 @@ body.mode-learning .col-spacer.right {
 
 <script>
 // ── config ──────────────────────────────────────────────────────────────
-// DeepSeek API (proxied through /api/deepseek so the key stays server-side)
-// `deepseek-chat` always points to the latest stable chat model (V3.x family).
-// `deepseek-reasoner` is the slower R1 reasoning model — not used here.
-const AI_MODEL = 'deepseek-chat';
-const AI_URL   = '/api/deepseek';
+// Gemini API (proxied through /api/gemini so the key stays server-side)
+// Using `gemini-2.0-flash` — GA, fast, and notably more stable than 2.5-flash.
+const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_URL   = `/api/gemini?model=${GEMINI_MODEL}`;
 
-// Build an OpenAI-compatible request body. DeepSeek accepts the same shape as
-// OpenAI, so messages are passed through as-is (role: system|user|assistant).
+// Convert OpenAI-style {role, content} messages into Gemini's {systemInstruction, contents}
 function toGeminiBody(allMessages, maxTokens) {
-  return {
-    model: AI_MODEL,
-    messages: allMessages.map(m => ({
-      role: m.role,                 // system | user | assistant
-      content: m.content || '',
-    })),
-    max_tokens: maxTokens || 800,
-    temperature: 0.7,
-    stream: false,
+  const systemParts = allMessages
+    .filter(m => m.role === 'system')
+    .map(m => m.content)
+    .join('\n\n');
+  const contents = allMessages
+    .filter(m => m.role !== 'system')
+    .map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content || '' }],
+    }));
+  const body = {
+    contents,
+    generationConfig: {
+      maxOutputTokens: maxTokens || 800,
+      temperature: 0.7,
+    },
   };
+  if (systemParts) body.systemInstruction = { parts: [{ text: systemParts }] };
+  return body;
 }
 
-// Extract text from a DeepSeek /chat/completions response (OpenAI shape)
+// Extract text from a Gemini /generateContent response
 function geminiText(data) {
-  return data?.choices?.[0]?.message?.content || '';
+  return data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
 }
-
-// Back-compat aliases — older code paths still reference the old names
-const GEMINI_URL = AI_URL;
-const GEMINI_MODEL = AI_MODEL;
 
 const SYSTEM_PROMPT = `You are a friendly car advisor at Møller Bil. Help users find the right car through natural conversation.
 
