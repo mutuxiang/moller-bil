@@ -2102,7 +2102,7 @@ body.mode-learning .col-spacer.right {
 }
 /* Reserve vertical space so the layout doesn't jump as text fills in */
 .app.is-onboarding .hero-headline {
-  min-height: 2.4em;
+  min-height: 4.2em;
 }
 
 /* ── Collapsible hero panel ── */
@@ -3546,8 +3546,8 @@ function startOnboardingIntro() {
 
   const MESSAGES = [
     "Buying a car can feel overwhelming.<br>Don't worry — I'm here to <u>help</u>.",
-    "Every car I show you is real — pulled live from <u>Møller Bil's inventory</u>.",
-    "And we don't just sell cars — <u>financing, warranties, even service</u> all happen here too.",
+    "every car I show you is <u>real</u>",
+    "Møller Bil does more than sell cars.<br>We can help with <u>financing, warranty, insurance, and service</u> too.",
   ];
 
   headline.innerHTML = '';
@@ -3592,56 +3592,116 @@ function startOnboardingIntro() {
   playOne(0, true);
 }
 
-// Typewriter — forward. Same HTML-aware logic as appendAIMessage.
+// Typewriter — forward. Renders by visible-character count so partial HTML
+// is always balanced; this avoids the browser re-inserting closing tags while
+// the reverse animation is deleting.
 function typeHtml(el, html, delay, onDone) {
-  let i = 0;
+  el.dataset.heroSource = html;
+  const total = countVisibleHeroChars(html);
+  let visible = 0;
   function step() {
-    if (i >= html.length) {
-      el.innerHTML = html;
+    el.innerHTML = renderHeroHtmlAt(html, visible);
+    if (visible >= total) {
       if (onDone) onDone();
       return;
     }
-    const ch = html[i];
-    if (ch === '<') {
-      const close = html.indexOf('>', i);
-      i = (close === -1) ? html.length : (close + 1);
-    } else if (ch === '&') {
-      const semi = html.indexOf(';', i);
-      i = (semi === -1 || semi - i > 8) ? (i + 1) : (semi + 1);
-    } else {
-      i++;
-    }
-    el.innerHTML = html.slice(0, i);
+    visible++;
     setTimeout(step, delay);
   }
   step();
 }
 
-// Reverse typewriter — removes from the end, atomically skipping tags/entities
+// Reverse typewriter — same renderer, just counts down visible characters.
 function reverseTypeHtml(el, delay, onDone) {
+  const source = el.dataset.heroSource || '';
+  const total = countVisibleHeroChars(source);
+  let visible = total;
   function step() {
-    let html = el.innerHTML;
-    if (html.length === 0) { if (onDone) onDone(); return; }
-    const last = html[html.length - 1];
-    if (last === '>') {
-      // Strip the whole closing/opening tag
-      const open = html.lastIndexOf('<');
-      html = (open === -1) ? '' : html.slice(0, open);
-    } else if (last === ';') {
-      // Possible HTML entity — find '&' within reasonable distance
-      const amp = html.lastIndexOf('&');
-      if (amp !== -1 && html.length - amp <= 8) {
-        html = html.slice(0, amp);
-      } else {
-        html = html.slice(0, -1);
-      }
-    } else {
-      html = html.slice(0, -1);
-    }
-    el.innerHTML = html;
+    el.innerHTML = renderHeroHtmlAt(source, visible);
+    if (visible <= 0) { if (onDone) onDone(); return; }
+    visible--;
     setTimeout(step, delay);
   }
   step();
+}
+
+function tokenizeHeroHtml(html) {
+  const tokens = [];
+  let i = 0;
+  while (i < html.length) {
+    if (html[i] === '<') {
+      const close = html.indexOf('>', i);
+      if (close === -1) break;
+      const raw = html.slice(i, close + 1);
+      const tagMatch = raw.match(/^<\/?\s*([a-z0-9-]+)/i);
+      const name = tagMatch ? tagMatch[1].toLowerCase() : '';
+      tokens.push({
+        type: 'tag',
+        raw,
+        name,
+        closing: /^<\//.test(raw),
+        voidTag: /^<\s*br\b/i.test(raw) || /\/>$/.test(raw),
+      });
+      i = close + 1;
+    } else if (html[i] === '&') {
+      const semi = html.indexOf(';', i);
+      if (semi !== -1 && semi - i <= 12) {
+        tokens.push({ type: 'text', raw: html.slice(i, semi + 1) });
+        i = semi + 1;
+      } else {
+        tokens.push({ type: 'text', raw: html[i++] });
+      }
+    } else {
+      tokens.push({ type: 'text', raw: html[i++] });
+    }
+  }
+  return tokens;
+}
+
+function countVisibleHeroChars(html) {
+  return tokenizeHeroHtml(html).reduce((count, token) => {
+    if (token.type === 'text') return count + 1;
+    if (token.voidTag) return count + 1;
+    return count;
+  }, 0);
+}
+
+function renderHeroHtmlAt(html, visibleCount) {
+  const tokens = tokenizeHeroHtml(html);
+  let remaining = Math.max(0, visibleCount);
+  let out = '';
+  const openTags = [];
+
+  for (const token of tokens) {
+    if (token.type === 'text') {
+      if (remaining <= 0) break;
+      out += token.raw;
+      remaining--;
+      continue;
+    }
+
+    if (token.voidTag) {
+      if (remaining <= 0) break;
+      out += token.raw;
+      remaining--;
+      continue;
+    }
+
+    if (token.closing) {
+      const idx = openTags.lastIndexOf(token.name);
+      if (idx !== -1) openTags.splice(idx, 1);
+      out += token.raw;
+      continue;
+    }
+
+    out += token.raw;
+    if (token.name) openTags.push(token.name);
+  }
+
+  for (let i = openTags.length - 1; i >= 0; i--) {
+    out += `</${openTags[i]}>`;
+  }
+  return out;
 }
 
 // User chose a mode from the onboarding CTA → slide the chat in and start
