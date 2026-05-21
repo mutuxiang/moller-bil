@@ -781,9 +781,9 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   box-shadow: 0 4px 16px rgba(0,25,70,0.10);
 }
 
-/* Image placeholder — short side doubled (120→240px) */
+/* Image — tightened so the card isn't dominated by the photo */
 .rec-ph, .rec-img {
-  width: 100%; height: 240px;
+  width: 100%; height: 180px;
   border-bottom: 1px solid var(--border);
   border-top-left-radius: var(--radius-card);
   border-top-right-radius: var(--radius-card);
@@ -810,8 +810,8 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 
 /* Card body — all content below image */
 .rec-body {
-  padding: 16px 18px 18px;
-  display: flex; flex-direction: column; gap: 14px;
+  padding: 14px 16px 16px;
+  display: flex; flex-direction: column; gap: 11px;
   flex: 1;
 }
 
@@ -822,8 +822,8 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .rec-inv {
   appearance: none; flex: 1;
   border: 0; background: var(--action-blue); color: var(--white, #fff);
-  border-radius: 999px; padding: 13px 20px;
-  font: 500 15px/1 "Moller",sans-serif;
+  border-radius: 999px; padding: 11px 18px;
+  font: 500 14px/1 "Moller",sans-serif;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 6px;
   transition: background 220ms var(--ease-out), opacity 220ms;
@@ -1054,32 +1054,32 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 }
 
 .rec-title { display: flex; flex-direction: column; gap: 2px; }
-.rec-name { font-size: 26px; font-weight: 500; line-height: 1.2; color: var(--ink); }
-.rec-sub { font-size: 16px; color: var(--muted); margin-top: 1px; }
+.rec-name { font-size: 22px; font-weight: 500; line-height: 1.2; color: var(--ink); }
+.rec-sub { font-size: 14px; color: var(--muted); margin-top: 1px; line-height: 1.4; }
 
 .rec-specs {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 7px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
 }
 .rec-spec {
-  background: var(--bg-surface); border-radius: var(--radius-card); padding: 9px 12px;
-  display: flex; flex-direction: column; gap: 2px;
+  background: var(--bg-surface); border-radius: var(--radius-card); padding: 7px 10px;
+  display: flex; flex-direction: column; gap: 1px;
 }
-.rec-spec-label { font-size: 14px; color: var(--muted); }
-.rec-spec-value { font-size: 17.5px; font-weight: 500; color: var(--ink); }
+.rec-spec-label { font-size: 12.5px; color: var(--muted); }
+.rec-spec-value { font-size: 15px; font-weight: 500; color: var(--ink); }
 
 .rec-divider { height: 1px; background: var(--border); }
 
-.rec-highlights { display: flex; flex-direction: column; gap: 6px; }
+.rec-highlights { display: flex; flex-direction: column; gap: 4px; }
 .rec-highlight {
-  display: flex; align-items: flex-start; gap: 10px;
-  font-size: 16px; font-weight: 400; color: var(--ink); line-height: 1.5;
+  display: flex; align-items: flex-start; gap: 9px;
+  font-size: 14px; font-weight: 400; color: var(--ink); line-height: 1.45;
 }
 .rec-highlight::before {
   content: '';
   flex-shrink: 0;
   width: 4px; height: 4px; border-radius: 50%;
   background: var(--salmon);
-  margin-top: 8px;
+  margin-top: 7px;
 }
 
 /* ── composer ── */
@@ -1918,46 +1918,45 @@ body.mode-learning .col-spacer.right {
 .col-spacer.left {
   width: 33.333vw !important;
   min-width: 380px;
-  max-width: 620px;
   flex-shrink: 0 !important;
   background: var(--moller-blue) !important;
   color: var(--cream-100) !important;
   display: flex !important;
   flex-direction: column !important;
-  padding: 48px 44px 36px !important;
+  padding: 56px 56px 44px !important;
   overflow-y: auto;
   border-right: 0 !important;
 }
-@media (max-width: 1100px) { .col-spacer.left { padding: 40px 32px 28px !important; min-width: 340px; } }
+@media (max-width: 1100px) { .col-spacer.left { padding: 44px 36px 32px !important; min-width: 340px; } }
 @media (max-width: 900px)  { .col-spacer.left { display: none !important; } }
 
 .hero-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 26px; }
 .hero-eyebrow {
-  font-size: 14px; font-weight: 500;
+  font-size: 15px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
 }
 .hero-glyph {
-  width: 42px; height: 42px;
+  width: 48px; height: 48px;
   display: flex; align-items: center; justify-content: center;
   opacity: 0.85;
 }
 .hero-glyph img { width: 100%; height: 100%; display: block; }
 .hero-headline {
   font-family: "Moller", sans-serif;
-  font-size: 46px; font-weight: 400;
-  line-height: 1.08; letter-spacing: -0.015em;
+  font-size: 54px; font-weight: 400;
+  line-height: 1.06; letter-spacing: -0.015em;
   color: var(--cream-100);
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 .hero-headline u {
-  text-decoration: underline 3px var(--salmon);
-  text-underline-offset: 6px;
+  text-decoration: underline 3.5px var(--salmon);
+  text-underline-offset: 7px;
 }
 .hero-sub {
-  font-size: 17px; line-height: 1.55;
+  font-size: 19px; line-height: 1.55;
   color: rgba(255,255,255,0.78);
-  max-width: 440px;
+  max-width: 520px;
 }
 .hero-bottom {
   margin-top: auto;
@@ -1965,13 +1964,13 @@ body.mode-learning .col-spacer.right {
 }
 .hero-recs-head { margin-bottom: 16px; }
 .hero-recs-label {
-  font-size: 14px; font-weight: 500;
+  font-size: 15px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
   display: block;
 }
 .hero-recs-sub {
-  font-size: 14px;
+  font-size: 15px;
   color: rgba(255,255,255,0.65);
   margin-top: 6px;
   display: block;
@@ -2002,16 +2001,16 @@ body.mode-learning .col-spacer.right {
   min-width: 0;
 }
 .hero-rec-card-name {
-  font-size: 17px; font-weight: 500;
+  font-size: 18px; font-weight: 500;
   color: var(--cream-100);
 }
 .hero-rec-card-meta {
-  font-size: 14px;
+  font-size: 14.5px;
   color: rgba(255,255,255,0.6);
 }
 .hero-rec-card-cta {
-  font-size: 13.5px; font-weight: 500;
-  padding: 8px 16px;
+  font-size: 14px; font-weight: 500;
+  padding: 9px 18px;
   border: 1px solid rgba(255,255,255,0.35);
   border-radius: 999px;
   color: var(--cream-100);
@@ -2041,16 +2040,16 @@ body.mode-learning .col-spacer.right {
 .hero.is-told .hero-sub { display: none; }
 .hero.is-told .hero-told { display: flex; }
 .hero-told-eyebrow {
-  font-size: 14px; font-weight: 500;
+  font-size: 15px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
 }
 .hero-told-title {
   font-family: "Moller", sans-serif;
-  font-size: 30px; font-weight: 400;
+  font-size: 34px; font-weight: 400;
   line-height: 1.2;
   color: var(--cream-100);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .hero-told-list { display: flex; flex-direction: column; gap: 0; }
 .hero-told-item {
@@ -2065,12 +2064,12 @@ body.mode-learning .col-spacer.right {
   gap: 16px;
 }
 .hero-told-item-label {
-  font-size: 13px; font-weight: 500;
+  font-size: 14px; font-weight: 500;
   letter-spacing: .12em; text-transform: uppercase;
   color: rgba(255,255,255,0.6);
 }
 .hero-told-item-value {
-  font-size: 16px; font-weight: 500;
+  font-size: 18px; font-weight: 500;
   color: var(--cream-100);
   text-align: right;
   max-width: 60%;
@@ -3710,6 +3709,15 @@ function buildSidebar() {
 // Which hero-told row is currently in edit mode (null when none)
 let heroToldEditing = null;
 
+// Preset budget bands used by the inline hero editor (no slider needed).
+const BUDGET_PRESETS = [
+  { label: 'Under 300k',   min: 50000,  max: 300000  },
+  { label: '300 – 425k',   min: 300000, max: 425000  },
+  { label: '425 – 575k',   min: 425000, max: 575000  },
+  { label: '575 – 750k',   min: 575000, max: 750000  },
+  { label: '750k +',       min: 750000, max: 1500000 },
+];
+
 function updateHeroToldPanel() {
   const hero    = document.getElementById('heroPanel');
   const toldEl  = document.getElementById('heroTold');
@@ -3746,9 +3754,21 @@ function updateHeroToldPanel() {
         let editorHtml = '';
         if (editing) {
           if (r.key === 'budget') {
-            // Budget needs the dual-range slider — open the drawer for that.
+            // Inline budget editor: 5 preset bands as chips. Avoids the drawer
+            // entirely — each chip writes to budgetMin/Max and triggers the same
+            // pipeline the slider does.
+            const sMin = document.getElementById('budgetMin');
+            const sMax = document.getElementById('budgetMax');
+            const curMin = sMin ? parseInt(sMin.value) : null;
+            const curMax = sMax ? parseInt(sMax.value) : null;
+            const chips = BUDGET_PRESETS.map(p => {
+              const on = curMin === p.min && curMax === p.max;
+              return `<button class="hero-told-chip${on ? ' on' : ''}" type="button"
+                        onclick="heroToldBudgetPick(${p.min}, ${p.max})">${escapeHtml(p.label)}</button>`;
+            }).join('');
             editorHtml = `
-              <div class="hero-told-edit-note">Budget uses a slider — opening the full filter panel…</div>
+              <div class="hero-told-edit-chips">${chips}</div>
+              <button class="hero-told-edit-done" type="button" onclick="heroToldEditDone()">Done</button>
             `;
           } else {
             const chips = r.options.map(opt => {
@@ -3784,8 +3804,7 @@ function updateHeroToldPanel() {
 }
 
 // Click "Change" on a hero-told row — flip just that row into edit mode.
-// Budget is special-cased: it uses the dual slider, which is too tall to
-// inline in the hero, so we punt to the existing drawer.
+// All groups (including budget) edit inline; no drawer opens.
 function heroToldChange(key) {
   if (heroToldEditing === key) {
     heroToldEditing = null;
@@ -3794,23 +3813,25 @@ function heroToldChange(key) {
   }
   heroToldEditing = key;
   updateHeroToldPanel();
-  if (key === 'budget') {
-    // Open the drawer for the slider; brief delay so the editor render lands first.
-    setTimeout(() => {
-      const side = document.querySelector('.side');
-      if (side && !side.classList.contains('open')) {
-        if (typeof toggleDrawer === 'function') toggleDrawer();
-      }
-      const group = document.querySelector(`.filter-group[data-key="budget"]`);
-      if (group) {
-        group.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const toggle = group.querySelector('.filter-change-toggle');
-        if (toggle && !group.classList.contains('editing')) toggle.click();
-      }
-      heroToldEditing = null;
-      updateHeroToldPanel();
-    }, 120);
+}
+
+// Write a preset budget band into the existing slider inputs and trigger
+// the same pipeline the slider does.
+function heroToldBudgetPick(min, max) {
+  takeSnapshotIfNeeded();
+  const sMin = document.getElementById('budgetMin');
+  const sMax = document.getElementById('budgetMax');
+  if (sMin) sMin.value = String(min);
+  if (sMax) sMax.value = String(max);
+  if (typeof onBudgetInput === 'function') {
+    onBudgetInput('min');
+    onBudgetInput('max');
   }
+  // getBudgetSummary() reads from window._lastBudget (the confirmed budget),
+  // so commit it immediately so the hero value updates without a Send.
+  window._lastBudget = { min, max };
+  setDirty(true);
+  buildSidebar();
 }
 
 function heroToldEditDone() {
