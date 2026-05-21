@@ -1999,7 +1999,7 @@ body.mode-learning .col-spacer.right {
 <script>
 // ── config ──────────────────────────────────────────────────────────────
 // Gemini API (proxied through /api/gemini so the key stays server-side)
-const GEMINI_MODEL = 'gemini-2.5-pro';
+const GEMINI_MODEL = 'gemini-3.0-pro';
 const GEMINI_URL   = `/api/gemini?model=${GEMINI_MODEL}`;
 
 // Convert OpenAI-style {role, content} messages into Gemini's {systemInstruction, contents}
@@ -3043,10 +3043,18 @@ function closeFilterTour() {
 // Detect what topic an AI message is about, so the sidebar's jump buttons
 // can scroll the chat back to the relevant question.
 function detectMessageTopic(text) {
-  const t = (text || '').toLowerCase();
+  const raw = (text || '').toLowerCase();
   // Skip the welcome greeting itself — it casually mentions fuel/budget/etc.
   // as examples but isn't actually asking the user about them.
-  if (/welcome|hi,?\s+welcome|two quick notes|what.s got you thinking|ask me anything/.test(t)) return null;
+  if (/welcome|hi,?\s+welcome|two quick notes|what.s got you thinking|ask me anything/.test(raw)) return null;
+
+  // The topic of a message is determined by the ACTUAL QUESTION being asked,
+  // not by incidental keywords in the surrounding context paragraph.
+  // The AI's prompt structure is: "2–3 sentences of context\n\n**bold question?**".
+  // So we isolate the last sentence ending in "?" and detect topic from THAT.
+  // Falls back to the full text only if no "?" is found (e.g. a statement reply).
+  const questionMatch = raw.match(/[^.!?]*\?/g);
+  const t = questionMatch ? questionMatch[questionMatch.length - 1] : raw;
 
   // Check fuel BEFORE budget — words like "affordable" / "petrol cars typically cost…"
   // can otherwise hijack a fuel-topic reply and pin it as a budget message.
