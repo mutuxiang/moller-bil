@@ -2146,7 +2146,7 @@ body.mode-learning .col-spacer.right {
 .app.hero-collapsed .hero-toggle-btn:hover { background: var(--cream-300); }
 @media (max-width: 900px) { .hero-toggle-btn { display: none !important; } }
 
-.hero-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 26px; }
+.hero-top { display: flex; justify-content: flex-end; align-items: flex-start; margin-bottom: 26px; }
 .hero-eyebrow {
   font-size: 15px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
@@ -2606,7 +2606,6 @@ body.mode-learning .col-spacer.right {
   <div class="main">
     <aside class="col-spacer left hero" id="heroPanel">
       <div class="hero-top">
-        <span class="hero-eyebrow">Welcome to Møller Bil</span>
         <span class="hero-glyph"><img src="logo-2.svg" alt=""></span>
       </div>
       <h1 class="hero-headline" id="heroHeadline"></h1>
@@ -3543,23 +3542,32 @@ function startOnboardingIntro() {
   headline.innerHTML = '';
   headline.classList.add('is-typing');
 
-  // Phase 1: type message 1 forward
-  typeHtml(headline, MSG1, 30, () => {
-    // Pause so the user can read it
+  // Safety net: if anything in the chain throws, still surface the CTAs
+  // after a generous timeout so the user never gets a permanent dead screen.
+  const safetyTimer = setTimeout(() => {
+    headline.innerHTML = MSG2;
+    headline.classList.remove('is-typing');
+    app.classList.add('is-ready');
+  }, 10000);
+
+  // Phase 1: type message 1 forward (faster than before — ~22ms/char)
+  typeHtml(headline, MSG1, 22, () => {
+    // Short pause so the user can read it, but not so long it feels frozen
     setTimeout(() => {
-      // Phase 2: reverse-type message 1 (faster than forward)
-      reverseTypeHtml(headline, 14, () => {
-        // Tiny pause before the next message
+      // Phase 2: reverse-type message 1 (snappier — 10ms/char)
+      reverseTypeHtml(headline, 10, () => {
+        // Very brief pause before the next message
         setTimeout(() => {
           // Phase 3: type message 2 forward
-          typeHtml(headline, MSG2, 28, () => {
+          typeHtml(headline, MSG2, 22, () => {
+            clearTimeout(safetyTimer);
             headline.classList.remove('is-typing');
             // Reveal CTA buttons + "Popular near you"
             app.classList.add('is-ready');
           });
-        }, 280);
+        }, 160);
       });
-    }, 1500);
+    }, 700);
   });
 }
 
