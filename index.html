@@ -777,7 +777,6 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .rec.pinned {
   border-color: var(--accent);
   background: var(--bg-surface);
-  order: -1;
   box-shadow: 0 4px 16px rgba(0,25,70,0.10);
 }
 
@@ -1916,8 +1915,9 @@ body.mode-learning .col-spacer.right {
 .btn-filter:hover { background: var(--moller-blue-700) !important; border-color: var(--moller-blue-700) !important; color: var(--cream-100) !important; }
 
 .col-spacer.left {
-  width: 33.333vw !important;
+  width: 40vw !important;
   min-width: 380px;
+  max-width: 48vw;
   flex-shrink: 0 !important;
   background: var(--moller-blue) !important;
   color: var(--cream-100) !important;
@@ -2051,12 +2051,78 @@ body.mode-learning .col-spacer.right {
   color: var(--cream-100);
   margin-bottom: 8px;
 }
-.hero-told-list { display: flex; flex-direction: column; gap: 0; }
+.hero-told-list { display: flex; flex-direction: column; gap: 0; position: relative; }
 .hero-told-item {
   display: flex; flex-direction: column;
   padding: 14px 0;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   gap: 6px;
+  position: relative;
+}
+/* Newly-added rows animate in (fade + slide) */
+.hero-told-item.is-new {
+  animation: heroToldRowIn 480ms var(--ease-out) both;
+}
+@keyframes heroToldRowIn {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* First-use coachmark next to the very first told row */
+.hero-told-tip {
+  position: absolute;
+  left: calc(100% + 18px);
+  top: 8px;
+  width: 260px;
+  background: var(--cream-100);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 14px 16px 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  z-index: 60;
+  animation: heroTipIn 420ms var(--ease-out) both;
+}
+.hero-told-tip::before {
+  content: '';
+  position: absolute;
+  left: -7px; top: 16px;
+  width: 14px; height: 14px;
+  background: var(--cream-100);
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+.hero-told-tip-eyebrow {
+  font-size: 11px; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--salmon);
+  margin-bottom: 4px;
+}
+.hero-told-tip-text {
+  font-size: 14px; line-height: 1.45;
+  margin-bottom: 10px;
+}
+.hero-told-tip-text b { font-weight: 500; }
+.hero-told-tip-close {
+  appearance: none; border: 0; background: transparent;
+  color: var(--action-blue); cursor: pointer;
+  font: 500 13px/1 "Moller", sans-serif;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@keyframes heroTipIn {
+  0%   { opacity: 0; transform: translateX(-6px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@media (max-width: 1280px) {
+  /* On narrower screens the tip can't sit to the right of the hero — put it below the row */
+  .hero-told-tip {
+    left: 0; right: auto; top: calc(100% + 8px);
+    width: auto; max-width: 92%;
+  }
+  .hero-told-tip::before {
+    left: 18px; top: -7px;
+  }
 }
 .hero-told-item:last-child { border-bottom: 0; }
 .hero-told-item-top {
@@ -2929,9 +2995,14 @@ function buildLiveRecs() {
   // Tailor the hero label slightly when we have personalized recs
   if (heroLabel) {
     const personalized = !/^Popular in the Oslo area$/i.test(reason);
-    heroLabel.textContent = personalized ? 'Matched for you' : 'Popular near you';
+    heroLabel.textContent = personalized ? 'Live picks while we chat' : 'Popular near you';
   }
-  if (heroSub) heroSub.textContent = reason;
+  if (heroSub) {
+    const personalized = !/^Popular in the Oslo area$/i.test(reason);
+    heroSub.textContent = personalized
+      ? `${reason} — a preview, not your final shortlist.`
+      : reason;
+  }
   if (body) body.innerHTML = '';
   if (hero) hero.innerHTML = '';
 
@@ -3708,6 +3779,10 @@ function buildSidebar() {
 // a compact summary of what we've captured so far.
 // Which hero-told row is currently in edit mode (null when none)
 let heroToldEditing = null;
+// Keys already rendered — used to detect newly-added rows for the entrance animation
+let _heroToldPrevKeys = new Set();
+// Whether the first-use coachmark has been shown / dismissed in this session
+let _heroToldTipShown = false;
 
 // Preset budget bands used by the inline hero editor (no slider needed).
 const BUDGET_PRESETS = [
@@ -3740,15 +3815,22 @@ function updateHeroToldPanel() {
     hero.classList.remove('is-told');
     toldEl.innerHTML = '';
     heroToldEditing = null;
+    _heroToldPrevKeys = new Set();
     return;
   }
+
+  // Compute which rows are NEW vs already present (for entrance animation)
+  const currentKeys = new Set(rows.map(r => r.key));
+  const newKeys     = new Set(rows.filter(r => !_heroToldPrevKeys.has(r.key)).map(r => r.key));
+  // First-time arrival of the very first row → show the coachmark
+  const firstEverArrival = _heroToldPrevKeys.size === 0 && rows.length > 0 && !_heroToldTipShown;
 
   hero.classList.add('is-told');
   toldEl.innerHTML = `
     <span class="hero-told-eyebrow">What you've told me</span>
     <h2 class="hero-told-title">Your live profile</h2>
     <div class="hero-told-list">
-      ${rows.map(r => {
+      ${rows.map((r, idx) => {
         const hasMsg = !!findLatestMessageForTopic(r.key);
         const editing = heroToldEditing === r.key;
         let editorHtml = '';
@@ -3783,8 +3865,10 @@ function updateHeroToldPanel() {
             `;
           }
         }
+        const isNew = newKeys.has(r.key);
+        const showTip = firstEverArrival && idx === 0;
         return `
-        <div class="hero-told-item${editing ? ' editing' : ''}">
+        <div class="hero-told-item${editing ? ' editing' : ''}${isNew ? ' is-new' : ''}">
           <div class="hero-told-item-top">
             <span class="hero-told-item-label">${escapeHtml(r.label)}</span>
             <span class="hero-told-item-value">${escapeHtml(r.value)}</span>
@@ -3797,10 +3881,33 @@ function updateHeroToldPanel() {
               onclick="heroToldJump('${r.key}')">Show in chat</button>
           </div>
           <div class="hero-told-edit">${editorHtml}</div>
+          ${showTip ? `
+            <div class="hero-told-tip" id="heroToldTip">
+              <div class="hero-told-tip-eyebrow">Quick tip</div>
+              <div class="hero-told-tip-text">
+                I'll capture each answer here as we go. Tap <b>Change</b> to update one, or <b>Show in chat</b> to revisit where it came up.
+              </div>
+              <button class="hero-told-tip-close" type="button" onclick="heroToldTipClose()">Got it</button>
+            </div>
+          ` : ''}
         </div>`;
       }).join('')}
     </div>
   `;
+  _heroToldPrevKeys = currentKeys;
+  if (firstEverArrival) {
+    _heroToldTipShown = true;
+    // auto-dismiss after a while so it doesn't linger
+    setTimeout(() => {
+      const t = document.getElementById('heroToldTip');
+      if (t) t.style.display = 'none';
+    }, 12000);
+  }
+}
+
+function heroToldTipClose() {
+  const t = document.getElementById('heroToldTip');
+  if (t) t.style.display = 'none';
 }
 
 // Click "Change" on a hero-told row — flip just that row into edit mode.
@@ -5851,10 +5958,9 @@ async function sendMessage() {
 }
 
 // When a rich card panel is going to render below (budget tiers, fuel cards),
-// the AI's long context paragraph is redundant. Keep only:
-//   • the short acknowledgement sentence (if it's the first paragraph and is
-//     short — under ~180 chars), and
-//   • the paragraph containing the bold question (the last "?" sentence).
+// the AI's long context paragraph is redundant. Keep:
+//   • a 1-sentence transition/ack (so the user feels heard), and
+//   • the paragraph containing the bold question.
 // Drop everything in between (the numbers-heavy "context" paragraph).
 function condenseForCardTopic(text) {
   if (!text) return text;
@@ -5868,14 +5974,23 @@ function condenseForCardTopic(text) {
     }
     return paras.length - 1;
   })();
+  const questionPara = paras[qIdx];
 
-  const out = [];
-  // Optional first ack: only if it's short and not the question paragraph
-  if (qIdx > 0 && paras[0].length < 180 && !/\?/.test(paras[0])) {
-    out.push(paras[0]);
+  // Build a one-sentence ack: take the very first sentence of the reply,
+  // capped at ~160 chars so a stray long sentence doesn't bring the whole
+  // pricing paragraph back in.
+  let ack = '';
+  if (qIdx > 0) {
+    const firstPara = paras[0];
+    // Skip paragraphs that ARE the question (just in case structure is odd)
+    if (!/\?/.test(firstPara)) {
+      const m = firstPara.match(/^[^.!?\n]*[.!?]/);
+      const candidate = m ? m[0].trim() : firstPara.trim();
+      ack = candidate.length > 200 ? candidate.slice(0, 197).trim() + '…' : candidate;
+    }
   }
-  out.push(paras[qIdx]);
-  return out.join('\n\n');
+
+  return ack ? `${ack}\n\n${questionPara}` : questionPara;
 }
 
 // For the size question: strip the trailing numbered/bulleted body-style
