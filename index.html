@@ -638,19 +638,11 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .size-scene-person {
   position: absolute;
   left: 0; top: 0;
-  z-index: 2;
-  background: var(--cream-200);
+  z-index: 3;
+  background: transparent;
   pointer-events: none;
 }
-.size-scene-person svg { display: block; }
-/* fade so cars sliding past the person don't visually crash into it */
-.size-scene-person::after {
-  content: '';
-  position: absolute;
-  right: -22px; top: 0; bottom: 0; width: 22px;
-  background: linear-gradient(to right, var(--cream-200), transparent);
-  pointer-events: none;
-}
+.size-scene-person svg { display: block; overflow: visible; }
 .size-scene-scroll {
   overflow-x: auto;
   overflow-y: hidden;
@@ -660,6 +652,90 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .size-scene-scroll svg { display: block; }
 .size-car-group { cursor: pointer; }
 .size-car-group:hover .size-car-bg { fill: rgba(0,25,70,0.05); }
+
+/* ── Norway map (range coverage, distilled ArtMap — no specific models) ── */
+.map-panel {
+  margin-top: 6px;
+  width: 100%;
+  background: var(--cream-200);
+  border-radius: 6px;
+  padding: 22px 26px 22px;
+  display: flex; flex-direction: column; gap: 14px;
+  align-self: stretch;
+}
+.map-panel-head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+  flex-wrap: wrap;
+}
+.map-panel-title {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--salmon);
+}
+.map-panel-sub {
+  font-size: 13.5px; color: var(--muted); line-height: 1.4;
+}
+.map-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+@media (max-width: 820px) {
+  .map-grid { grid-template-columns: 1fr; }
+}
+.map-stage {
+  background: var(--cream-100);
+  border-radius: 6px;
+  padding: 14px;
+  min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.map-stage svg { display: block; max-width: 100%; max-height: 520px; height: auto; }
+.map-side {
+  display: flex; flex-direction: column; gap: 18px;
+  min-width: 0;
+}
+.map-hub-label {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted);
+}
+.map-hub-name {
+  font-size: 19px; font-weight: 500; color: var(--ink);
+  margin-top: 4px;
+}
+.map-rings { display: flex; flex-direction: column; gap: 12px; }
+.map-ring {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--cream-100);
+  border-radius: 6px;
+}
+.map-ring-swatch {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--ink);
+}
+.map-ring.short  .map-ring-swatch { border-style: dotted; opacity: .55; }
+.map-ring.mid    .map-ring-swatch { border-style: dashed; opacity: .8; }
+.map-ring.long   .map-ring-swatch { border-style: solid;  }
+.map-ring-label {
+  font-size: 14px; font-weight: 500; color: var(--ink); line-height: 1.2;
+}
+.map-ring-sub {
+  font-size: 12px; color: var(--muted); display: block; margin-top: 2px;
+}
+.map-ring-km {
+  font-size: 14px; font-weight: 500; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.map-legend-cities {
+  font-size: 12px; color: var(--muted); line-height: 1.5;
+  padding-top: 6px; border-top: 1px solid rgba(0,25,70,0.08);
+}
 
 /* ════════════════════════════════════════════════════════════
    RECOMMENDATION CARDS — redesigned
@@ -671,12 +747,13 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   margin-top: 4px;
   max-width: 1080px;
 }
-.msg.has-recs, .msg.has-fuel, .msg.has-budget, .msg.has-size { max-width: none; width: 100%; }
+.msg.has-recs, .msg.has-fuel, .msg.has-budget, .msg.has-size, .msg.has-map { max-width: none; width: 100%; }
 .msg.has-recs .msg-content,
 .msg.has-inv .msg-content,
 .msg.has-fuel .msg-content,
 .msg.has-budget .msg-content,
-.msg.has-size .msg-content {
+.msg.has-size .msg-content,
+.msg.has-map .msg-content {
   width: 100%;
   flex: 1 1 100%;
 }
@@ -1922,7 +1999,7 @@ body.mode-learning .col-spacer.right {
 <script>
 // ── config ──────────────────────────────────────────────────────────────
 // Gemini API (proxied through /api/gemini so the key stays server-side)
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-2.5-pro';
 const GEMINI_URL   = `/api/gemini?model=${GEMINI_MODEL}`;
 
 // Convert OpenAI-style {role, content} messages into Gemini's {systemInstruction, contents}
@@ -1967,6 +2044,8 @@ Rules:
 - Always respond in English.
 - All prices and budgets are in Norwegian kroner (kr). Format like "350 000 kr" or "~450 000 kr". NEVER use $ or €.
 - HIGH-PRIORITY OVERRIDE: If the user's message contains "Not sure yet", "I am not sure yet", "[NOT-SURE-YET", "unsure", or similar — DO NOT advance the conversation. Stay on the EXACT current topic. Briefly explain the options (1–2 sentences each), then re-ask the SAME question. The last sentence of your reply MUST be a question about the same topic. NEVER pivot to budget, seats, brand, must-haves, etc. when the user is asking for clarification on the current question. This rule overrides the normal B+C+D+F+G flow.
+- USER-DRIVEN TOPIC SWITCH: If the user's latest message clearly raises a NEW topic, a question of their own, or talks about something other than what you just asked (e.g. you asked about fuel and they reply about size, range, brand, or anything else) — DROP your previous question entirely. Do NOT repeat it, do NOT append "but back to my earlier question…". Acknowledge what they just said in 1–2 sentences, answer or react to it, then ask the next logical question driven by THEIR message. The conversation must always follow the user's energy, never force them back to a question they chose to skip.
+- Note: "Not sure yet" / "unsure" is NOT a topic switch — it's a clarification request, and the previous rule (re-ask the same question with explanation) still applies. Only treat substantive new content as a topic switch.
 
 OPENING — read the user's mode from their FIRST reply:
 - If they say "Find my next car" / "replace my car" / "compare options" / "shopping" → SHOPPING MODE. Begin the discovery flow below.
@@ -2971,6 +3050,9 @@ function detectMessageTopic(text) {
 
   // Check fuel BEFORE budget — words like "affordable" / "petrol cars typically cost…"
   // can otherwise hijack a fuel-topic reply and pin it as a budget message.
+  // Range / geography questions (cabin trips, named cities, "how far", weekly distance)
+  // come BEFORE fuel so the Norway map wins when both could apply.
+  if (/\bcabin\b|road trip|long trip|long-distance|long distance|how far|\bkm\/week|km per week|drive to|weekly drive|range coverage|reach .* on (a|one) charge|\boslo\b|\bbergen\b|\btrondheim\b|\blillehammer\b|\btrysil\b|\bkristiansand\b|nationwide|norway-wide|across norway/i.test(t)) return 'range';
   if (/electric|hybrid|petrol|diesel|fuel\b|\bev\b|charging|plug-in|powertrain/i.test(t))                     return 'fuel';
   if (/budget|\bprice\b|\bcost\b|spend|how much|\bkr\b|kroner|\bafford\b/i.test(t))                            return 'budget';
   if (/passenger|seat|family|kids|children|how many people|how many.*fit|7-seater|7 seater/i.test(t))         return 'seats';
@@ -4379,7 +4461,6 @@ const SIZE_SCENE = (() => {
 
 function buildSizePersonSvg() {
   const { PERSON_H, personW, padL, vbH, ground, SCALE } = SIZE_SCENE;
-  const navy = 'var(--ink)';
   const salmon = 'var(--salmon)';
   const widthCm = padL + personW + 36;  // room for "175 cm" label on the right of head
   const personX = padL + personW / 2;
@@ -4390,13 +4471,11 @@ function buildSizePersonSvg() {
   return {
     svg: `
       <svg viewBox="0 0 ${widthCm} ${vbH}" width="${widthPx}" height="${heightPx}" preserveAspectRatio="xMinYMin meet" style="overflow:visible">
-        <line x1="0" y1="${ground}" x2="${widthCm}" y2="${ground}" stroke="${navy}" stroke-opacity="0.45" stroke-width="1"/>
-        <line x1="${personX - 22}" y1="${ground - PERSON_H}" x2="${widthCm + 36}" y2="${ground - PERSON_H}" stroke="${salmon}" stroke-opacity="0.45" stroke-dasharray="3 5" stroke-width="1"/>
         <text x="${personX - 26}" y="${ground - PERSON_H - 8}" font-size="13" fill="${salmon}" font-weight="500">175 cm</text>
         <g transform="translate(${personX} ${ground})">
-          <circle cx="0" cy="${-PERSON_H * 0.93 + headR * 0.2}" r="${headR}" fill="${navy}"/>
-          <rect x="${-PERSON_H * 0.018}" y="${-PERSON_H * 0.87}" width="${PERSON_H * 0.036}" height="${PERSON_H * 0.04}" fill="${navy}"/>
-          <path d="${personBody}" fill="${navy}"/>
+          <circle cx="0" cy="${-PERSON_H * 0.93 + headR * 0.2}" r="${headR}" fill="${salmon}"/>
+          <rect x="${-PERSON_H * 0.018}" y="${-PERSON_H * 0.87}" width="${PERSON_H * 0.036}" height="${PERSON_H * 0.04}" fill="${salmon}"/>
+          <path d="${personBody}" fill="${salmon}"/>
         </g>
       </svg>
     `,
@@ -4469,7 +4548,7 @@ function renderSizeCards(msgEl) {
     </div>
     <div class="size-scene">
       <div class="size-scene-person" style="width:${person.widthPx}px">${person.svg}</div>
-      <div class="size-scene-scroll" style="padding-left:${person.widthPx + 16}px">${buildSizeCarsSvg()}</div>
+      <div class="size-scene-scroll">${buildSizeCarsSvg()}</div>
     </div>
   `;
   // Each car group inside the SVG is the click target — no separate option row
@@ -4496,6 +4575,107 @@ function pickSize(filterKey, label) {
   input.value = `A ${label.toLowerCase()} fits me best.`;
   updateSend();
   sendMessage();
+}
+
+// ── Norway map (range coverage — generic EV bands, no specific models) ──
+const NORWAY_PATH = "M120,40 L140,30 L160,40 L155,70 L175,80 L170,110 L195,130 L210,160 L230,200 L240,260 L255,310 L260,360 L245,420 L235,460 L220,500 L195,540 L175,580 L150,610 L130,640 L120,680 L100,710 L85,740 L75,770 L70,800 L60,820 L40,800 L48,760 L60,720 L55,680 L70,640 L88,600 L98,560 L78,520 L60,470 L70,420 L92,380 L86,330 L78,290 L92,250 L80,210 L88,170 L98,130 L108,90 Z";
+const NORWAY_HUB = { x: 215, y: 480, name: 'Oslo' };
+const NORWAY_PINS = [
+  { name: 'Oslo',          x: 215, y: 480, hub: true,  label: 'Your hub' },
+  { name: 'Lillehammer',   x: 198, y: 410, label: '~180 km' },
+  { name: 'Trysil',        x: 230, y: 430, label: 'Cabin · ~220 km' },
+  { name: 'Bergen',        x: 108, y: 470, label: '~460 km' },
+  { name: 'Kristiansand',  x: 175, y: 600, label: '~320 km' },
+  { name: 'Trondheim',     x: 175, y: 290, label: '~500 km' },
+];
+const NORWAY_ROUTES = [
+  { to: [230, 430], label: 'Trysil' },
+  { to: [108, 470], label: 'Bergen' },
+  { to: [198, 410], label: 'Lillehammer' },
+];
+// Range bands as km on a single charge — drawn as halos around the hub.
+// 1 km ≈ 0.25 viewBox units (matches the rough scale of the Norway path).
+const NORWAY_BANDS = [
+  { id: 'short', km: 300, label: 'Short-range EV',  sub: 'City + commute' },
+  { id: 'mid',   km: 500, label: 'Mid-range EV',    sub: 'Cabin without a stop' },
+  { id: 'long',  km: 650, label: 'Long-range EV',   sub: 'Most cross-country trips' },
+];
+const NORWAY_KM_PER_UNIT = 0.25;
+
+function buildNorwayMapSvg() {
+  const navy = 'var(--ink)';
+  const muted = 'var(--muted)';
+  const salmon = 'var(--salmon)';
+  const cream = 'var(--cream-100)';
+
+  const halos = NORWAY_BANDS.map((b, i) => {
+    const r = b.km * NORWAY_KM_PER_UNIT;
+    const dash = i === 0 ? '2 3' : i === 1 ? '4 3' : '0';
+    return `<circle cx="${NORWAY_HUB.x}" cy="${NORWAY_HUB.y}" r="${r}" fill="none" stroke="${navy}" stroke-opacity="${0.5 - i * 0.1}" stroke-width="1.2" stroke-dasharray="${dash}"/>`;
+  }).join('');
+
+  const routes = NORWAY_ROUTES.map((r, i) => {
+    const mx = (NORWAY_HUB.x + r.to[0]) / 2 + (i - 1) * 10;
+    const my = (NORWAY_HUB.y + r.to[1]) / 2 - 12;
+    return `<path d="M${NORWAY_HUB.x} ${NORWAY_HUB.y} Q${mx},${my} ${r.to[0]},${r.to[1]}" stroke="${salmon}" stroke-opacity="0.55" stroke-width="1.4" stroke-dasharray="3 3" fill="none"/>`;
+  }).join('');
+
+  const pins = NORWAY_PINS.map(p => `
+    <g>
+      <circle cx="${p.x}" cy="${p.y}" r="${p.hub ? 6 : 3.5}" fill="${p.hub ? salmon : navy}" stroke="${cream}" stroke-width="1.5"/>
+      <text x="${p.x + 10}" y="${p.y - 2}" font-size="10" fill="${navy}" font-weight="500">${escapeHtml(p.name)}</text>
+      ${p.label ? `<text x="${p.x + 10}" y="${p.y + 10}" font-size="8.5" fill="${muted}">${escapeHtml(p.label)}</text>` : ''}
+    </g>
+  `).join('');
+
+  return `
+    <svg viewBox="0 0 300 820" preserveAspectRatio="xMidYMid meet" width="100%" style="display:block">
+      <path d="${NORWAY_PATH}" fill="${cream}" stroke="${navy}" stroke-opacity="0.45" stroke-width="1"/>
+      ${halos}
+      ${routes}
+      ${pins}
+    </svg>
+  `;
+}
+
+function renderNorwayMap(msgEl) {
+  const content = msgEl.querySelector('.msg-content');
+  if (content.querySelector('.map-panel')) return;
+  const panel = document.createElement('div');
+  panel.className = 'map-panel';
+  panel.innerHTML = `
+    <div class="map-panel-head">
+      <span class="map-panel-title">Norway · single-charge coverage from Oslo</span>
+      <span class="map-panel-sub">Three rings = how far an EV reaches without stopping to charge. The salmon pin is your hub.</span>
+    </div>
+    <div class="map-grid">
+      <div class="map-stage">${buildNorwayMapSvg()}</div>
+      <div class="map-side">
+        <div>
+          <span class="map-hub-label">Your hub</span>
+          <div class="map-hub-name">Oslo &middot; Skøyen</div>
+        </div>
+        <div class="map-rings">
+          ${NORWAY_BANDS.map(b => `
+            <div class="map-ring ${b.id}">
+              <span class="map-ring-swatch"></span>
+              <span>
+                <span class="map-ring-label">${escapeHtml(b.label)}</span>
+                <span class="map-ring-sub">${escapeHtml(b.sub)}</span>
+              </span>
+              <span class="map-ring-km">${b.km} km</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="map-legend-cities">
+          Distances from Oslo: Lillehammer ~180 km · Trysil ~220 km · Kristiansand ~320 km · Bergen ~460 km · Trondheim ~500 km.
+        </div>
+      </div>
+    </div>
+  `;
+  content.appendChild(panel);
+  msgEl.classList.add('has-map');
+  document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
 }
 
 function renderEVSurprises(items, msgEl) {
@@ -5144,12 +5324,17 @@ async function sendMessage() {
     } else {
       const surprises = parseEVSurprises(aiText);
       const { cleanText, suggestions } = parseSuggestions(aiText);
-      const aiTopic = detectMessageTopic(cleanText);
+      // Detect topic from BOTH the AI reply and the user's latest message —
+      // so e.g. asking "can I reach my cabin?" pops up the map even if the AI
+      // answer doesn't echo those exact keywords.
+      const userTopic = detectMessageTopic(combined);
+      const aiTopic   = detectMessageTopic(cleanText) || userTopic;
       const msgEl = appendAIMessage(cleanText, (el) => {
         if (surprises && surprises.length > 0) renderEVSurprises(surprises, el);
         if (aiTopic === 'fuel')   renderFuelCards(el);
         if (aiTopic === 'budget') renderBudgetCards(el);
         if (aiTopic === 'size')   renderSizeCards(el);
+        if (aiTopic === 'range')  renderNorwayMap(el);
         renderQuickChips(suggestions, el);
       });
       attachStripTo(msgEl);
