@@ -509,6 +509,92 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   }
   .budget-card { scroll-snap-align: start; }
 }
+/* The overall panel wraps the rail + the 3 tier cards */
+.budget-panel {
+  margin-top: 6px;
+  display: flex; flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  align-self: stretch;
+}
+
+/* ── Price rail — cars hang above a horizontal price axis ── */
+.budget-rail {
+  position: relative;
+  background: var(--cream-200);
+  border-radius: 6px;
+  padding: 28px 36px 30px;
+  /* Tall enough to fit a car silhouette above the line + tag below */
+  min-height: 230px;
+}
+.budget-rail-cars {
+  position: relative;
+  height: 130px;
+}
+.budget-rail-car {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  pointer-events: none;
+}
+.budget-rail-car svg {
+  height: 96px;
+  width: auto;
+}
+.budget-rail-tag {
+  margin-top: 6px;
+  display: flex; flex-direction: column; align-items: center;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.budget-rail-tag-price {
+  font-size: 17px; font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.budget-rail-car.accent .budget-rail-tag-price { color: var(--salmon); }
+.budget-rail-tag-unit {
+  font-size: 10px; font-weight: 500;
+  letter-spacing: .06em;
+  color: var(--muted);
+  margin-left: 3px;
+}
+.budget-rail-tag-fuel {
+  font-size: 11px; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.budget-rail-line {
+  position: absolute;
+  left: 36px; right: 36px;
+  top: 158px;
+  height: 1px;
+  background: var(--ink);
+  opacity: 0.5;
+}
+.budget-rail-ticks {
+  position: relative;
+  height: 30px;
+  margin-top: 12px;
+}
+.budget-rail-tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 11px; font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.budget-rail-tick span {
+  margin-left: 3px;
+  opacity: 0.65;
+}
+
+/* ── Tier cards — simplified: no car silhouette, no "Best for" text ── */
 .budget-card {
   background: var(--cream-200);
   border-radius: 6px;
@@ -521,27 +607,17 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   background: var(--ink);
   color: var(--cream-100);
 }
-/* Car silhouette at the top of each card */
-.budget-car-wrap {
-  width: 100%;
-  height: 64px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 2px;
-}
-.budget-car-svg {
-  height: 100%;
-  width: auto;
-  max-width: 88%;
-  display: block;
+.budget-card-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 10px;
 }
 .budget-rec-pill {
-  position: absolute;
-  top: 16px; right: 16px;
   font-size: 11px; font-weight: 500;
   letter-spacing: .12em; text-transform: uppercase;
   color: var(--salmon);
   border: 1px solid var(--salmon);
   padding: 4px 10px; border-radius: 999px;
+  flex-shrink: 0;
 }
 .budget-range {
   font-size: 28px; font-weight: 500;
@@ -573,15 +649,31 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   margin: 6px 0 2px;
 }
 .budget-card.accent .budget-hr { background: rgba(255,255,255,0.18); }
-.budget-best {
-  font-size: 15.5px; line-height: 1.5;
-  color: var(--muted); margin: 0;
+/* Big % + "of buyers chose this tier" stat */
+.budget-pick {
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 0;
 }
-.budget-card.accent .budget-best { color: rgba(255,255,255,0.78); }
-.budget-best b {
-  font-weight: 500; color: var(--ink);
+.budget-pick-num {
+  font-size: 30px; font-weight: 500;
+  letter-spacing: -.01em;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
-.budget-card.accent .budget-best b { color: var(--cream-100); }
+.budget-card.accent .budget-pick-num { color: var(--cream-100); }
+.budget-pick-label {
+  font-size: 13.5px; line-height: 1.35;
+  color: var(--muted);
+}
+.budget-card.accent .budget-pick-label { color: rgba(255,255,255,0.72); }
+
+/* Narrow viewports — let the rail breathe; rail labels can wrap */
+@media (max-width: 760px) {
+  .budget-rail { padding: 24px 22px 24px; min-height: 220px; }
+  .budget-rail-line { left: 22px; right: 22px; }
+  .budget-rail-tick { font-size: 10px; }
+}
 
 /* ── Size visualization (human-scale comparison, no specific models) ── */
 .size-panel {
@@ -5324,92 +5416,148 @@ function fuelGlyphSvg(kind, accent) {
 // ── Budget tier cards (renders when the AI is asking about budget) ──
 const BUDGET_TIERS = [
   {
-    label: 'Entry',     range: '300 – 425 k kr',
-    age: '5 – 7 yr',    mileage: '80 – 130k km',
+    label: 'Entry',     range: '300–425 kr',
+    age: '5–7 yr',    mileage: '80–130k km',
     fuel: 'Petrol / Diesel', evRange: '—',
-    best: 'Cabin trips, occasional use. Lower buy-in, higher fuel bill.',
-    carType: 'compact',
+    pick: '23%',
   },
   {
-    label: 'Sweet spot', range: '425 – 575 k kr', accent: true,
-    age: '2 – 4 yr',    mileage: '40 – 80k km',
+    label: 'Sweet spot', range: '425–575 kr', accent: true,
+    age: '2–4 yr',    mileage: '40–80k km',
     fuel: 'PHEV / used EV', evRange: '≈ 330 km',
-    best: 'Daily commute + summer trips. Best balance of price, age, range.',
-    carType: 'wagon',
+    pick: '52%',
   },
   {
-    label: 'Top',       range: '575 k kr +',
-    age: '0 – 2 yr',    mileage: '< 30k km',
+    label: 'Top',       range: '575 kr +',
+    age: '0–2 yr',    mileage: '< 30k km',
     fuel: 'New / nearly-new EV', evRange: '≈ 480 km',
-    best: 'Towing, road trips, family of five. Lowest worry, highest buy-in.',
-    carType: 'suv',
+    pick: '25%',
   },
 ];
 
-// Car silhouettes — sized to fit nicely at the top of a budget card.
-// Uses the same path generator as the size-comparison cards so the visual
-// language stays consistent across the app.
-function budgetCarSvg(type, accent) {
-  // Pick a reasonable physical size per type for a recognisable silhouette
-  const dims = {
-    compact: { length: 405, height: 145 },
-    wagon:   { length: 469, height: 147 },
-    suv:     { length: 458, height: 163 },
-  };
-  const { length, height } = dims[type] || dims.wagon;
-  const path = carSideSvgPath(length, height, type);
-  // Tiny wheels — proportional to the body
-  const tireR = Math.round(height * 0.13);
-  // Re-derive the wheel x-positions the same way carSideSvgPath did, roughly
-  const wheelTable = {
-    compact:  { rs: 0.26, re: 0.66 },
-    wagon:    { rs: 0.30, re: 0.86 },
-    suv:      { rs: 0.27, re: 0.78 },
-  }[type] || { rs: 0.30, re: 0.78 };
-  const wx1 = Math.round(length * wheelTable.rs + 14);
-  const wx2 = Math.round(length * wheelTable.re + 2);
-  // Viewbox: padding around the body for the wheels
-  const pad = 8;
-  const vbW = length + pad * 2;
-  const vbH = height + tireR + pad * 2;
-  const fill = accent ? '#E1644B' : '#001946';
+// Price rail — 3 example listings hanging at concrete price points.
+// One petrol (entry, with a smoke trail), one EV in the sweet spot, one premium EV.
+const BUDGET_RAIL = {
+  priceMin: 300,
+  priceMax: 800,
+  listings: [
+    { kr: 350, fuel: 'Petrol',   carType: 'wagon',    length: 469, height: 147, accent: false },
+    { kr: 520, fuel: 'Electric', carType: 'suv',      length: 465, height: 162, accent: true  },
+    { kr: 760, fuel: 'Electric', carType: 'largesuv', length: 484, height: 168, accent: false },
+  ],
+};
+
+// ── Price rail — hanging cars showing what concrete prices actually buy ──
+// One car per example listing, positioned along a 300k–800k kr axis.
+// Petrol cars get a smoke trail behind them (visual hint of "older / dirtier").
+function budgetRailCarSvg(c) {
+  const isPetrol = c.fuel === 'Petrol';
+  const L = c.length, H = c.height;
+  const p = carSideSvgPath(L, H, c.carType);
+  // Same colour vocabulary as the size cards: navy for default, salmon for accent
+  const fill = c.accent ? '#E1644B' : '#001946';
+  const wheelOuter = '#0a1530';
+  // Extra canvas to the LEFT for the smoke trail on petrol cars
+  const padL = isPetrol ? 280 : 14;
+  const padR = 14;
+  const padTop = Math.max(40, H + 18);
+  const padBot = 50;
+  const vbW = L + padL + padR;
+  const vbH = padTop + padBot;
+  // Render width tuned so a non-petrol car reads ~140px wide on screen
+  const renderW = isPetrol ? 220 : 140;
+  // Exhaust smoke (combustion-only)
+  const smoke = isPetrol ? `
+    <rect x="-14" y="-22" width="18" height="8" rx="2" fill="#001232" opacity="0.85"/>
+    <rect x="-18" y="-23" width="6"  height="10" rx="1" fill="#001232" opacity="0.7"/>
+    <circle cx="-30"  cy="-32" r="22" fill="#001746" opacity="0.32"/>
+    <circle cx="-78"  cy="-54" r="32" fill="#001746" opacity="0.22"/>
+    <circle cx="-140" cy="-72" r="42" fill="#001746" opacity="0.14"/>
+    <circle cx="-210" cy="-90" r="50" fill="#001746" opacity="0.08"/>
+    <circle cx="-54"  cy="-22" r="18" fill="#001746" opacity="0.18"/>
+    <circle cx="-110" cy="-40" r="26" fill="#001746" opacity="0.12"/>
+    <circle cx="-176" cy="-58" r="34" fill="#001746" opacity="0.07"/>
+  ` : '';
+  // Car body — mirrored on X so it faces RIGHT (carSideSvgPath draws left-facing)
+  const body = `
+    <g transform="translate(${L} 0) scale(-1 1)">
+      <path d="${p.body}" fill="${fill}"/>
+      <path d="${p.glass}" fill="rgba(255,255,255,0.18)"/>
+      <g><circle cx="${p.wxF}" cy="${-p.wheelR + 4}" r="${p.wheelR}" fill="${wheelOuter}"/><circle cx="${p.wxF}" cy="${-p.wheelR + 4}" r="${p.wheelR * 0.42}" fill="${fill}"/></g>
+      <g><circle cx="${p.wxR}" cy="${-p.wheelR + 4}" r="${p.wheelR}" fill="${wheelOuter}"/><circle cx="${p.wxR}" cy="${-p.wheelR + 4}" r="${p.wheelR * 0.42}" fill="${fill}"/></g>
+    </g>
+  `;
   return `
-    <svg class="budget-car-svg" viewBox="${-pad} ${-(height + pad)} ${vbW} ${vbH}"
-         xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="${path}" fill="${fill}"/>
-      <circle cx="${wx1}" cy="0" r="${tireR}" fill="${fill}"/>
-      <circle cx="${wx2}" cy="0" r="${tireR}" fill="${fill}"/>
-      <circle cx="${wx1}" cy="0" r="${Math.round(tireR * 0.5)}" fill="#F9F7F4"/>
-      <circle cx="${wx2}" cy="0" r="${Math.round(tireR * 0.5)}" fill="#F9F7F4"/>
+    <svg width="${renderW}" viewBox="${-padL} ${-padTop} ${vbW} ${vbH}"
+         style="overflow:visible; display:block" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <ellipse cx="${L / 2}" cy="4" rx="${L * 0.46}" ry="3" fill="#001946" opacity="0.10"/>
+      ${smoke}
+      ${body}
     </svg>
+  `;
+}
+
+function buildBudgetRail() {
+  const { priceMin, priceMax, listings } = BUDGET_RAIL;
+  const xPct = (kr) => ((kr - priceMin) / (priceMax - priceMin)) * 100;
+  // Major tick every 100k kr
+  const ticks = [];
+  for (let p = priceMin; p <= priceMax; p += 100) {
+    ticks.push(`<div class="budget-rail-tick" style="left:${xPct(p)}%">${p}<span>×000 kr</span></div>`);
+  }
+  const cars = listings.map(c => `
+    <div class="budget-rail-car${c.accent ? ' accent' : ''}" style="left:${xPct(c.kr)}%">
+      ${budgetRailCarSvg(c)}
+      <div class="budget-rail-tag">
+        <span class="budget-rail-tag-price">${c.kr}<span class="budget-rail-tag-unit">×000 kr</span></span>
+        <span class="budget-rail-tag-fuel">${escapeHtml(c.fuel)}</span>
+      </div>
+    </div>
+  `).join('');
+  return `
+    <div class="budget-rail">
+      <div class="budget-rail-cars">${cars}</div>
+      <div class="budget-rail-line"></div>
+      <div class="budget-rail-ticks">${ticks.join('')}</div>
+    </div>
   `;
 }
 
 function renderBudgetCards(msgEl) {
   const content = msgEl.querySelector('.msg-content');
-  if (content.querySelector('.budget-cards')) return;
-  const wrap = document.createElement('div');
-  wrap.className = 'budget-cards';
-  BUDGET_TIERS.forEach((t) => {
+  if (content.querySelector('.budget-panel')) return;
+  const panel = document.createElement('div');
+  panel.className = 'budget-panel';
+  // Build the rail first
+  const railHtml = buildBudgetRail();
+  // Then the 3 tier cards
+  const cardsHtml = BUDGET_TIERS.map((t) => {
     const accent = !!t.accent;
-    const card = document.createElement('div');
-    card.className = 'budget-card' + (accent ? ' accent' : '');
-    card.innerHTML = `
-      <div class="budget-car-wrap">${budgetCarSvg(t.carType, accent)}</div>
-      ${accent ? `<span class="budget-rec-pill">Recommended</span>` : ''}
-      <span class="budget-range">${escapeHtml(t.range)}</span>
-      <div class="budget-stats">
-        <div class="budget-attr"><span class="budget-attr-label">Age</span><span class="budget-attr-val">${escapeHtml(t.age)}</span></div>
-        <div class="budget-attr"><span class="budget-attr-label">Mileage</span><span class="budget-attr-val">${escapeHtml(t.mileage)}</span></div>
-        <div class="budget-attr"><span class="budget-attr-label">Fuel</span><span class="budget-attr-val">${escapeHtml(t.fuel)}</span></div>
-        <div class="budget-attr"><span class="budget-attr-label">EV range</span><span class="budget-attr-val">${escapeHtml(t.evRange)}</span></div>
+    return `
+      <div class="budget-card${accent ? ' accent' : ''}">
+        <div class="budget-card-head">
+          <span class="budget-range">${escapeHtml(t.range)}</span>
+          ${accent ? `<span class="budget-rec-pill">Most chosen</span>` : ''}
+        </div>
+        <div class="budget-stats">
+          <div class="budget-attr"><span class="budget-attr-label">Age</span><span class="budget-attr-val">${escapeHtml(t.age)}</span></div>
+          <div class="budget-attr"><span class="budget-attr-label">Mileage</span><span class="budget-attr-val">${escapeHtml(t.mileage)}</span></div>
+          <div class="budget-attr"><span class="budget-attr-label">Fuel</span><span class="budget-attr-val">${escapeHtml(t.fuel)}</span></div>
+          <div class="budget-attr"><span class="budget-attr-label">EV range</span><span class="budget-attr-val">${escapeHtml(t.evRange)}</span></div>
+        </div>
+        <hr class="budget-hr">
+        <div class="budget-pick">
+          <span class="budget-pick-num">${escapeHtml(t.pick)}</span>
+          <span class="budget-pick-label">of buyers chose this tier</span>
+        </div>
       </div>
-      <hr class="budget-hr">
-      <p class="budget-best"><b>Best for ·</b> ${escapeHtml(t.best)}</p>
     `;
-    wrap.appendChild(card);
-  });
-  content.appendChild(wrap);
+  }).join('');
+  panel.innerHTML = `
+    ${railHtml}
+    <div class="budget-cards">${cardsHtml}</div>
+  `;
+  content.appendChild(panel);
   msgEl.classList.add('has-budget');
   document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
 }
