@@ -2273,16 +2273,27 @@ body.mode-learning .col-spacer.right {
   padding-top: 36px;
 }
 .hero-recs-head { margin-bottom: 16px; }
+/* Mirror the "What you've told me / Your live profile" hierarchy:
+   eyebrow (salmon uppercase) → title (big Moller cream) → optional tagline. */
 .hero-recs-label {
   font-size: 15px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
   display: block;
 }
-.hero-recs-sub {
-  font-size: 15px;
-  color: rgba(255,255,255,0.65);
+.hero-recs-title {
+  font-family: "Moller", sans-serif;
+  font-size: 34px; font-weight: 400;
+  line-height: 1.2;
+  color: var(--cream-100);
   margin-top: 6px;
+  margin-bottom: 4px;
+  display: block;
+}
+.hero-recs-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.55);
+  margin-top: 0;
   display: block;
 }
 #heroRecsBody { display: flex; flex-direction: column; gap: 10px; }
@@ -2299,6 +2310,13 @@ body.mode-learning .col-spacer.right {
   transition: border-color 220ms var(--ease-out), background 220ms var(--ease-out);
 }
 .hero-rec-card:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.04); }
+/* Cards fade + slide in after the skeleton flash — gives a clear sense of
+   "the picks just refreshed for you". Staggered via inline animation-delay. */
+.hero-rec-card { animation: heroRecCardIn 380ms var(--ease-out) both; }
+@keyframes heroRecCardIn {
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 .hero-rec-card-img {
   width: 88px; height: 64px;
   border-radius: 4px;
@@ -2731,6 +2749,7 @@ body.mode-learning .col-spacer.right {
       <div class="hero-bottom">
         <div class="hero-recs-head">
           <span class="hero-recs-label" id="heroRecsLabel">Popular near you</span>
+          <h2 class="hero-recs-title" id="heroRecsTitle">Live in stock</h2>
           <span class="hero-recs-sub" id="heroRecsSub">Popular in the Oslo area</span>
         </div>
         <div id="heroRecsBody"></div>
@@ -3466,17 +3485,60 @@ function getLiveRecommendations() {
   return { reason, cars: top };
 }
 
+// Tracks the most recent re-render request so we can cancel a pending flash
+// if the user makes another change before the prior one finishes.
+let _liveRecsFlashTimer = null;
+let _liveRecsBuildingFlash = false;
 function buildLiveRecs() {
+  // Re-render flash — when inventory is already loaded, briefly show skeletons
+  // first so the user actually SEES the "Live picks" rail respond to their
+  // chip changes. Without this, the rail updates instantly and the feedback
+  // is invisible.
+  if (inventoryLoaded && !_liveRecsBuildingFlash) {
+    const heroBody = document.getElementById('heroRecsBody');
+    const sideBody = document.getElementById('liveRecsBody');
+    const hadHeroCards = heroBody && heroBody.querySelector('.hero-rec-card');
+    const hadSideCards = sideBody && sideBody.querySelector('.live-rec-card');
+    if (hadHeroCards || hadSideCards) {
+      _liveRecsBuildingFlash = true;
+      if (heroBody) {
+        heroBody.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+          const sk = document.createElement('div');
+          sk.className = 'hero-rec-skeleton';
+          heroBody.appendChild(sk);
+        }
+      }
+      if (sideBody) {
+        sideBody.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+          const sk = document.createElement('div');
+          sk.className = 'live-rec-skeleton';
+          sideBody.appendChild(sk);
+        }
+      }
+      if (_liveRecsFlashTimer) clearTimeout(_liveRecsFlashTimer);
+      _liveRecsFlashTimer = setTimeout(() => {
+        _liveRecsBuildingFlash = false;
+        buildLiveRecs();
+      }, 520);
+      return;
+    }
+  }
+  _liveRecsBuildingFlash = false;
+
   const body = document.getElementById('liveRecsBody');
   const reasonEl = document.getElementById('liveRecsReason');
   const hero = document.getElementById('heroRecsBody');
   const heroSub = document.getElementById('heroRecsSub');
   const heroLabel = document.getElementById('heroRecsLabel');
+  const heroTitle = document.getElementById('heroRecsTitle');
 
   // Loading state — inventory still being fetched
   if (!inventoryLoaded) {
     if (reasonEl) reasonEl.textContent = 'Finding picks in stock…';
-    if (heroSub) heroSub.textContent = 'Finding picks in stock…';
+    if (heroTitle) heroTitle.textContent = 'Finding picks in stock…';
+    if (heroSub) heroSub.textContent = 'Pulling live data from Møller Bil';
     if (body) {
       body.innerHTML = '';
       for (let i = 0; i < 3; i++) {
@@ -3501,32 +3563,36 @@ function buildLiveRecs() {
   // Empty state — inventory loaded but nothing matched (or API failed)
   if (!cars.length) {
     if (reasonEl) reasonEl.textContent = 'Waiting for your first answers';
-    if (heroSub) heroSub.textContent = 'Waiting for your first answers';
+    if (heroTitle) heroTitle.textContent = 'Waiting for your first answers';
+    if (heroSub) heroSub.textContent = 'Tell me what you need and picks appear here.';
     if (body) body.innerHTML = `<div class="live-rec-empty">Recommendations will appear here once we have a feel for what you're after.</div>`;
     if (hero) hero.innerHTML = '';
     return;
   }
 
   if (reasonEl) reasonEl.textContent = reason;
-  // Tailor the hero label slightly when we have personalized recs
+  const personalized = !/^Popular in the Oslo area$/i.test(reason);
+  // Tailor the hero label / title / sub based on whether we've personalized
   if (heroLabel) {
-    const personalized = !/^Popular in the Oslo area$/i.test(reason);
     heroLabel.textContent = personalized ? 'Live picks while we chat' : 'Popular near you';
   }
+  if (heroTitle) {
+    heroTitle.textContent = personalized ? reason : 'Popular in the Oslo area';
+  }
   if (heroSub) {
-    const personalized = !/^Popular in the Oslo area$/i.test(reason);
     heroSub.textContent = personalized
-      ? `${reason} — a preview, not your final shortlist.`
-      : reason;
+      ? 'A preview, not your final shortlist.'
+      : 'Refreshed live from Møller Bil inventory.';
   }
   if (body) body.innerHTML = '';
   if (hero) hero.innerHTML = '';
 
-  cars.forEach(car => {
+  cars.forEach((car, idx) => {
     if (body) {
       const btn = document.createElement('button');
       btn.className = 'live-rec-card';
       btn.type = 'button';
+      btn.style.animationDelay = (idx * 80) + 'ms';
       btn.onclick = () => {
         btn.disabled = true;
         loadInventory(car.name).finally(() => { btn.disabled = false; });
@@ -3552,6 +3618,7 @@ function buildLiveRecs() {
       const btn = document.createElement('button');
       btn.className = 'hero-rec-card';
       btn.type = 'button';
+      btn.style.animationDelay = (idx * 80) + 'ms';
       btn.onclick = () => {
         btn.disabled = true;
         loadInventory(car.name).finally(() => { btn.disabled = false; });
