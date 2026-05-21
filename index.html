@@ -1877,8 +1877,28 @@ body.mode-learning .col-spacer.right {
 }
 
 /* ── Layout overhaul — hero left, chat right ── */
-/* Right sidebar / spacers hidden, topbar restored */
-.side, .col-spacer.right, .resize-handle { display: none !important; }
+/* Right sidebar acts as a slide-in drawer instead of an always-visible column. */
+.col-spacer.right, .resize-handle { display: none !important; }
+.side {
+  display: flex !important;
+  position: fixed !important;
+  top: 0; right: 0; bottom: 0;
+  width: 460px; max-width: 92vw;
+  border-left: 1px solid var(--border);
+  background: var(--bg);
+  z-index: 100;
+  transform: translateX(100%);
+  transition: transform .3s var(--ease-out);
+  box-shadow: -8px 0 26px rgba(0,25,70,0.12);
+}
+.side.open { transform: translateX(0); }
+.filter-group-flash {
+  animation: groupFlash 1.4s ease-out;
+}
+@keyframes groupFlash {
+  0%   { background: rgba(225,100,75,0.18); }
+  100% { background: transparent; }
+}
 
 /* Topbar restyle to match cream-bar look with dark filled Filters button */
 .topbar { height: 70px !important; }
@@ -1910,12 +1930,12 @@ body.mode-learning .col-spacer.right {
 
 .hero-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 26px; }
 .hero-eyebrow {
-  font-size: 12px; font-weight: 500;
+  font-size: 14px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
 }
 .hero-glyph {
-  width: 38px; height: 38px;
+  width: 42px; height: 42px;
   display: flex; align-items: center; justify-content: center;
   opacity: 0.85;
 }
@@ -1932,19 +1952,26 @@ body.mode-learning .col-spacer.right {
   text-underline-offset: 6px;
 }
 .hero-sub {
-  font-size: 15.5px; line-height: 1.55;
-  color: rgba(255,255,255,0.72);
-  max-width: 420px;
+  font-size: 17px; line-height: 1.55;
+  color: rgba(255,255,255,0.78);
+  max-width: 440px;
 }
 .hero-bottom {
   margin-top: auto;
   padding-top: 36px;
 }
+.hero-recs-head { margin-bottom: 16px; }
 .hero-recs-label {
-  font-size: 12px; font-weight: 500;
+  font-size: 14px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
-  margin-bottom: 14px;
+  display: block;
+}
+.hero-recs-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.65);
+  margin-top: 6px;
+  display: block;
 }
 #heroRecsBody { display: flex; flex-direction: column; gap: 10px; }
 .hero-rec-card {
@@ -1953,15 +1980,15 @@ body.mode-learning .col-spacer.right {
   color: var(--cream-100);
   width: 100%;
   border-radius: 4px;
-  padding: 12px 14px;
-  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 16px;
   text-align: left; cursor: pointer;
   font-family: inherit;
   transition: border-color 220ms var(--ease-out), background 220ms var(--ease-out);
 }
 .hero-rec-card:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.04); }
 .hero-rec-card-img {
-  width: 60px; height: 44px;
+  width: 64px; height: 46px;
   border-radius: 3px;
   background: rgba(255,255,255,0.08);
   flex-shrink: 0;
@@ -1972,16 +1999,16 @@ body.mode-learning .col-spacer.right {
   min-width: 0;
 }
 .hero-rec-card-name {
-  font-size: 15px; font-weight: 500;
+  font-size: 17px; font-weight: 500;
   color: var(--cream-100);
 }
 .hero-rec-card-meta {
-  font-size: 12.5px;
-  color: rgba(255,255,255,0.55);
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
 }
 .hero-rec-card-cta {
-  font-size: 12.5px; font-weight: 500;
-  padding: 7px 14px;
+  font-size: 13.5px; font-weight: 500;
+  padding: 8px 16px;
   border: 1px solid rgba(255,255,255,0.35);
   border-radius: 999px;
   color: var(--cream-100);
@@ -1993,7 +2020,7 @@ body.mode-learning .col-spacer.right {
   border-color: var(--salmon);
 }
 .hero-rec-skeleton {
-  height: 64px;
+  height: 70px;
   background: rgba(255,255,255,0.05);
   border-radius: 4px;
   animation: pulse 1.6s ease-in-out infinite;
@@ -2011,41 +2038,59 @@ body.mode-learning .col-spacer.right {
 .hero.is-told .hero-sub { display: none; }
 .hero.is-told .hero-told { display: flex; }
 .hero-told-eyebrow {
-  font-size: 12px; font-weight: 500;
+  font-size: 14px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
 }
 .hero-told-title {
   font-family: "Moller", sans-serif;
-  font-size: 26px; font-weight: 400;
+  font-size: 30px; font-weight: 400;
   line-height: 1.2;
   color: var(--cream-100);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .hero-told-list { display: flex; flex-direction: column; gap: 0; }
 .hero-told-item {
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding: 12px 0;
+  display: flex; flex-direction: column;
+  padding: 14px 0;
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  gap: 16px;
+  gap: 6px;
 }
 .hero-told-item:last-child { border-bottom: 0; }
+.hero-told-item-top {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 16px;
+}
 .hero-told-item-label {
-  font-size: 11.5px; font-weight: 500;
+  font-size: 13px; font-weight: 500;
   letter-spacing: .12em; text-transform: uppercase;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255,255,255,0.6);
 }
 .hero-told-item-value {
-  font-size: 14.5px; font-weight: 500;
+  font-size: 16px; font-weight: 500;
   color: var(--cream-100);
   text-align: right;
   max-width: 60%;
 }
-.hero-told-item-value.empty {
-  color: rgba(255,255,255,0.35);
-  font-weight: 400;
-  font-style: italic;
+.hero-told-item-actions {
+  display: flex; gap: 14px;
+  margin-top: 2px;
 }
+.hero-told-action {
+  appearance: none; border: 0; background: transparent;
+  padding: 0; cursor: pointer;
+  font: 500 12.5px/1 "Moller", sans-serif;
+  letter-spacing: 0.04em;
+  color: var(--salmon);
+  text-decoration: underline;
+  text-decoration-color: rgba(225,100,75,0.4);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 220ms var(--ease-out), opacity 220ms var(--ease-out);
+}
+.hero-told-action:hover { text-decoration-color: var(--salmon); }
+.hero-told-action.muted { color: rgba(255,255,255,0.55); }
+.hero-told-action.muted:hover { color: var(--cream-100); }
+.hero-told-action:disabled { opacity: 0.35; cursor: not-allowed; text-decoration: none; }
 
 /* User bubble: dark navy on right */
 .msg.user .bub {
@@ -2084,11 +2129,14 @@ body.mode-learning .col-spacer.right {
         <span class="hero-eyebrow">Welcome to Møller Bil</span>
         <span class="hero-glyph"><img src="logo-2.svg" alt=""></span>
       </div>
-      <h1 class="hero-headline">Buying a car can feel <u>overwhelming</u>.<br>Don't worry — I'm here to help.</h1>
+      <h1 class="hero-headline">Buying a car can feel overwhelming.<br>Don't worry — I'm here to <u>help</u>.</h1>
       <p class="hero-sub">You don't need to know a thing about cars. Just tell me about your life, needs and budget, and I'll capture what matters as we talk.</p>
       <div class="hero-told" id="heroTold"></div>
       <div class="hero-bottom">
-        <div class="hero-recs-label">Popular near you</div>
+        <div class="hero-recs-head">
+          <span class="hero-recs-label" id="heroRecsLabel">Popular near you</span>
+          <span class="hero-recs-sub" id="heroRecsSub">Popular in the Oslo area</span>
+        </div>
         <div id="heroRecsBody"></div>
       </div>
     </aside>
@@ -2792,10 +2840,13 @@ function buildLiveRecs() {
   const body = document.getElementById('liveRecsBody');
   const reasonEl = document.getElementById('liveRecsReason');
   const hero = document.getElementById('heroRecsBody');
+  const heroSub = document.getElementById('heroRecsSub');
+  const heroLabel = document.getElementById('heroRecsLabel');
 
   // Loading state — inventory still being fetched
   if (!inventoryLoaded) {
     if (reasonEl) reasonEl.textContent = 'Finding picks in stock…';
+    if (heroSub) heroSub.textContent = 'Finding picks in stock…';
     if (body) {
       body.innerHTML = '';
       for (let i = 0; i < 3; i++) {
@@ -2820,12 +2871,19 @@ function buildLiveRecs() {
   // Empty state — inventory loaded but nothing matched (or API failed)
   if (!cars.length) {
     if (reasonEl) reasonEl.textContent = 'Waiting for your first answers';
+    if (heroSub) heroSub.textContent = 'Waiting for your first answers';
     if (body) body.innerHTML = `<div class="live-rec-empty">Recommendations will appear here once we have a feel for what you're after.</div>`;
     if (hero) hero.innerHTML = '';
     return;
   }
 
   if (reasonEl) reasonEl.textContent = reason;
+  // Tailor the hero label slightly when we have personalized recs
+  if (heroLabel) {
+    const personalized = !/^Popular in the Oslo area$/i.test(reason);
+    heroLabel.textContent = personalized ? 'Matched for you' : 'Popular near you';
+  }
+  if (heroSub) heroSub.textContent = reason;
   if (body) body.innerHTML = '';
   if (hero) hero.innerHTML = '';
 
@@ -3008,11 +3066,7 @@ function showOnboarding() {
   const { text, chips } = getGreetingForMode(conversationMode);
   appendAIMessage(text, (msgEl) => {
     renderQuickChips(chips, msgEl);
-    // Only kick off the guided tour AFTER the greeting has finished typing
-    if (!_onboardingStarted) {
-      _onboardingStarted = true;
-      setTimeout(() => renderOnboardingStep(), 250);
-    }
+    // Guided tour disabled — straight into the conversation.
   });
   messages.push({ role: 'assistant', content: text });
 }
@@ -3181,13 +3235,13 @@ function finishOnboarding() {
 let filterTourShown = false;
 
 function maybeShowFilterTour() {
+  // Filter mini-tour disabled — entry experience is fully streamlined.
+  return;
   if (filterTourShown) return;
-  // Don't overlap the main onboarding tour
   if (document.querySelector('.ob-card')) return;
   const target = document.querySelector('.filter-group[data-state="confirmed"]');
   if (!target) return;
   filterTourShown = true;
-  // give the buildSidebar layout a frame to settle
   setTimeout(() => showFilterTour(target), 250);
 }
 
@@ -3614,13 +3668,13 @@ function updateHeroToldPanel() {
   if (typeof FILTERS !== 'undefined') {
     FILTERS.forEach(g => {
       const s = getConfirmedSummary(g.key);
-      if (s) rows.push({ label: g.title, value: s });
+      if (s) rows.push({ key: g.key, label: g.title, value: s });
     });
   }
   const brandS = getConfirmedSummary('brand');
-  if (brandS) rows.push({ label: 'Brand preference', value: brandS });
+  if (brandS) rows.push({ key: 'brand', label: 'Brand preference', value: brandS });
   const budgetS = getBudgetSummary();
-  if (budgetS) rows.push({ label: 'Budget', value: budgetS });
+  if (budgetS) rows.push({ key: 'budget', label: 'Budget', value: budgetS });
 
   if (rows.length === 0) {
     hero.classList.remove('is-told');
@@ -3633,14 +3687,45 @@ function updateHeroToldPanel() {
     <span class="hero-told-eyebrow">What you've told me</span>
     <h2 class="hero-told-title">Your live profile</h2>
     <div class="hero-told-list">
-      ${rows.map(r => `
+      ${rows.map(r => {
+        const hasMsg = !!findLatestMessageForTopic(r.key);
+        return `
         <div class="hero-told-item">
-          <span class="hero-told-item-label">${escapeHtml(r.label)}</span>
-          <span class="hero-told-item-value">${escapeHtml(r.value)}</span>
-        </div>
-      `).join('')}
+          <div class="hero-told-item-top">
+            <span class="hero-told-item-label">${escapeHtml(r.label)}</span>
+            <span class="hero-told-item-value">${escapeHtml(r.value)}</span>
+          </div>
+          <div class="hero-told-item-actions">
+            <button class="hero-told-action" type="button"
+              onclick="heroToldChange('${r.key}')">Change</button>
+            <button class="hero-told-action muted" type="button"
+              ${hasMsg ? '' : 'disabled'}
+              onclick="heroToldJump('${r.key}')">Show in chat</button>
+          </div>
+        </div>`;
+      }).join('')}
     </div>
   `;
+}
+
+// Open the Filters drawer and scroll the selected filter into view for editing
+function heroToldChange(key) {
+  if (typeof toggleDrawer === 'function') toggleDrawer();
+  // Briefly defer so the drawer is rendered before we scroll/highlight
+  setTimeout(() => {
+    const group = document.querySelector(`.filter-group[data-key="${key}"]`);
+    if (!group) return;
+    group.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    group.classList.add('filter-group-flash');
+    setTimeout(() => group.classList.remove('filter-group-flash'), 1600);
+    // Auto-expand the edit row so the chips/slider is ready to use
+    const toggle = group.querySelector('.filter-change-toggle');
+    if (toggle && !group.classList.contains('editing')) toggle.click();
+  }, 80);
+}
+
+function heroToldJump(key) {
+  if (typeof jumpToTopic === 'function') jumpToTopic(key);
 }
 
 // "dirty" = sidebar has un-sent manual edits. Apply button is gone;
@@ -4180,33 +4265,12 @@ function appendAIMessage(text, onDone) {
   const bub = msgDiv.querySelector('.bub');
   const displayText = sanitizeAssistantText(text);
   const full = formatText(displayText);
-  const total = displayText.length;
-  const speed = 18;
-  let revealed = 0;
 
+  // Render the whole message at once — no typewriter intro animation.
   function tick() {
-    revealed = Math.min(revealed + 2, total);
-    let plainCount = 0;
-    let htmlOut = '';
-    let inTag = false;
-    for (let ci = 0; ci < full.length; ci++) {
-      const ch = full[ci];
-      if (ch === '<') { inTag = true; }
-      if (inTag) { htmlOut += ch; if (ch === '>') inTag = false; continue; }
-      if (plainCount >= revealed) break;
-      htmlOut += ch;
-      plainCount++;
-    }
-    bub.innerHTML = htmlOut;
+    bub.innerHTML = full;
     stream.scrollTop = stream.scrollHeight;
-
-    if (revealed < total) {
-      setTimeout(tick, speed);
-    } else {
-      bub.innerHTML = full;
-      stream.scrollTop = stream.scrollHeight;
-      if (typeof onDone === 'function') onDone(msgDiv);
-    }
+    if (typeof onDone === 'function') onDone(msgDiv);
   }
   tick();
   return msgDiv;
@@ -5610,12 +5674,13 @@ async function sendMessage() {
       // answer doesn't echo those exact keywords.
       const userTopic = detectMessageTopic(combined);
       const aiTopic   = detectMessageTopic(rawClean) || userTopic;
-      // For size topic, strip the AI's verbose bullet/numbered list of body
-      // styles — the size-comparison cards below already cover all of that
-      // visually, so the text becomes redundant + cramped.
-      const cleanText = aiTopic === 'size'
-        ? stripTrailingList(rawClean)
-        : rawClean;
+      // Topic-specific text shrinking: when a rich panel is going to render
+      // below, drop the AI's verbose explanation paragraph(s) — the cards
+      // already convey the same info visually.
+      let cleanText = rawClean;
+      if (aiTopic === 'size')   cleanText = stripTrailingList(rawClean);
+      if (aiTopic === 'budget') cleanText = condenseForCardTopic(rawClean);
+      if (aiTopic === 'fuel')   cleanText = condenseForCardTopic(rawClean);
       const msgEl = appendAIMessage(cleanText, (el) => {
         if (surprises && surprises.length > 0) renderEVSurprises(surprises, el);
         if (aiTopic === 'fuel')   renderFuelCards(el);
@@ -5639,6 +5704,34 @@ async function sendMessage() {
     isStreaming = false;
     updateSend();
   }
+}
+
+// When a rich card panel is going to render below (budget tiers, fuel cards),
+// the AI's long context paragraph is redundant. Keep only:
+//   • the short acknowledgement sentence (if it's the first paragraph and is
+//     short — under ~180 chars), and
+//   • the paragraph containing the bold question (the last "?" sentence).
+// Drop everything in between (the numbers-heavy "context" paragraph).
+function condenseForCardTopic(text) {
+  if (!text) return text;
+  const paras = text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+  if (paras.length <= 1) return text;
+
+  // Find the paragraph that contains the bold question (last `?` line)
+  const qIdx = (() => {
+    for (let i = paras.length - 1; i >= 0; i--) {
+      if (/\?/.test(paras[i])) return i;
+    }
+    return paras.length - 1;
+  })();
+
+  const out = [];
+  // Optional first ack: only if it's short and not the question paragraph
+  if (qIdx > 0 && paras[0].length < 180 && !/\?/.test(paras[0])) {
+    out.push(paras[0]);
+  }
+  out.push(paras[qIdx]);
+  return out.join('\n\n');
 }
 
 // For the size question: strip the trailing numbered/bulleted body-style
