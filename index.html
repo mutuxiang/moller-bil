@@ -1947,15 +1947,18 @@ body.mode-learning .col-spacer.right {
   line-height: 1;
 }
 .hero-toggle-btn:hover { background: var(--moller-blue-700); }
-/* Collapsed state — hide the hero panel, re-center chat */
+/* Collapsed state — hide the hero panel, chat takes 75% of screen, centered */
 .app.hero-collapsed .col-spacer.left { display: none !important; }
 .app.hero-collapsed .col-center {
-  max-width: 820px !important;
+  flex: 0 0 75vw !important;
+  max-width: 75vw !important;
+  width: 75vw !important;
   margin-left: auto !important;
   margin-right: auto !important;
 }
 .app.hero-collapsed .hero-toggle-btn {
-  left: 0px;
+  /* Override inline left set by JS — pin to the screen's left edge */
+  left: 0 !important;
   border-radius: 0 50% 50% 0;
   border-left: 0;
   background: var(--cream-200);
@@ -3967,12 +3970,18 @@ function toggleHeroPanel() {
       : 'M9 2L4 7L9 12'    // chevron left (collapse)
     );
   }
-  // Update button position to sit at right edge of hero panel (0 when collapsed)
-  if (btn && !collapsed) {
-    const hero = document.getElementById('heroPanel');
-    if (hero) {
-      const rect = hero.getBoundingClientRect();
-      btn.style.left = (rect.right - 18) + 'px';
+  // Update button position
+  if (btn) {
+    if (collapsed) {
+      // Clear inline style so the CSS rule (left: 0 !important) pins it to the screen edge
+      btn.style.left = '';
+    } else {
+      // Expanded: place button at right edge of hero panel
+      const hero = document.getElementById('heroPanel');
+      if (hero) {
+        const rect = hero.getBoundingClientRect();
+        btn.style.left = (rect.right - 18) + 'px';
+      }
     }
   }
 }
