@@ -64,7 +64,9 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .topbar {
   height: 80px;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-surface);
+  /* Unified with page bg (cream-100) — was cream-200; the 1px bottom border
+     still gives subtle separation without a visible shade change. */
+  background: var(--bg);
   display: flex; align-items: center;
   padding: 0 40px; gap: 16px;
   flex-shrink: 0;
@@ -125,28 +127,15 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   color: var(--ink);
   font-weight: 500;
 }
+/* Brand-signature underline — matches the salmon underline under <u> in the
+   hero headline. Sits slightly below the baseline for breathing room. */
 .mode-toggle button.on::after {
   content: '';
   position: absolute;
-  left: 0; right: 0; bottom: -1px;
-  height: 2px;
+  left: 0; right: 0; bottom: 8px;
+  height: 3px;
   background: var(--salmon);
-  border-radius: 1px;
-}
-.mode-toggle button.locked {
-  color: rgba(0,25,70,0.35);
-  cursor: not-allowed;
-}
-.mode-toggle button.locked:hover { color: rgba(0,25,70,0.35); }
-.mode-toggle button.locked::before {
-  content: '';
-  display: inline-block;
-  width: 9px; height: 11px;
-  margin-right: 6px;
-  vertical-align: -1px;
-  background: currentColor;
-  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'><path fill='black' d='M7 0a4 4 0 0 0-4 4v3H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V4a4 4 0 0 0-4-4zm-2.5 7V4a2.5 2.5 0 0 1 5 0v3z'/></svg>") center/contain no-repeat;
-          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'><path fill='black' d='M7 0a4 4 0 0 0-4 4v3H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V4a4 4 0 0 0-4-4zm-2.5 7V4a2.5 2.5 0 0 1 5 0v3z'/></svg>") center/contain no-repeat;
+  border-radius: 0;
 }
 
 
@@ -2066,33 +2055,71 @@ body.mode-learning .col-spacer.right {
 }
 /* Once the user picks a mode, the buttons disappear forever for this session */
 .app:not(.is-onboarding) .hero-cta { display: none !important; }
+/* Editorial Møller-style CTAs: sharp 4px corners (brand card radius), an
+   uppercase salmon/cream eyebrow above the main label, and a thin right-pointing
+   arrow. Reads more like a brand panel than a generic pill button. */
 .hero-cta-btn {
   appearance: none;
-  border: 0;
-  font: 500 18px/1.2 "Moller", sans-serif;
-  padding: 20px 28px;
-  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
   cursor: pointer;
   text-align: left;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 18px;
+  row-gap: 4px;
+  align-items: center;
+  padding: 18px 24px 18px 26px;
+  border-radius: var(--radius-card); /* 4px — matches Moller card vocabulary */
+  font-family: "Moller", sans-serif;
   transition: background 220ms var(--ease-out),
               border-color 220ms var(--ease-out),
               transform 120ms var(--ease-out);
 }
+.hero-cta-eyebrow {
+  grid-column: 1; grid-row: 1;
+  font-size: 11px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase;
+  line-height: 1;
+}
+.hero-cta-label {
+  grid-column: 1; grid-row: 2;
+  font-size: 19px; font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+}
+.hero-cta-arrow {
+  grid-column: 2; grid-row: 1 / span 2;
+  align-self: center;
+  flex-shrink: 0;
+  transition: transform 220ms var(--ease-out);
+}
+.hero-cta-btn:hover .hero-cta-arrow { transform: translateX(3px); }
+.hero-cta-btn:active { transform: scale(0.992); }
+
+/* Primary — salmon fill, cream text, cream eyebrow at lower opacity */
 .hero-cta-btn.primary {
   background: var(--salmon);
+  border-color: var(--salmon);
   color: var(--cream-100);
 }
-.hero-cta-btn.primary:hover { background: #c8553e; }
+.hero-cta-btn.primary .hero-cta-eyebrow { color: rgba(255,255,255,0.72); }
+.hero-cta-btn.primary:hover {
+  background: #c8553e;
+  border-color: #c8553e;
+}
+
+/* Ghost — transparent with cream outline, salmon eyebrow for brand pop */
 .hero-cta-btn.ghost {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.35);
+  border-color: rgba(255,255,255,0.28);
   color: var(--cream-100);
 }
-.hero-cta-btn.ghost:hover { border-color: var(--cream-100); background: rgba(255,255,255,0.04); }
-.hero-cta-btn:active { transform: scale(0.985); }
-.hero-cta-btn svg { flex-shrink: 0; opacity: 0.85; }
+.hero-cta-btn.ghost .hero-cta-eyebrow { color: var(--salmon); }
+.hero-cta-btn.ghost:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--cream-100);
+}
 
 /* Onboarding-mode headline gets a blinking caret while typewriter is running */
 .hero-headline.is-typing::after {
@@ -2628,15 +2655,17 @@ body.mode-learning .col-spacer.right {
       <!-- Two CTA buttons revealed after the typewriter sequence finishes -->
       <div class="hero-cta" id="heroCta">
         <button class="hero-cta-btn primary" type="button" onclick="onboardingChoose('shopping')">
-          <span>I want to find a car</span>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M5 10h10M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <span class="hero-cta-eyebrow">Find your match</span>
+          <span class="hero-cta-label">I want to find a car</span>
+          <svg class="hero-cta-arrow" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+            <path d="M5 11h12M12 6l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
         <button class="hero-cta-btn ghost" type="button" onclick="onboardingChoose('learning')">
-          <span>I just want to learn about cars</span>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M5 10h10M11 6l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <span class="hero-cta-eyebrow">Just curious</span>
+          <span class="hero-cta-label">I just want to learn about cars</span>
+          <svg class="hero-cta-arrow" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+            <path d="M5 11h12M12 6l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
       </div>
@@ -2664,7 +2693,7 @@ body.mode-learning .col-spacer.right {
       <div class="chat-mode-bar">
         <div class="mode-toggle" id="modeToggle" role="tablist">
           <button data-mode="shopping" class="on" onclick="setConversationMode('shopping')">Find a car</button>
-          <button data-mode="learning" class="locked" onclick="showLearningLocked()">Just learning</button>
+          <button data-mode="learning" onclick="setConversationMode('learning')">Just learning</button>
         </div>
       </div>
 
