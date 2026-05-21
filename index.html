@@ -2402,9 +2402,10 @@ body.mode-learning .col-spacer.right {
 <script>
 // ── config ──────────────────────────────────────────────────────────────
 // Gemini API (proxied through /api/gemini so the key stays server-side)
-// Using `gemini-2.5-pro` — slower than flash but the most stable / highest-quality
-// model in the current lineup. Avoids the inconsistency of 2.5-flash.
-const GEMINI_MODEL = 'gemini-2.5-pro';
+// Using `gemini-2.5-flash` with thinking DISABLED — gives stable, fast, predictable
+// chat output. The "驴唇不对马嘴" instability of 2.5-flash was caused by uncontrolled
+// internal thinking; with thinkingBudget=0 the model behaves like a standard chat model.
+const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_URL   = `/api/gemini?model=${GEMINI_MODEL}`;
 
 // Convert OpenAI-style {role, content} messages into Gemini's {systemInstruction, contents}
@@ -2422,17 +2423,30 @@ function toGeminiBody(allMessages, maxTokens) {
   const body = {
     contents,
     generationConfig: {
-      maxOutputTokens: maxTokens || 800,
+      // Bumped from 800 → 2048 so we always have headroom for the full reply
+      maxOutputTokens: maxTokens || 2048,
       temperature: 0.7,
+      // Disable internal thinking — eliminates flakiness and saves tokens.
+      // Only `gemini-2.5-flash` and `flash-lite` support thinkingBudget: 0.
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
   if (systemParts) body.systemInstruction = { parts: [{ text: systemParts }] };
   return body;
 }
 
-// Extract text from a Gemini /generateContent response
+// Extract text from a Gemini /generateContent response.
+// Surfaces structured failure info (safety blocks, MAX_TOKENS, etc.) instead of
+// silently returning empty string — makes the "Empty response from API" error
+// debuggable when it does happen.
 function geminiText(data) {
-  return data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+  const cand = data?.candidates?.[0];
+  const text = cand?.content?.parts?.map(p => p.text || '').join('') || '';
+  if (text) return text;
+  // No text — figure out why and put it in the console for diagnostics
+  const reason = cand?.finishReason || data?.promptFeedback?.blockReason || 'unknown';
+  console.warn('[Gemini] empty response — finishReason:', reason, 'raw:', data);
+  return '';
 }
 
 const SYSTEM_PROMPT = `You are a friendly car advisor at Møller Bil. Help users find the right car through natural conversation.
