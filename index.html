@@ -1875,6 +1875,118 @@ body.mode-learning .col-spacer.right {
   opacity: 1;
   transform: translate(-50%, 0);
 }
+
+/* ── Layout overhaul — hero left, chat right ── */
+.topbar { display: none !important; }
+.side, .col-spacer.right, .resize-handle { display: none !important; }
+
+.col-spacer.left {
+  width: 460px !important;
+  min-width: 460px;
+  max-width: 460px;
+  flex-shrink: 0 !important;
+  background: var(--moller-blue) !important;
+  color: var(--cream-100) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 56px 48px 40px !important;
+  overflow-y: auto;
+  border-right: 0 !important;
+}
+@media (max-width: 900px) {
+  .col-spacer.left { display: none !important; }
+}
+
+.hero-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+.hero-eyebrow {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--salmon);
+}
+.hero-glyph {
+  width: 30px; height: 30px;
+  border: 1px dashed rgba(255,255,255,0.35);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.55); font-size: 13px;
+}
+.hero-headline {
+  font-family: "Moller", sans-serif;
+  font-size: 44px; font-weight: 400;
+  line-height: 1.08; letter-spacing: -0.015em;
+  color: var(--cream-100);
+  margin-bottom: 22px;
+}
+.hero-headline u {
+  text-decoration: underline 3px var(--salmon);
+  text-underline-offset: 6px;
+}
+.hero-sub {
+  font-size: 15px; line-height: 1.55;
+  color: rgba(255,255,255,0.7);
+  max-width: 380px;
+}
+.hero-bottom {
+  margin-top: auto;
+  padding-top: 32px;
+}
+.hero-recs-label {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--salmon);
+  margin-bottom: 14px;
+}
+#heroRecsBody { display: flex; flex-direction: column; gap: 10px; }
+.hero-rec-card {
+  appearance: none; border: 1px solid rgba(255,255,255,0.12);
+  background: var(--moller-blue-700);
+  color: var(--cream-100);
+  width: 100%;
+  border-radius: 4px;
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  text-align: left; cursor: pointer;
+  font-family: inherit;
+  transition: border-color 220ms var(--ease-out), background 220ms var(--ease-out);
+}
+.hero-rec-card:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.04); }
+.hero-rec-card-img {
+  width: 44px; height: 36px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  object-fit: cover;
+}
+.hero-rec-card-info {
+  flex: 1; display: flex; flex-direction: column; gap: 3px;
+  min-width: 0;
+}
+.hero-rec-card-name {
+  font-size: 15px; font-weight: 500;
+  color: var(--cream-100);
+}
+.hero-rec-card-meta {
+  font-size: 12.5px;
+  color: rgba(255,255,255,0.55);
+}
+.hero-rec-skeleton {
+  height: 64px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 0.6 } 50% { opacity: 1 } }
+
+/* User bubble: dark navy on right */
+.msg.user .bub {
+  background: var(--moller-blue) !important;
+  color: var(--cream-100) !important;
+  border-color: var(--moller-blue) !important;
+}
+.msg.user .bub-token {
+  color: var(--cream-100);
+  border-color: rgba(255,255,255,0.4);
+}
 </style>
 </head>
 <body>
@@ -1897,7 +2009,18 @@ body.mode-learning .col-spacer.right {
   </div>
 
   <div class="main">
-    <div class="col-spacer left"></div>
+    <aside class="col-spacer left">
+      <div class="hero-top">
+        <span class="hero-eyebrow">Welcome to Møller Bil</span>
+        <span class="hero-glyph">ø</span>
+      </div>
+      <h1 class="hero-headline">Which car fits your <u>everyday life</u>?</h1>
+      <p class="hero-sub">Tell me about your life, needs and budget. I'll capture what matters as we talk.</p>
+      <div class="hero-bottom">
+        <div class="hero-recs-label">Popular near you</div>
+        <div id="heroRecsBody"></div>
+      </div>
+    </aside>
     <div class="col-center">
 
     <div class="chat">
@@ -1999,7 +2122,7 @@ body.mode-learning .col-spacer.right {
 <script>
 // ── config ──────────────────────────────────────────────────────────────
 // Gemini API (proxied through /api/gemini so the key stays server-side)
-const GEMINI_MODEL = 'gemini-2.5-pro';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_URL   = `/api/gemini?model=${GEMINI_MODEL}`;
 
 // Convert OpenAI-style {role, content} messages into Gemini's {systemInstruction, contents}
@@ -2597,16 +2720,26 @@ function getLiveRecommendations() {
 function buildLiveRecs() {
   const body = document.getElementById('liveRecsBody');
   const reasonEl = document.getElementById('liveRecsReason');
-  if (!body || !reasonEl) return;
+  const hero = document.getElementById('heroRecsBody');
 
   // Loading state — inventory still being fetched
   if (!inventoryLoaded) {
-    reasonEl.textContent = 'Finding picks in stock…';
-    body.innerHTML = '';
-    for (let i = 0; i < 3; i++) {
-      const sk = document.createElement('div');
-      sk.className = 'live-rec-skeleton';
-      body.appendChild(sk);
+    if (reasonEl) reasonEl.textContent = 'Finding picks in stock…';
+    if (body) {
+      body.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        const sk = document.createElement('div');
+        sk.className = 'live-rec-skeleton';
+        body.appendChild(sk);
+      }
+    }
+    if (hero) {
+      hero.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        const sk = document.createElement('div');
+        sk.className = 'hero-rec-skeleton';
+        hero.appendChild(sk);
+      }
     }
     return;
   }
@@ -2615,37 +2748,65 @@ function buildLiveRecs() {
 
   // Empty state — inventory loaded but nothing matched (or API failed)
   if (!cars.length) {
-    reasonEl.textContent = 'Waiting for your first answers';
-    body.innerHTML = `<div class="live-rec-empty">Recommendations will appear here once we have a feel for what you're after.</div>`;
+    if (reasonEl) reasonEl.textContent = 'Waiting for your first answers';
+    if (body) body.innerHTML = `<div class="live-rec-empty">Recommendations will appear here once we have a feel for what you're after.</div>`;
+    if (hero) hero.innerHTML = '';
     return;
   }
 
-  reasonEl.textContent = reason;
-  body.innerHTML = '';
+  if (reasonEl) reasonEl.textContent = reason;
+  if (body) body.innerHTML = '';
+  if (hero) hero.innerHTML = '';
 
   cars.forEach(car => {
-    const btn = document.createElement('button');
-    btn.className = 'live-rec-card';
-    btn.type = 'button';
-    btn.onclick = () => {
-      btn.disabled = true;
-      loadInventory(car.name).finally(() => { btn.disabled = false; });
-    };
-    const imgHtml = car.image
-      ? `<img class="live-rec-img" src="${escapeHtml(car.image)}" alt="" loading="lazy">`
-      : `<div class="live-rec-img"></div>`;
-    const priceLabel = car.minPrice
-      ? `From ${formatNOK(car.minPrice)} · ${car.count} in stock`
-      : `${car.count} in stock`;
-    btn.innerHTML = `
-      ${imgHtml}
-      <div class="live-rec-info">
-        <div class="live-rec-name">${escapeHtml(car.name)}</div>
-        <div class="live-rec-meta">${escapeHtml(priceLabel)}</div>
-      </div>
-      <span class="live-rec-cta">View</span>
-    `;
-    body.appendChild(btn);
+    if (body) {
+      const btn = document.createElement('button');
+      btn.className = 'live-rec-card';
+      btn.type = 'button';
+      btn.onclick = () => {
+        btn.disabled = true;
+        loadInventory(car.name).finally(() => { btn.disabled = false; });
+      };
+      const imgHtml = car.image
+        ? `<img class="live-rec-img" src="${escapeHtml(car.image)}" alt="" loading="lazy">`
+        : `<div class="live-rec-img"></div>`;
+      const priceLabel = car.minPrice
+        ? `From ${formatNOK(car.minPrice)} · ${car.count} in stock`
+        : `${car.count} in stock`;
+      btn.innerHTML = `
+        ${imgHtml}
+        <div class="live-rec-info">
+          <div class="live-rec-name">${escapeHtml(car.name)}</div>
+          <div class="live-rec-meta">${escapeHtml(priceLabel)}</div>
+        </div>
+        <span class="live-rec-cta">View</span>
+      `;
+      body.appendChild(btn);
+    }
+
+    if (hero) {
+      const btn = document.createElement('button');
+      btn.className = 'hero-rec-card';
+      btn.type = 'button';
+      btn.onclick = () => {
+        btn.disabled = true;
+        loadInventory(car.name).finally(() => { btn.disabled = false; });
+      };
+      const imgHtml = car.image
+        ? `<img class="hero-rec-card-img" src="${escapeHtml(car.image)}" alt="" loading="lazy">`
+        : `<div class="hero-rec-card-img"></div>`;
+      const priceLabel = car.minPrice
+        ? `From ${formatNOK(car.minPrice)}`
+        : `${car.count} in stock`;
+      btn.innerHTML = `
+        ${imgHtml}
+        <div class="hero-rec-card-info">
+          <div class="hero-rec-card-name">${escapeHtml(car.name)}</div>
+          <div class="hero-rec-card-meta">${escapeHtml(priceLabel)}</div>
+        </div>
+      `;
+      hero.appendChild(btn);
+    }
   });
 
 }
@@ -2760,11 +2921,7 @@ function getGreetingForMode(mode) {
   }
   // shopping (default)
   return {
-    text:
-      "Hi, welcome! Two quick notes before we begin:\n\n" +
-      "• I pull from **Møller Bil's live used-car inventory** — every recommendation maps to a real car you can go see today.\n" +
-      "• Nothing you tell me is stored or shared — this chat is just between us.\n\n" +
-      "So — **what's got you thinking about a new car?**",
+    text: "So — **what's got you thinking about a new car?**",
     chips: [
       "My current car needs replacing",
       "Curious about going electric",
@@ -5342,7 +5499,8 @@ async function sendMessage() {
         if (aiTopic === 'fuel')   renderFuelCards(el);
         if (aiTopic === 'budget') renderBudgetCards(el);
         if (aiTopic === 'size')   renderSizeCards(el);
-        if (aiTopic === 'range')  renderNorwayMap(el);
+        // Map disabled for now
+        // if (aiTopic === 'range')  renderNorwayMap(el);
         renderQuickChips(suggestions, el);
       });
       attachStripTo(msgEl);
