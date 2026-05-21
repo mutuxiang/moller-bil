@@ -1978,6 +1978,11 @@ body.mode-learning .col-spacer.right {
 
 /* Topbar restyle to match cream-bar look with dark filled Filters button */
 .topbar { height: 70px !important; }
+.app.is-onboarding .topbar {
+  background: var(--moller-blue) !important;
+  border-bottom-color: rgba(255,255,255,0.12) !important;
+}
+.app.is-onboarding .btn-filter { display: none !important; }
 .btn-reset-all, .btn-collection { height: 40px !important; padding: 0 18px !important; font-size: 14.5px !important; }
 .btn-filter {
   height: 40px !important; padding: 0 22px !important;
@@ -2590,11 +2595,11 @@ body.mode-learning .col-spacer.right {
 </head>
 <body>
 
-<div class="app">
+<div class="app is-onboarding">
 
   <div class="topbar">
     <a class="topbar-brand" href="#" aria-label="Møller Bil">
-      <img class="topbar-logo" src="logo.svg" alt="Møller Bil">
+      <img class="topbar-logo" src="logo-3.svg" data-default-src="logo.svg" data-onboarding-src="logo-3.svg" alt="Møller Bil">
     </a>
     <div class="topbar-spacer"></div>
     <button class="btn-collection" id="btnCollection" onclick="toggleCollection()" title="Saved cars">
@@ -3538,21 +3543,34 @@ function init() {
 // through all three, the CTA buttons + "Popular near you" fade in below; the
 // rotation keeps going subtly behind the buttons until the user picks a mode.
 let _onboardingLoopStopped = false;
-function startOnboardingIntro() {
+let _heroTypewriterStarted = false;
+function setTopbarOnboardingState(isOnboarding) {
+  const logo = document.querySelector('.topbar-logo');
+  if (!logo) return;
+  logo.src = isOnboarding
+    ? (logo.dataset.onboardingSrc || 'logo-3.svg')
+    : (logo.dataset.defaultSrc || 'logo.svg');
+}
+
+function startOnboardingIntro(options = {}) {
+  const { onboarding = true } = options;
   const app = document.querySelector('.app');
-  app.classList.add('is-onboarding');
+  if (onboarding) app.classList.add('is-onboarding');
+  setTopbarOnboardingState(app.classList.contains('is-onboarding'));
   const headline = document.getElementById('heroHeadline');
   if (!headline) return;
+  if (_heroTypewriterStarted && !_onboardingLoopStopped) return;
 
   const MESSAGES = [
-    "Buying a car can feel overwhelming.<br>Don't worry — I'm here to <u>help</u>.",
-    "every car I show you is <u>real</u>",
+    "Buying a car can feel overwhelming.<br>For people who don't know cars, I'm here to <u>help</u>.",
+    "Every car I show you is <u>real</u>.<br>Our vehicle info comes from a real in-stock database.",
     "Møller Bil does more than sell cars.<br>We can help with <u>financing, warranty, insurance, and service</u> too.",
   ];
 
   headline.innerHTML = '';
   headline.classList.add('is-typing');
   _onboardingLoopStopped = false;
+  _heroTypewriterStarted = true;
 
   // Safety net — if anything throws or hangs, still reveal the CTAs after a
   // generous timeout so the page never deadlocks.
@@ -3704,21 +3722,18 @@ function renderHeroHtmlAt(html, visibleCount) {
   return out;
 }
 
+function stopHeroTypewriter() {
+  _onboardingLoopStopped = true;
+  _heroTypewriterStarted = false;
+  const headline = document.getElementById('heroHeadline');
+  if (headline) headline.classList.remove('is-typing');
+}
+
 // User chose a mode from the onboarding CTA → slide the chat in and start
 // the AI conversation in the requested mode.
 function onboardingChoose(mode) {
   const app = document.querySelector('.app');
   if (!app.classList.contains('is-onboarding')) return; // double-click guard
-
-  // Halt the headline rotation immediately so it doesn't keep mutating after
-  // the chat slides in.
-  _onboardingLoopStopped = true;
-  const headline = document.getElementById('heroHeadline');
-  if (headline) {
-    // Leave the most-recent message on screen — it stays as a tagline above
-    // the live profile until the first user answer hides the headline entirely.
-    headline.classList.remove('is-typing');
-  }
 
   // Switch mode BEFORE removing the onboarding class so the greeting renders
   // for the right mode when showOnboarding() runs below.
@@ -3727,7 +3742,12 @@ function onboardingChoose(mode) {
 
   // Remove onboarding state — this triggers the slide-in transition for the
   // chat panel and shrinks the hero back to its normal 40vw column.
+  const toggleBtn = document.getElementById('heroToggleBtn');
+  if (toggleBtn) toggleBtn.style.left = '';
   app.classList.remove('is-onboarding', 'is-ready');
+  setTopbarOnboardingState(false);
+  setTimeout(() => window.dispatchEvent(new Event('resize')), 40);
+  setTimeout(() => window.dispatchEvent(new Event('resize')), 680);
 
   // After the slide-in animation, kick off the AI greeting.
   setTimeout(() => {
@@ -4440,6 +4460,7 @@ function updateHeroToldPanel() {
     toldEl.innerHTML = '';
     heroToldEditing = null;
     _heroToldPrevKeys = new Set();
+    if (!_heroTypewriterStarted) startOnboardingIntro({ onboarding: false });
     return;
   }
 
@@ -4449,6 +4470,7 @@ function updateHeroToldPanel() {
   // First-time arrival of the very first row → show the coachmark
   const firstEverArrival = _heroToldPrevKeys.size === 0 && rows.length > 0 && !_heroToldTipShown;
 
+  stopHeroTypewriter();
   hero.classList.add('is-told');
   toldEl.innerHTML = `
     <span class="hero-told-eyebrow">What you've told me</span>
