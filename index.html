@@ -2037,20 +2037,21 @@ body.mode-learning .col-spacer.right {
   max-width: none !important;
   min-width: 0 !important;
   flex: 1 1 100% !important;
-  padding: 6vh 8vw !important;
+  /* Same padding as the post-onboarding hero so the panel's content-origin
+     (top-left of the inner box) sits at the SAME pixel position in both
+     states. When the chat slides in, the headline doesn't shift left or up;
+     it only narrows horizontally and grows downward as needed. */
+  padding: 56px 56px 44px !important;
   /* Onboarding is a fixed landing, never scrollable */
   overflow: hidden !important;
-  /* Vertically center the entire composition in the available space —
-     headline + CTAs sit as one block in the middle of the viewport. */
-  justify-content: center !important;
+  /* No vertical centering — content flows from the top in both states */
+  justify-content: flex-start !important;
 }
-/* Hero-top (the small Ø glyph at the top-right) anchors to the corner,
-   doesn't take part in the centered stack. */
+/* Hero-top glyph stays in normal flow — same vertical contribution in both
+   states, so the headline below it sits at the same Y in onboarding AND in
+   the shrunk hero panel. */
 .app.is-onboarding .hero-top {
-  position: absolute;
-  top: 6vh;
-  right: 8vw;
-  margin-bottom: 0;
+  margin-bottom: 26px;
 }
 /* Headline — slightly smaller than full hero, tighter line-height, capped
    width so the two lines feel intentional (not full-bleed running text) */
@@ -2069,21 +2070,27 @@ body.mode-learning .col-spacer.right {
   gap: 20px; /* was 12 — more breathing room between primary + ghost */
 }
 
-/* ── Hero photo clipped by the Møller ø-mark (onboarding only) ── */
+/* ── Hero photo (onboarding only) — clean rectangle, Møller card radius ── */
 .hero-clip {
   position: absolute;
   right: 7vw;
   top: 50%;
-  transform: translateY(-50%) rotate(16deg);
-  width: min(440px, 30vw);
-  aspect-ratio: 200 / 290;
+  transform: translateY(-50%);
+  width: min(440px, 32vw);
+  aspect-ratio: 4 / 5;
   pointer-events: none;
-  filter: drop-shadow(0 24px 60px rgba(0,0,0,0.35));
+  border-radius: var(--radius-card);  /* 4px — same as brand cards */
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.35);
 }
-.hero-clip svg { width: 100%; height: 100%; display: block; overflow: visible; }
-/* Only render the clip during onboarding */
+.hero-clip img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Only render during onboarding */
 .app:not(.is-onboarding) .hero-clip { display: none; }
-/* Narrow viewports — hide the photo entirely so headline + CTAs keep the stage */
+/* Narrow viewports — hide the photo so headline + CTAs keep the stage */
 @media (max-width: 900px) {
   .hero-clip { display: none !important; }
 }
@@ -2723,20 +2730,9 @@ body.mode-learning .col-spacer.right {
       <div class="hero-top">
         <span class="hero-glyph"><img src="logo-2.svg" alt=""></span>
       </div>
-      <!-- Hero photo clipped by the Møller ø-mark — onboarding only -->
+      <!-- Hero photo — rectangular crop, onboarding only -->
       <div class="hero-clip" aria-hidden="true">
-        <svg viewBox="0 0 200 290" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <clipPath id="heroOclip" clipPathUnits="userSpaceOnUse">
-              <path d="M 100 0 C 198 60, 198 230, 100 290 C 2 230, 2 60, 100 0 Z"/>
-            </clipPath>
-          </defs>
-          <image href="hero.avif" x="0" y="0" width="200" height="290"
-                 preserveAspectRatio="xMidYMid slice" clip-path="url(#heroOclip)"/>
-          <!-- Faint outline so the shape reads against the navy bg -->
-          <path d="M 100 0 C 198 60, 198 230, 100 290 C 2 230, 2 60, 100 0 Z"
-                fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
-        </svg>
+        <img src="hero.avif" alt="">
       </div>
       <h1 class="hero-headline" id="heroHeadline"></h1>
       <!-- Two CTA buttons revealed after the typewriter sequence finishes -->
@@ -3732,9 +3728,9 @@ function startOnboardingIntro(options = {}) {
             const nextIdx = (idx + 1) % MESSAGES.length;
             const stillFirst = isFirstPass && nextIdx !== 0;
             playOne(nextIdx, stillFirst);
-          }, 180);
+          }, 380);
         });
-      }, (isFirstPass && idx === MESSAGES.length - 1) ? 1800 : 1100);
+      }, (isFirstPass && idx === MESSAGES.length - 1) ? 4200 : 3200);  /* longer linger so each line breathes */
     });
   }
   playOne(0, true);
