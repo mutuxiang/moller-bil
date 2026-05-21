@@ -4212,14 +4212,16 @@ function detectMessageTopic(text) {
   const questionMatch = raw.match(/[^.!?]*\?/g);
   const t = questionMatch ? questionMatch[questionMatch.length - 1] : raw;
 
-  // Check fuel BEFORE budget — words like "affordable" / "petrol cars typically cost…"
-  // can otherwise hijack a fuel-topic reply and pin it as a budget message.
-  // Range / geography questions (cabin trips, named cities, "how far", weekly distance)
-  // come BEFORE fuel so the Norway map wins when both could apply.
+  // Order matters: specific topics first, generic ones last. When an AI
+  // reply could plausibly match multiple, the more specific intent wins.
+  // Example bug we're guarding against: "How many people and how much CARGO
+  // SPACE do you need?" — the bare "how much" used to match budget before
+  // "how many people" got a chance to match seats. Now seats runs first AND
+  // the budget regex requires "how much" to be followed by money context.
   if (/\bcabin\b|road trip|long trip|long-distance|long distance|how far|\bkm\/week|km per week|drive to|weekly drive|range coverage|reach .* on (a|one) charge|\boslo\b|\bbergen\b|\btrondheim\b|\blillehammer\b|\btrysil\b|\bkristiansand\b|nationwide|norway-wide|across norway/i.test(t)) return 'range';
+  if (/passenger|seat\b|seats\b|family|kids|children|how many people|how many.*(fit|need|carry)|7-seater|7 seater|cargo|luggage|trunk|boot space/i.test(t)) return 'seats';
   if (/electric|hybrid|petrol|diesel|fuel\b|\bev\b|charging|plug-in|powertrain/i.test(t))                     return 'fuel';
-  if (/budget|\bprice\b|\bcost\b|spend|how much|\bkr\b|kroner|\bafford\b/i.test(t))                            return 'budget';
-  if (/passenger|seat|family|kids|children|how many people|how many.*fit|7-seater|7 seater/i.test(t))         return 'seats';
+  if (/budget|\bprice\b|\bcost\b|\bspend(?:ing)?\b|\bkr\b|kroner|\bafford\b|how much.*(?:spend|cost|pay|budget|kr|kroner|afford|willing)|price (?:range|point|tag)/i.test(t)) return 'budget';
   if (/\bsize\b|compact|\bsuv\b|\bvan\b|hatchback|sedan|station wagon|small car|big car/i.test(t))            return 'size';
   if (/\bbrand\b|brands you|particular brand|brand in mind|brand preference|manufacturer|trust.*brand|prefer.*(audi|bmw|mercedes|toyota|volvo|tesla|kia|hyundai|ford|volkswagen|peugeot|renault)/i.test(t)) return 'brand';
   if (/use it for|drive|commut|trip|city|mountain|leisure|road|daily|weekend/i.test(t))                       return 'usage';
@@ -5191,10 +5193,25 @@ function syncFiltersFromText(text) {
     'alone': 'seats:2',
   };
 
+  // Multi-word aliases use substring match; single-word aliases require a
+  // word-boundary match so e.g. "alone" doesn't get found inside other words.
   Object.entries(aliases).forEach(([alias, chipKey]) => {
-    if (lower.includes(alias)) {
-      if (!activeChips[chipKey]) { activeChips[chipKey] = true; changed = true; }
-    }
+    const matched = alias.includes(' ')
+      ? lower.includes(alias)
+      : new RegExp(`\\b${alias}\\b`, 'i').test(lower);
+    if (matched && !activeChips[chipKey]) { activeChips[chipKey] = true; changed = true; }
+  });
+
+  // Short/colloquial fuel shortenings the AI and users actually type. These
+  // MUST use word boundaries — "ev" inside "every" or "level" would otherwise
+  // false-trigger Electric.
+  const FUEL_SHORT = [
+    { re: /\b(?:ev|evs|bev|bevs|battery[- ]electric|all[- ]electric|fully[- ]electric)\b/i,  chip: 'fuel:Electric' },
+    { re: /\b(?:phev|plug[- ]in(?:[- ]hybrid)?)\b/i,                                          chip: 'fuel:Hybrid' },
+    { re: /\b(?:gasoline|gas)\b/i,                                                            chip: 'fuel:Petrol' },
+  ];
+  FUEL_SHORT.forEach(({ re, chip }) => {
+    if (re.test(lower) && !activeChips[chip]) { activeChips[chip] = true; changed = true; }
   });
 
   const seatChip = inferSeatsFromText(lower);
