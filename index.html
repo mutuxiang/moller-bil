@@ -614,6 +614,19 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   overflow-y: hidden;
   padding-bottom: 4px;
 }
+/* Fixed center-pinned person reference — does NOT scroll with the cars.
+   Sits as an overlay anchored to the horizontal center of the scene so the
+   user can drag any car under it for direct size comparison. */
+.size-scene-person-fixed {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none; /* clicks fall through to whichever car is behind */
+  filter: drop-shadow(0 2px 6px rgba(225, 100, 75, 0.25));
+}
+.size-scene-person-fixed svg { display: block; overflow: visible; }
 .size-scene-scroll svg { display: block; }
 .size-car-group { cursor: pointer; }
 .size-car-group:hover .size-car-bg { fill: rgba(0,25,70,0.05); }
@@ -5471,35 +5484,21 @@ function buildSizePersonSvg() {
 }
 
 function buildSizeCarsSvg() {
-  const { PERSON_H, personW, gapCm, padR, vbH, ground, SCALE } = SIZE_SCENE;
+  const { gapCm, padR, vbH, ground, SCALE } = SIZE_SCENE;
   const navy = 'var(--ink)';
   const salmon = 'var(--salmon)';
   const padInner = 24;
-  // Insert the person between car index 2 (Sedan/Wagon) and index 3 (SUV) →
-  // 3 cars on the LEFT (smaller-to-mid), 2 cars on the RIGHT (bigger), with
-  // the 175 cm human reference dead-center between them. This makes left/right
-  // size comparisons against the person trivial at a glance.
-  const PERSON_INSERT_AT = 3;
-  const personSlotW = personW + gapCm; // give the figure breathing room on both sides
 
-  // Lay out the cars, inserting a person-slot at the chosen index
+  // Cars lay out continuously — no person slot in the SVG. The person is a
+  // separate fixed overlay anchored to the center of the viewport (rendered
+  // by renderSizeCards), so as the user scrolls left/right, cars slide past
+  // the human reference for direct comparison at any scroll position.
   let x = padInner;
   const positions = [];
-  let personX = 0;
-  SIZE_OPTIONS.forEach((c, i) => {
-    if (i === PERSON_INSERT_AT) {
-      // Reserve the person slot here
-      personX = x + personSlotW / 2;
-      x += personSlotW;
-    }
+  SIZE_OPTIONS.forEach((c) => {
     positions.push(x);
     x += c.length + gapCm;
   });
-  // Edge case: if PERSON_INSERT_AT >= cars.length, append the slot at the end
-  if (PERSON_INSERT_AT >= SIZE_OPTIONS.length) {
-    personX = x + personSlotW / 2;
-    x += personSlotW;
-  }
   const totalCm = x - gapCm + padR;
   const svgW = Math.round(totalCm * SCALE);
   const svgH = Math.round(vbH * SCALE);
@@ -5509,20 +5508,6 @@ function buildSizeCarsSvg() {
     const tx = i * 100;
     ticks.push(`<line x1="${tx}" y1="${ground}" x2="${tx}" y2="${ground + 6}" stroke="${navy}" stroke-opacity="${i % 5 === 0 ? 0.45 : 0.2}" stroke-width="1"/>`);
   }
-
-  // The person figure — same proportions as buildSizePersonSvg, inlined here
-  const headR = PERSON_H * 0.062;
-  const personBody = `M ${-PERSON_H * 0.10} ${-PERSON_H * 0.85} Q ${-PERSON_H * 0.12} ${-PERSON_H * 0.78} ${-PERSON_H * 0.10} ${-PERSON_H * 0.55} L ${-PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${-PERSON_H * 0.075} 0 L ${-PERSON_H * 0.015} 0 L ${-PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} 0 L ${PERSON_H * 0.075} 0 L ${PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${PERSON_H * 0.10} ${-PERSON_H * 0.55} Q ${PERSON_H * 0.12} ${-PERSON_H * 0.78} ${PERSON_H * 0.10} ${-PERSON_H * 0.85} Z`;
-  const personSvg = `
-    <g class="size-person-group">
-      <text x="${personX}" y="${ground - PERSON_H - 14}" font-size="13" fill="${salmon}" font-weight="500" text-anchor="middle">175 cm</text>
-      <g transform="translate(${personX} ${ground})">
-        <circle cx="0" cy="${-PERSON_H * 0.93 + headR * 0.2}" r="${headR}" fill="${salmon}"/>
-        <rect x="${-PERSON_H * 0.018}" y="${-PERSON_H * 0.87}" width="${PERSON_H * 0.036}" height="${PERSON_H * 0.04}" fill="${salmon}"/>
-        <path d="${personBody}" fill="${salmon}"/>
-      </g>
-    </g>
-  `;
 
   const cars = SIZE_OPTIONS.map((c, i) => {
     const x0 = positions[i];
@@ -5549,16 +5534,42 @@ function buildSizeCarsSvg() {
     `;
   }).join('');
 
-  // Marker for JS scroll-to-person
   return `
-    <svg viewBox="0 0 ${totalCm} ${vbH}" width="${svgW}" height="${svgH}" preserveAspectRatio="xMinYMin meet" data-person-x="${personX}" data-scale="${SCALE}">
+    <svg viewBox="0 0 ${totalCm} ${vbH}" width="${svgW}" height="${svgH}" preserveAspectRatio="xMinYMin meet" data-scale="${SCALE}">
       <line x1="0" y1="${ground}" x2="${totalCm}" y2="${ground}" stroke="${navy}" stroke-opacity="0.45" stroke-width="1"/>
       ${ticks.join('')}
       <line x1="0" y1="${SIZE_SCENE.ground - SIZE_SCENE.PERSON_H}" x2="${totalCm}" y2="${SIZE_SCENE.ground - SIZE_SCENE.PERSON_H}" stroke="${salmon}" stroke-opacity="0.45" stroke-dasharray="3 5" stroke-width="1"/>
       ${cars}
-      ${personSvg}
     </svg>
   `;
+}
+
+// Build a standalone person SVG sized to the same vbH as the cars SVG, so it
+// can be overlaid at the center of the scene at the same baseline.
+function buildSizeCenterPersonSvg() {
+  const { PERSON_H, personW, vbH, ground, SCALE } = SIZE_SCENE;
+  const salmon = 'var(--salmon)';
+  // Pad so the head fits and the "175 cm" label has room above
+  const padX = 30, padTop = 16;
+  const widthCm = personW + padX * 2;
+  const cx = widthCm / 2;
+  const headR = PERSON_H * 0.062;
+  const personBody = `M ${-PERSON_H * 0.10} ${-PERSON_H * 0.85} Q ${-PERSON_H * 0.12} ${-PERSON_H * 0.78} ${-PERSON_H * 0.10} ${-PERSON_H * 0.55} L ${-PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${-PERSON_H * 0.075} 0 L ${-PERSON_H * 0.015} 0 L ${-PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} ${-PERSON_H * 0.46} L ${PERSON_H * 0.015} 0 L ${PERSON_H * 0.075} 0 L ${PERSON_H * 0.085} ${-PERSON_H * 0.50} L ${PERSON_H * 0.10} ${-PERSON_H * 0.85} Z`;
+  const widthPx = Math.round(widthCm * SCALE);
+  const heightPx = Math.round(vbH * SCALE);
+  return {
+    widthPx, heightPx,
+    svg: `
+      <svg viewBox="0 0 ${widthCm} ${vbH}" width="${widthPx}" height="${heightPx}" preserveAspectRatio="xMinYMin meet" style="overflow:visible">
+        <text x="${cx}" y="${ground - PERSON_H - 14}" font-size="13" fill="${salmon}" font-weight="500" text-anchor="middle">175 cm</text>
+        <g transform="translate(${cx} ${ground})">
+          <circle cx="0" cy="${-PERSON_H * 0.93 + headR * 0.2}" r="${headR}" fill="${salmon}"/>
+          <rect x="${-PERSON_H * 0.018}" y="${-PERSON_H * 0.87}" width="${PERSON_H * 0.036}" height="${PERSON_H * 0.04}" fill="${salmon}"/>
+          <path d="${personBody}" fill="${salmon}"/>
+        </g>
+      </svg>
+    `,
+  };
 }
 
 function renderSizeCards(msgEl) {
@@ -5566,13 +5577,17 @@ function renderSizeCards(msgEl) {
   if (content.querySelector('.size-panel')) return;
   const panel = document.createElement('div');
   panel.className = 'size-panel';
+  const person = buildSizeCenterPersonSvg();
   panel.innerHTML = `
     <div class="size-panel-head">
       <span class="size-panel-title">Sized next to a 175 cm person</span>
-      <span class="size-panel-sub">Scroll left or right to compare. Tap a body to pick it.</span>
+      <span class="size-panel-sub">Scroll left or right — the person stays put as your reference. Tap a body to pick it.</span>
     </div>
     <div class="size-scene">
       <div class="size-scene-scroll">${buildSizeCarsSvg()}</div>
+      <!-- Person silhouette is anchored to the center of the scene viewport;
+           it does NOT scroll with the cars — they slide past it for comparison. -->
+      <div class="size-scene-person-fixed" style="width:${person.widthPx}px;height:${person.heightPx}px">${person.svg}</div>
     </div>
   `;
   // Each car group inside the SVG is the click target — no separate option row
@@ -5583,18 +5598,16 @@ function renderSizeCards(msgEl) {
   msgEl.classList.add('has-size');
   document.getElementById('stream').scrollTop = document.getElementById('stream').scrollHeight;
 
-  // Auto-scroll the scene so the person silhouette starts centered in view.
-  // The user can then scroll either direction to compare against bigger or
-  // smaller cars relative to the human reference.
+  // Start with the middle of the cars roughly under the center-pinned person —
+  // so the user immediately sees 1-2 cars on each side of the human reference.
   requestAnimationFrame(() => {
     const scroller = panel.querySelector('.size-scene-scroll');
     const svg      = panel.querySelector('.size-scene-scroll svg');
     if (!scroller || !svg) return;
-    const personXcm = parseFloat(svg.getAttribute('data-person-x'));
-    const scale     = parseFloat(svg.getAttribute('data-scale'));
-    if (!isFinite(personXcm) || !isFinite(scale)) return;
-    const personXpx = personXcm * scale;
-    scroller.scrollLeft = Math.max(0, personXpx - scroller.clientWidth / 2);
+    const scale = parseFloat(svg.getAttribute('data-scale')) || 1;
+    const totalPx = svg.getBoundingClientRect().width;
+    // Center the SVG content horizontally in the visible scroll area
+    scroller.scrollLeft = Math.max(0, (totalPx - scroller.clientWidth) / 2);
   });
 }
 
