@@ -3580,9 +3580,7 @@ function buildLiveRecs() {
     heroTitle.textContent = personalized ? reason : 'Popular in the Oslo area';
   }
   if (heroSub) {
-    heroSub.textContent = personalized
-      ? 'A preview, not your final shortlist.'
-      : 'Refreshed live from Møller Bil inventory.';
+    heroSub.textContent = personalized ? '' : 'Refreshed live from Møller Bil inventory.';
   }
   if (body) body.innerHTML = '';
   if (hero) hero.innerHTML = '';
