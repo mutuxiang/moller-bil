@@ -377,11 +377,15 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   font: 500 17.5px/1.5 "Moller",sans-serif;
   color: var(--ink); background: var(--cream-100);
   cursor: pointer; user-select: none;
-  transition: background 220ms var(--ease-out), color 220ms var(--ease-out), border-color 220ms var(--ease-out);
+  transition: background 220ms var(--ease-out),
+              color 220ms var(--ease-out),
+              border-color 220ms var(--ease-out),
+              border-radius 220ms var(--ease-out);
 }
 .chip:hover {
   background: var(--accent); color: var(--cream-100);
   border-color: var(--accent);
+  border-radius: 8px;
 }
 .chip.on {
   background: var(--accent); color: var(--cream-100);
@@ -2065,6 +2069,9 @@ body.mode-learning .col-spacer.right {
 /* Hide the saved-cars / collection button until the user enters the chat —
    they haven't saved anything yet, so the chip is just noise on the welcome. */
 .app.is-onboarding .btn-collection { display: none !important; }
+/* Onboarding hides the live "Popular near you" rail — the page is just
+   headline + two CTAs. Recs reappear once the user enters the chat. */
+.app.is-onboarding .hero-bottom { display: none !important; }
 
 /* CTAs + "Popular near you" are visible from the very first frame — they
    don't gate on the typewriter sequence. The typewriter cycles in the
@@ -2667,7 +2674,7 @@ body.mode-learning .col-spacer.right {
 
   <div class="topbar">
     <a class="topbar-brand" href="#" aria-label="Møller Bil">
-      <img class="topbar-logo" src="logo-3.svg" data-default-src="logo.svg" data-onboarding-src="logo-3.svg" alt="Møller Bil">
+      <img class="topbar-logo" src="logo.svg" alt="Møller Bil">
     </a>
     <div class="topbar-spacer"></div>
     <button class="btn-collection" id="btnCollection" onclick="toggleCollection()" title="Saved cars">
