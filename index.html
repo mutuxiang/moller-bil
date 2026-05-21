@@ -2066,7 +2066,26 @@ body.mode-learning .col-spacer.right {
 .app.is-onboarding .hero-cta {
   margin: 0;
   max-width: 480px;
-  gap: 12px;
+  gap: 20px; /* was 12 — more breathing room between primary + ghost */
+}
+
+/* ── Hero photo clipped by the Møller ø-mark (onboarding only) ── */
+.hero-clip {
+  position: absolute;
+  right: 7vw;
+  top: 50%;
+  transform: translateY(-50%) rotate(16deg);
+  width: min(440px, 30vw);
+  aspect-ratio: 200 / 290;
+  pointer-events: none;
+  filter: drop-shadow(0 24px 60px rgba(0,0,0,0.35));
+}
+.hero-clip svg { width: 100%; height: 100%; display: block; overflow: visible; }
+/* Only render the clip during onboarding */
+.app:not(.is-onboarding) .hero-clip { display: none; }
+/* Narrow viewports — hide the photo entirely so headline + CTAs keep the stage */
+@media (max-width: 900px) {
+  .hero-clip { display: none !important; }
 }
 /* Position context for the absolute hero-top glyph */
 .app.is-onboarding .col-spacer.left { position: relative; }
@@ -2703,6 +2722,21 @@ body.mode-learning .col-spacer.right {
     <aside class="col-spacer left hero" id="heroPanel">
       <div class="hero-top">
         <span class="hero-glyph"><img src="logo-2.svg" alt=""></span>
+      </div>
+      <!-- Hero photo clipped by the Møller ø-mark — onboarding only -->
+      <div class="hero-clip" aria-hidden="true">
+        <svg viewBox="0 0 200 290" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <clipPath id="heroOclip" clipPathUnits="userSpaceOnUse">
+              <path d="M 100 0 C 198 60, 198 230, 100 290 C 2 230, 2 60, 100 0 Z"/>
+            </clipPath>
+          </defs>
+          <image href="hero.avif" x="0" y="0" width="200" height="290"
+                 preserveAspectRatio="xMidYMid slice" clip-path="url(#heroOclip)"/>
+          <!-- Faint outline so the shape reads against the navy bg -->
+          <path d="M 100 0 C 198 60, 198 230, 100 290 C 2 230, 2 60, 100 0 Z"
+                fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+        </svg>
       </div>
       <h1 class="hero-headline" id="heroHeadline"></h1>
       <!-- Two CTA buttons revealed after the typewriter sequence finishes -->
@@ -3634,12 +3668,11 @@ function init() {
 // rotation keeps going subtly behind the buttons until the user picks a mode.
 let _onboardingLoopStopped = false;
 let _heroTypewriterStarted = false;
-function setTopbarOnboardingState(isOnboarding) {
+// Topbar uses the single blue `logo.svg` in every state — no per-mode swap.
+// (Kept as a no-op so existing call sites don't need to be untangled.)
+function setTopbarOnboardingState(_isOnboarding) {
   const logo = document.querySelector('.topbar-logo');
-  if (!logo) return;
-  logo.src = isOnboarding
-    ? (logo.dataset.onboardingSrc || 'logo-3.svg')
-    : (logo.dataset.defaultSrc || 'logo.svg');
+  if (logo) logo.src = 'logo.svg';
 }
 
 function startOnboardingIntro(options = {}) {
