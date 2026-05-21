@@ -512,32 +512,39 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .budget-card {
   background: var(--cream-200);
   border-radius: 6px;
-  padding: 18px 20px 16px;
-  display: flex; flex-direction: column; gap: 12px;
+  padding: 22px 24px 20px;
+  display: flex; flex-direction: column; gap: 14px;
   color: var(--ink);
+  position: relative;
 }
 .budget-card.accent {
   background: var(--ink);
   color: var(--cream-100);
 }
-.budget-card-head {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+/* Car silhouette at the top of each card */
+.budget-car-wrap {
+  width: 100%;
+  height: 64px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 2px;
 }
-.budget-tier-label {
-  font-size: 12px; font-weight: 500;
-  letter-spacing: .14em; text-transform: uppercase;
-  color: var(--muted);
+.budget-car-svg {
+  height: 100%;
+  width: auto;
+  max-width: 88%;
+  display: block;
 }
-.budget-card.accent .budget-tier-label { color: var(--salmon); }
 .budget-rec-pill {
-  font-size: 10.5px; font-weight: 500;
+  position: absolute;
+  top: 16px; right: 16px;
+  font-size: 11px; font-weight: 500;
   letter-spacing: .12em; text-transform: uppercase;
   color: var(--salmon);
   border: 1px solid var(--salmon);
-  padding: 3px 8px; border-radius: 999px;
+  padding: 4px 10px; border-radius: 999px;
 }
 .budget-range {
-  font-size: 22px; font-weight: 500;
+  font-size: 28px; font-weight: 500;
   color: var(--ink);
   letter-spacing: -.005em;
   line-height: 1.1;
@@ -546,63 +553,35 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .budget-card.accent .budget-range { color: var(--cream-100); }
 .budget-stats {
   display: grid; grid-template-columns: 1fr 1fr;
-  gap: 10px 18px;
-  margin-top: 2px;
+  gap: 12px 20px;
+  margin-top: 4px;
 }
-.budget-attr { display: flex; flex-direction: column; gap: 2px; }
+.budget-attr { display: flex; flex-direction: column; gap: 3px; }
 .budget-attr-label {
-  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
   color: var(--muted); font-weight: 500;
 }
 .budget-card.accent .budget-attr-label { color: rgba(255,255,255,0.55); }
 .budget-attr-val {
-  font-size: 14px; font-weight: 500; line-height: 1.2;
+  font-size: 17px; font-weight: 500; line-height: 1.2;
   color: var(--ink);
 }
 .budget-card.accent .budget-attr-val { color: var(--cream-100); }
 .budget-hr {
   border: 0; height: 1px;
   background: rgba(0,25,70,0.08);
-  margin: 4px 0 2px;
+  margin: 6px 0 2px;
 }
 .budget-card.accent .budget-hr { background: rgba(255,255,255,0.18); }
 .budget-best {
-  font-size: 13.5px; line-height: 1.5;
+  font-size: 15.5px; line-height: 1.5;
   color: var(--muted); margin: 0;
 }
-.budget-card.accent .budget-best { color: rgba(255,255,255,0.7); }
+.budget-card.accent .budget-best { color: rgba(255,255,255,0.78); }
 .budget-best b {
   font-weight: 500; color: var(--ink);
 }
 .budget-card.accent .budget-best b { color: var(--cream-100); }
-.budget-stock-row {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: auto; padding-top: 4px; gap: 12px;
-}
-.budget-stock-label {
-  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--muted); font-weight: 500;
-}
-.budget-card.accent .budget-stock-label { color: rgba(255,255,255,0.55); }
-.budget-stock-bar-wrap { display: inline-flex; align-items: center; gap: 10px; }
-.budget-stock-bar {
-  position: relative;
-  width: 100px; height: 7px;
-  background: rgba(0,25,70,0.08);
-  border-radius: 2px;
-}
-.budget-card.accent .budget-stock-bar { background: rgba(255,255,255,0.18); }
-.budget-stock-fill {
-  position: absolute; left: 0; top: 0; bottom: 0;
-  width: 0%; background: var(--ink); border-radius: 2px;
-}
-.budget-card.accent .budget-stock-fill { background: var(--salmon); }
-.budget-stock-num {
-  font-size: 14px; font-weight: 500;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-.budget-card.accent .budget-stock-num { color: var(--cream-100); }
 
 /* ── Size visualization (human-scale comparison, no specific models) ── */
 .size-panel {
@@ -5304,40 +5283,75 @@ const BUDGET_TIERS = [
     age: '5 – 7 yr',    mileage: '80 – 130k km',
     fuel: 'Petrol / Diesel', evRange: '—',
     best: 'Cabin trips, occasional use. Lower buy-in, higher fuel bill.',
-    stock: 47,
+    carType: 'compact',
   },
   {
     label: 'Sweet spot', range: '425 – 575 k kr', accent: true,
     age: '2 – 4 yr',    mileage: '40 – 80k km',
     fuel: 'PHEV / used EV', evRange: '≈ 330 km',
     best: 'Daily commute + summer trips. Best balance of price, age, range.',
-    stock: 92,
+    carType: 'wagon',
   },
   {
     label: 'Top',       range: '575 k kr +',
     age: '0 – 2 yr',    mileage: '< 30k km',
     fuel: 'New / nearly-new EV', evRange: '≈ 480 km',
     best: 'Towing, road trips, family of five. Lowest worry, highest buy-in.',
-    stock: 38,
+    carType: 'suv',
   },
 ];
+
+// Car silhouettes — sized to fit nicely at the top of a budget card.
+// Uses the same path generator as the size-comparison cards so the visual
+// language stays consistent across the app.
+function budgetCarSvg(type, accent) {
+  // Pick a reasonable physical size per type for a recognisable silhouette
+  const dims = {
+    compact: { length: 405, height: 145 },
+    wagon:   { length: 469, height: 147 },
+    suv:     { length: 458, height: 163 },
+  };
+  const { length, height } = dims[type] || dims.wagon;
+  const path = carSideSvgPath(length, height, type);
+  // Tiny wheels — proportional to the body
+  const tireR = Math.round(height * 0.13);
+  // Re-derive the wheel x-positions the same way carSideSvgPath did, roughly
+  const wheelTable = {
+    compact:  { rs: 0.26, re: 0.66 },
+    wagon:    { rs: 0.30, re: 0.86 },
+    suv:      { rs: 0.27, re: 0.78 },
+  }[type] || { rs: 0.30, re: 0.78 };
+  const wx1 = Math.round(length * wheelTable.rs + 14);
+  const wx2 = Math.round(length * wheelTable.re + 2);
+  // Viewbox: padding around the body for the wheels
+  const pad = 8;
+  const vbW = length + pad * 2;
+  const vbH = height + tireR + pad * 2;
+  const fill = accent ? '#E1644B' : '#001946';
+  return `
+    <svg class="budget-car-svg" viewBox="${-pad} ${-(height + pad)} ${vbW} ${vbH}"
+         xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="${path}" fill="${fill}"/>
+      <circle cx="${wx1}" cy="0" r="${tireR}" fill="${fill}"/>
+      <circle cx="${wx2}" cy="0" r="${tireR}" fill="${fill}"/>
+      <circle cx="${wx1}" cy="0" r="${Math.round(tireR * 0.5)}" fill="#F9F7F4"/>
+      <circle cx="${wx2}" cy="0" r="${Math.round(tireR * 0.5)}" fill="#F9F7F4"/>
+    </svg>
+  `;
+}
 
 function renderBudgetCards(msgEl) {
   const content = msgEl.querySelector('.msg-content');
   if (content.querySelector('.budget-cards')) return;
-  const maxStock = Math.max(...BUDGET_TIERS.map(t => t.stock));
   const wrap = document.createElement('div');
   wrap.className = 'budget-cards';
-  BUDGET_TIERS.forEach((t, i) => {
+  BUDGET_TIERS.forEach((t) => {
     const accent = !!t.accent;
     const card = document.createElement('div');
     card.className = 'budget-card' + (accent ? ' accent' : '');
-    const stockPct = Math.round((t.stock / maxStock) * 100);
     card.innerHTML = `
-      <div class="budget-card-head">
-        <span class="budget-tier-label">Tier ${i + 1} · ${escapeHtml(t.label)}</span>
-        ${accent ? `<span class="budget-rec-pill">Recommended</span>` : ''}
-      </div>
+      <div class="budget-car-wrap">${budgetCarSvg(t.carType, accent)}</div>
+      ${accent ? `<span class="budget-rec-pill">Recommended</span>` : ''}
       <span class="budget-range">${escapeHtml(t.range)}</span>
       <div class="budget-stats">
         <div class="budget-attr"><span class="budget-attr-label">Age</span><span class="budget-attr-val">${escapeHtml(t.age)}</span></div>
@@ -5347,13 +5361,6 @@ function renderBudgetCards(msgEl) {
       </div>
       <hr class="budget-hr">
       <p class="budget-best"><b>Best for ·</b> ${escapeHtml(t.best)}</p>
-      <div class="budget-stock-row">
-        <span class="budget-stock-label">On the lot now</span>
-        <span class="budget-stock-bar-wrap">
-          <span class="budget-stock-bar"><span class="budget-stock-fill" style="width:${stockPct}%"></span></span>
-          <span class="budget-stock-num">${t.stock}</span>
-        </span>
-      </div>
     `;
     wrap.appendChild(card);
   });
