@@ -2053,47 +2053,25 @@ body.mode-learning .col-spacer.right {
 .app.is-onboarding .hero-top {
   margin-bottom: 26px;
 }
-/* Headline — slightly smaller than full hero, tighter line-height, capped
-   width so the two lines feel intentional (not full-bleed running text) */
+/* Headline — same font-size as the post-onboarding state (54px from the
+   base .hero-headline rule). We only constrain max-width here so the
+   onboarding layout reads as a deliberate two-line composition instead
+   of a full-bleed banner. No size jump during the chat slide-in. */
 .app.is-onboarding .hero-headline {
-  font-size: 48px;
-  line-height: 1.1;
-  letter-spacing: -0.015em;
-  margin-bottom: 28px;
   max-width: 880px;
+  margin-bottom: 64px;  /* breathing room before the CTA stack */
 }
-/* CTA stack sits directly under the headline, narrower than viewport for
-   a more deliberate landing-page feel */
+/* CTA stack sits well below the headline — breathing room is the point */
 .app.is-onboarding .hero-cta {
-  margin: 0;
+  margin: 32px 0 0;     /* extra top breathing beyond the headline's 64px margin-bottom */
   max-width: 480px;
-  gap: 20px; /* was 12 — more breathing room between primary + ghost */
+  gap: 22px;
+}
+/* During onboarding, give each CTA more vertical heft — feels less cramped */
+.app.is-onboarding .hero-cta-btn {
+  padding: 22px 26px 22px 28px;
 }
 
-/* ── Hero photo (onboarding only) — clean rectangle, Møller card radius ── */
-.hero-clip {
-  position: absolute;
-  right: 7vw;
-  top: 50%;
-  transform: translateY(-50%);
-  width: min(440px, 32vw);
-  aspect-ratio: 4 / 5;
-  pointer-events: none;
-  border-radius: var(--radius-card);  /* 4px — same as brand cards */
-  overflow: hidden;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.35);
-}
-.hero-clip img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  display: block;
-}
-/* Only render during onboarding */
-.app:not(.is-onboarding) .hero-clip { display: none; }
-/* Narrow viewports — hide the photo so headline + CTAs keep the stage */
-@media (max-width: 900px) {
-  .hero-clip { display: none !important; }
-}
 /* Position context for the absolute hero-top glyph */
 .app.is-onboarding .col-spacer.left { position: relative; }
 .app.is-onboarding .col-center {
@@ -2729,10 +2707,6 @@ body.mode-learning .col-spacer.right {
     <aside class="col-spacer left hero" id="heroPanel">
       <div class="hero-top">
         <span class="hero-glyph"><img src="logo-2.svg" alt=""></span>
-      </div>
-      <!-- Hero photo — rectangular crop, onboarding only -->
-      <div class="hero-clip" aria-hidden="true">
-        <img src="hero.avif" alt="">
       </div>
       <h1 class="hero-headline" id="heroHeadline"></h1>
       <!-- Two CTA buttons revealed after the typewriter sequence finishes -->
