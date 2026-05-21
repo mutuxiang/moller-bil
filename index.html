@@ -2029,6 +2029,9 @@ body.mode-learning .col-spacer.right {
 .app.is-onboarding .hero-toggle-btn { display: none !important; }
 .app.is-onboarding .side,
 .app.is-onboarding .resize-handle { display: none !important; }
+/* Hide the saved-cars / collection button until the user enters the chat —
+   they haven't saved anything yet, so the chip is just noise on the welcome. */
+.app.is-onboarding .btn-collection { display: none !important; }
 
 /* Hero bottom (Popular near you) and CTA buttons fade in AFTER the typewriter
    sequence finishes. The `.is-ready` class is toggled by JS. */
@@ -3529,46 +3532,64 @@ function init() {
   applyConversationMode();
 }
 
-// ── Onboarding intro (typewriter sequence on the hero headline) ──────────
+// ── Onboarding intro (rotating typewriter on the hero headline) ──────────
+// Three messages cycle continuously — each types in, lingers for a beat, then
+// reverse-types out, the next types in, and so on. After the first full pass
+// through all three, the CTA buttons + "Popular near you" fade in below; the
+// rotation keeps going subtly behind the buttons until the user picks a mode.
+let _onboardingLoopStopped = false;
 function startOnboardingIntro() {
   const app = document.querySelector('.app');
   app.classList.add('is-onboarding');
   const headline = document.getElementById('heroHeadline');
   if (!headline) return;
 
-  const MSG1 = "Buying a car can feel overwhelming.<br>Don't worry — I'm here to <u>help</u>.";
-  const MSG2 = "Every car I show you is real — pulled live from <u>Møller Bil's inventory</u>.";
+  const MESSAGES = [
+    "Buying a car can feel overwhelming.<br>Don't worry — I'm here to <u>help</u>.",
+    "Every car I show you is real — pulled live from <u>Møller Bil's inventory</u>.",
+    "And we don't just sell cars — <u>financing, warranties, even service</u> all happen here too.",
+  ];
 
   headline.innerHTML = '';
   headline.classList.add('is-typing');
+  _onboardingLoopStopped = false;
 
-  // Safety net: if anything in the chain throws, still surface the CTAs
-  // after a generous timeout so the user never gets a permanent dead screen.
+  // Safety net — if anything throws or hangs, still reveal the CTAs after a
+  // generous timeout so the page never deadlocks.
   const safetyTimer = setTimeout(() => {
-    headline.innerHTML = MSG2;
-    headline.classList.remove('is-typing');
-    app.classList.add('is-ready');
-  }, 10000);
+    if (!app.classList.contains('is-ready')) {
+      headline.innerHTML = MESSAGES[1];
+      headline.classList.remove('is-typing');
+      app.classList.add('is-ready');
+    }
+  }, 14000);
 
-  // Phase 1: type message 1 forward (faster than before — ~22ms/char)
-  typeHtml(headline, MSG1, 22, () => {
-    // Short pause so the user can read it, but not so long it feels frozen
-    setTimeout(() => {
-      // Phase 2: reverse-type message 1 (snappier — 10ms/char)
-      reverseTypeHtml(headline, 10, () => {
-        // Very brief pause before the next message
-        setTimeout(() => {
-          // Phase 3: type message 2 forward
-          typeHtml(headline, MSG2, 22, () => {
-            clearTimeout(safetyTimer);
-            headline.classList.remove('is-typing');
-            // Reveal CTA buttons + "Popular near you"
-            app.classList.add('is-ready');
-          });
-        }, 160);
-      });
-    }, 700);
-  });
+  // Run one message: type forward → linger → reverse-type → tiny pause → next
+  function playOne(idx, isFirstPass) {
+    if (_onboardingLoopStopped) { clearTimeout(safetyTimer); return; }
+    typeHtml(headline, MESSAGES[idx], 22, () => {
+      if (_onboardingLoopStopped) { clearTimeout(safetyTimer); return; }
+      // After the LAST message types out on the first pass, reveal the CTAs.
+      // The user can click immediately; the rotation keeps going behind.
+      if (isFirstPass && idx === MESSAGES.length - 1) {
+        app.classList.add('is-ready');
+        clearTimeout(safetyTimer);
+      }
+      setTimeout(() => {
+        if (_onboardingLoopStopped) return;
+        reverseTypeHtml(headline, 10, () => {
+          if (_onboardingLoopStopped) return;
+          setTimeout(() => {
+            if (_onboardingLoopStopped) return;
+            const nextIdx = (idx + 1) % MESSAGES.length;
+            const stillFirst = isFirstPass && nextIdx !== 0;
+            playOne(nextIdx, stillFirst);
+          }, 180);
+        });
+      }, 1100);
+    });
+  }
+  playOne(0, true);
 }
 
 // Typewriter — forward. Same HTML-aware logic as appendAIMessage.
@@ -3628,6 +3649,16 @@ function reverseTypeHtml(el, delay, onDone) {
 function onboardingChoose(mode) {
   const app = document.querySelector('.app');
   if (!app.classList.contains('is-onboarding')) return; // double-click guard
+
+  // Halt the headline rotation immediately so it doesn't keep mutating after
+  // the chat slides in.
+  _onboardingLoopStopped = true;
+  const headline = document.getElementById('heroHeadline');
+  if (headline) {
+    // Leave the most-recent message on screen — it stays as a tagline above
+    // the live profile until the first user answer hides the headline entirely.
+    headline.classList.remove('is-typing');
+  }
 
   // Switch mode BEFORE removing the onboarding class so the greeting renders
   // for the right mode when showOnboarding() runs below.
