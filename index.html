@@ -523,75 +523,79 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   position: relative;
   background: var(--cream-200);
   border-radius: 6px;
-  padding: 28px 36px 30px;
-  /* Tall enough to fit a car silhouette above the line + tag below */
-  min-height: 230px;
+  padding: 32px 44px 28px;
+  min-height: 240px;
 }
 .budget-rail-cars {
   position: relative;
-  height: 130px;
+  height: 150px;   /* fits the bigger car height + a touch of room above */
 }
 .budget-rail-car {
   position: absolute;
-  top: 0;
+  bottom: 0;       /* anchor to the bottom so wheels sit on the rail line */
   transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center;
   pointer-events: none;
 }
 .budget-rail-car svg {
-  height: 96px;
+  height: 150px;   /* was 96px — bigger, more presence */
   width: auto;
+  display: block;
 }
-.budget-rail-tag {
-  margin-top: 6px;
-  display: flex; flex-direction: column; align-items: center;
-  line-height: 1.15;
-  white-space: nowrap;
-}
-.budget-rail-tag-price {
-  font-size: 17px; font-weight: 500;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-.budget-rail-car.accent .budget-rail-tag-price { color: var(--salmon); }
-.budget-rail-tag-unit {
-  font-size: 10px; font-weight: 500;
-  letter-spacing: .06em;
-  color: var(--muted);
-  margin-left: 3px;
-}
-.budget-rail-tag-fuel {
-  font-size: 11px; font-weight: 500;
-  letter-spacing: .14em; text-transform: uppercase;
-  color: var(--muted);
-  margin-top: 2px;
-}
+/* Rail line — sits just below the car wheels */
 .budget-rail-line {
   position: absolute;
-  left: 36px; right: 36px;
-  top: 158px;
+  left: 44px; right: 44px;
+  top: 182px;      /* directly under the cars row (32px padding + 150px cars) */
   height: 1px;
   background: var(--ink);
-  opacity: 0.5;
+  opacity: 0.45;
 }
+/* Ticks row — major ticks have label, minor ticks are just stubs */
 .budget-rail-ticks {
   position: relative;
-  height: 30px;
-  margin-top: 12px;
+  height: 36px;
+  margin-top: 4px;
 }
 .budget-rail-tick {
   position: absolute;
   top: 0;
   transform: translateX(-50%);
-  font-size: 11px; font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: .04em;
-  color: var(--muted);
+  display: flex; flex-direction: column; align-items: center;
   white-space: nowrap;
 }
-.budget-rail-tick span {
-  margin-left: 3px;
-  opacity: 0.65;
+.budget-rail-tick-mark {
+  display: block;
+  width: 1px;
+  background: var(--ink);
+}
+.budget-rail-tick.is-major .budget-rail-tick-mark {
+  height: 9px;
+  opacity: 0.6;
+}
+.budget-rail-tick.is-minor .budget-rail-tick-mark {
+  height: 5px;
+  opacity: 0.3;
+}
+.budget-rail-tick-label {
+  margin-top: 5px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+  color: var(--ink);
+  display: inline-flex; align-items: baseline;
+  gap: 3px;
+  line-height: 1;
+}
+.budget-rail-tick-label b {
+  font-weight: 500;
+}
+.budget-rail-tick-label span {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: .04em;
+  text-transform: lowercase;
 }
 
 /* ── Tier cards — simplified: no car silhouette, no "Best for" text ── */
@@ -5003,14 +5007,18 @@ function appendUserMessage(text, tokens) {
   const msgDiv = document.createElement('div');
   msgDiv.id = nextMsgId();
   msgDiv.className = 'msg user';
-  let tokenHtml = '';
+  // Render quick-reply chips as PLAIN TEXT in the bubble — no outlined pill.
+  // Once a chip has been sent it should read like any other typed message.
+  let body = '';
   if (tokens && tokens.length > 0) {
-    tokenHtml = `<span class="bub-tokens">${tokens.map(t => `<span class="bub-token">${escapeHtml(t)}</span>`).join('')}</span>`;
+    body += escapeHtml(tokens.join(', '));
+    if (text) body += '. ';
   }
+  if (text) body += escapeHtml(text);
   msgDiv.innerHTML = `
     <div class="av user">U</div>
     <div class="msg-content">
-      <div class="bub">${tokenHtml}${text ? escapeHtml(text) : ''}</div>
+      <div class="bub">${body}</div>
     </div>
   `;
   stream.appendChild(msgDiv);
@@ -5500,18 +5508,23 @@ function budgetRailCarSvg(c) {
 function buildBudgetRail() {
   const { priceMin, priceMax, listings } = BUDGET_RAIL;
   const xPct = (kr) => ((kr - priceMin) / (priceMax - priceMin)) * 100;
-  // Major tick every 100k kr
+  // Major tick every 100k kr, minor ticks every 50k for a real-ruler feel
   const ticks = [];
-  for (let p = priceMin; p <= priceMax; p += 100) {
-    ticks.push(`<div class="budget-rail-tick" style="left:${xPct(p)}%">${p}<span>×000 kr</span></div>`);
+  for (let p = priceMin; p <= priceMax; p += 50) {
+    const major = (p % 100 === 0);
+    if (major) {
+      ticks.push(`
+        <div class="budget-rail-tick is-major" style="left:${xPct(p)}%">
+          <span class="budget-rail-tick-mark"></span>
+          <span class="budget-rail-tick-label"><b>${p}</b><span>k kr</span></span>
+        </div>`);
+    } else {
+      ticks.push(`<div class="budget-rail-tick is-minor" style="left:${xPct(p)}%"><span class="budget-rail-tick-mark"></span></div>`);
+    }
   }
   const cars = listings.map(c => `
     <div class="budget-rail-car${c.accent ? ' accent' : ''}" style="left:${xPct(c.kr)}%">
       ${budgetRailCarSvg(c)}
-      <div class="budget-rail-tag">
-        <span class="budget-rail-tag-price">${c.kr}<span class="budget-rail-tag-unit">×000 kr</span></span>
-        <span class="budget-rail-tag-fuel">${escapeHtml(c.fuel)}</span>
-      </div>
     </div>
   `).join('');
   return `
