@@ -2520,6 +2520,19 @@ body.mode-learning .col-spacer.right {
   color: var(--cream-100);
   margin-bottom: 8px;
 }
+.hero-told-empty {
+  margin-top: 4px;
+  padding: 16px 0 4px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.72);
+  font-size: 16px;
+  line-height: 1.55;
+  max-width: 460px;
+}
+.hero-told-empty b {
+  color: var(--cream-100);
+  font-weight: 500;
+}
 .hero-told-list { display: flex; flex-direction: column; gap: 0; position: relative; }
 .hero-told-item {
   display: flex; flex-direction: column;
@@ -3579,9 +3592,7 @@ function buildLiveRecs() {
   if (heroTitle) {
     heroTitle.textContent = personalized ? reason : 'Popular in the Oslo area';
   }
-  if (heroSub) {
-    heroSub.textContent = personalized ? '' : 'Refreshed live from Møller Bil inventory.';
-  }
+  if (heroSub) heroSub.textContent = '';
   if (body) body.innerHTML = '';
   if (hero) hero.innerHTML = '';
 
@@ -3899,6 +3910,7 @@ function stopHeroTypewriter() {
 function onboardingChoose(mode) {
   const app = document.querySelector('.app');
   if (!app.classList.contains('is-onboarding')) return; // double-click guard
+  stopHeroTypewriter();
 
   // Switch mode BEFORE removing the onboarding class so the greeting renders
   // for the right mode when showOnboarding() runs below.
@@ -3915,6 +3927,7 @@ function onboardingChoose(mode) {
   }
   app.classList.remove('is-onboarding', 'is-ready');
   setTopbarOnboardingState(false);
+  updateHeroToldPanel();
   setTimeout(() => window.dispatchEvent(new Event('resize')), 40);
   setTimeout(syncHeroToggleBtn, 120);
   setTimeout(syncHeroToggleBtn, 360);
@@ -4002,11 +4015,7 @@ function getGreetingForMode(mode) {
 function showOnboarding() {
   onboardingStep = 0;
   const { text, chips } = getGreetingForMode(conversationMode);
-  appendAIMessage(text, (msgEl) => {
-    renderQuickChips(chips, msgEl);
-    // Guided tour disabled — straight into the conversation.
-  });
-  messages.push({ role: 'assistant', content: text });
+  renderQuickChips(chips, null);
 }
 let _onboardingStarted = false;
 
@@ -4633,11 +4642,26 @@ function updateHeroToldPanel() {
   if (budgetS) rows.push({ key: 'budget', label: 'Budget', value: budgetS, options: null });
 
   if (rows.length === 0) {
-    hero.classList.remove('is-told');
-    toldEl.innerHTML = '';
+    const app = document.querySelector('.app');
+    if (app && app.classList.contains('is-onboarding')) {
+      hero.classList.remove('is-told');
+      toldEl.innerHTML = '';
+      heroToldEditing = null;
+      _heroToldPrevKeys = new Set();
+      return;
+    }
+    stopHeroTypewriter();
+    hero.classList.add('is-told');
+    toldEl.innerHTML = `
+      <span class="hero-told-eyebrow">What you've told me</span>
+      <h2 class="hero-told-title">Your live profile</h2>
+      <div class="hero-told-empty">
+        Nothing confirmed yet. As you chat, I'll collect key answers here — <b>budget</b>, <b>passengers</b>, <b>powertrain</b>, <b>size</b>, and brand preferences — so you can see and edit your profile before recommendations narrow down.
+      </div>
+    `;
     heroToldEditing = null;
     _heroToldPrevKeys = new Set();
-    if (!_heroTypewriterStarted) startOnboardingIntro({ onboarding: false });
+    _heroToldTipShown = true;
     return;
   }
 
@@ -4726,7 +4750,6 @@ function updateHeroToldPanel() {
     const t = document.getElementById('heroToldTip');
     if (t) t.style.display = 'none';
     // Defer slightly so the row entrance animation isn't fighting with the scrim
-    setTimeout(showHeroToldIntro, 350);
   }
 }
 
