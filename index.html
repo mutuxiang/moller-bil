@@ -742,10 +742,13 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
    ════════════════════════════════════════════════════════════ */
 .recs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Cap each card at ~360px so 2-card responses don't stretch into giant tiles.
+     Auto-fit keeps any unused columns from showing as empty filler. */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 360px));
   gap: 16px;
   margin-top: 4px;
-  max-width: 1080px;
+  max-width: 1100px;
+  justify-content: start;
 }
 .msg.has-recs, .msg.has-fuel, .msg.has-budget, .msg.has-size, .msg.has-map { max-width: none; width: 100%; }
 .msg.has-recs .msg-content,
@@ -1913,19 +1916,19 @@ body.mode-learning .col-spacer.right {
 .btn-filter:hover { background: var(--moller-blue-700) !important; border-color: var(--moller-blue-700) !important; color: var(--cream-100) !important; }
 
 .col-spacer.left {
-  width: 560px !important;
-  min-width: 560px;
-  max-width: 560px;
+  width: 33.333vw !important;
+  min-width: 380px;
+  max-width: 620px;
   flex-shrink: 0 !important;
   background: var(--moller-blue) !important;
   color: var(--cream-100) !important;
   display: flex !important;
   flex-direction: column !important;
-  padding: 56px 56px 40px !important;
+  padding: 48px 44px 36px !important;
   overflow-y: auto;
   border-right: 0 !important;
 }
-@media (max-width: 1100px) { .col-spacer.left { width: 460px !important; min-width: 460px; max-width: 460px; padding: 48px 40px 32px !important; } }
+@media (max-width: 1100px) { .col-spacer.left { padding: 40px 32px 28px !important; min-width: 340px; } }
 @media (max-width: 900px)  { .col-spacer.left { display: none !important; } }
 
 .hero-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 26px; }
@@ -2091,6 +2094,52 @@ body.mode-learning .col-spacer.right {
 .hero-told-action.muted { color: rgba(255,255,255,0.55); }
 .hero-told-action.muted:hover { color: var(--cream-100); }
 .hero-told-action:disabled { opacity: 0.35; cursor: not-allowed; text-decoration: none; }
+
+/* Inline editor inside a hero told row — replaces the drawer trip */
+.hero-told-edit {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.hero-told-item.editing .hero-told-edit { display: flex; }
+.hero-told-item.editing { padding-bottom: 18px; }
+.hero-told-edit-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.hero-told-chip {
+  appearance: none;
+  padding: 8px 14px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: transparent;
+  color: var(--cream-100);
+  border-radius: 999px;
+  font: 500 13.5px/1 "Moller", sans-serif;
+  cursor: pointer;
+  transition: background 180ms var(--ease-out), border-color 180ms var(--ease-out);
+}
+.hero-told-chip:hover { border-color: var(--cream-100); }
+.hero-told-chip.on {
+  background: var(--salmon);
+  border-color: var(--salmon);
+  color: var(--cream-100);
+}
+.hero-told-edit-done {
+  appearance: none; border: 0;
+  align-self: flex-start;
+  background: transparent; color: var(--cream-100);
+  padding: 6px 0;
+  font: 500 13px/1 "Moller", sans-serif;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(255,255,255,0.4);
+  text-underline-offset: 4px;
+}
+.hero-told-edit-done:hover { text-decoration-color: var(--cream-100); }
+.hero-told-edit-note {
+  font-size: 12.5px; color: rgba(255,255,255,0.55);
+  line-height: 1.4;
+}
 
 /* User bubble: dark navy on right */
 .msg.user .bub {
@@ -3658,6 +3707,9 @@ function buildSidebar() {
 // ── Hero "What you've told me" mirror ─────────────────────────────────────
 // Once the user has confirmed any detail, swap the hero welcome copy for
 // a compact summary of what we've captured so far.
+// Which hero-told row is currently in edit mode (null when none)
+let heroToldEditing = null;
+
 function updateHeroToldPanel() {
   const hero    = document.getElementById('heroPanel');
   const toldEl  = document.getElementById('heroTold');
@@ -3668,17 +3720,18 @@ function updateHeroToldPanel() {
   if (typeof FILTERS !== 'undefined') {
     FILTERS.forEach(g => {
       const s = getConfirmedSummary(g.key);
-      if (s) rows.push({ key: g.key, label: g.title, value: s });
+      if (s) rows.push({ key: g.key, label: g.title, value: s, options: g.options });
     });
   }
   const brandS = getConfirmedSummary('brand');
-  if (brandS) rows.push({ key: 'brand', label: 'Brand preference', value: brandS });
+  if (brandS) rows.push({ key: 'brand', label: 'Brand preference', value: brandS, options: (typeof BRANDS !== 'undefined' ? BRANDS : []) });
   const budgetS = getBudgetSummary();
-  if (budgetS) rows.push({ key: 'budget', label: 'Budget', value: budgetS });
+  if (budgetS) rows.push({ key: 'budget', label: 'Budget', value: budgetS, options: null });
 
   if (rows.length === 0) {
     hero.classList.remove('is-told');
     toldEl.innerHTML = '';
+    heroToldEditing = null;
     return;
   }
 
@@ -3689,39 +3742,110 @@ function updateHeroToldPanel() {
     <div class="hero-told-list">
       ${rows.map(r => {
         const hasMsg = !!findLatestMessageForTopic(r.key);
+        const editing = heroToldEditing === r.key;
+        let editorHtml = '';
+        if (editing) {
+          if (r.key === 'budget') {
+            // Budget needs the dual-range slider — open the drawer for that.
+            editorHtml = `
+              <div class="hero-told-edit-note">Budget uses a slider — opening the full filter panel…</div>
+            `;
+          } else {
+            const chips = r.options.map(opt => {
+              const chipKey = `${r.key}:${opt}`;
+              const on = !!activeChips[chipKey];
+              return `<button class="hero-told-chip${on ? ' on' : ''}" type="button"
+                        onclick="heroToldToggle('${r.key}', ${JSON.stringify(opt).replace(/"/g, '&quot;')})">${escapeHtml(opt)}</button>`;
+            }).join('');
+            editorHtml = `
+              <div class="hero-told-edit-chips">${chips}</div>
+              <button class="hero-told-edit-done" type="button" onclick="heroToldEditDone()">Done</button>
+            `;
+          }
+        }
         return `
-        <div class="hero-told-item">
+        <div class="hero-told-item${editing ? ' editing' : ''}">
           <div class="hero-told-item-top">
             <span class="hero-told-item-label">${escapeHtml(r.label)}</span>
             <span class="hero-told-item-value">${escapeHtml(r.value)}</span>
           </div>
           <div class="hero-told-item-actions">
             <button class="hero-told-action" type="button"
-              onclick="heroToldChange('${r.key}')">Change</button>
+              onclick="heroToldChange('${r.key}')">${editing ? 'Cancel' : 'Change'}</button>
             <button class="hero-told-action muted" type="button"
               ${hasMsg ? '' : 'disabled'}
               onclick="heroToldJump('${r.key}')">Show in chat</button>
           </div>
+          <div class="hero-told-edit">${editorHtml}</div>
         </div>`;
       }).join('')}
     </div>
   `;
 }
 
-// Open the Filters drawer and scroll the selected filter into view for editing
+// Click "Change" on a hero-told row — flip just that row into edit mode.
+// Budget is special-cased: it uses the dual slider, which is too tall to
+// inline in the hero, so we punt to the existing drawer.
 function heroToldChange(key) {
-  if (typeof toggleDrawer === 'function') toggleDrawer();
-  // Briefly defer so the drawer is rendered before we scroll/highlight
-  setTimeout(() => {
-    const group = document.querySelector(`.filter-group[data-key="${key}"]`);
-    if (!group) return;
-    group.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    group.classList.add('filter-group-flash');
-    setTimeout(() => group.classList.remove('filter-group-flash'), 1600);
-    // Auto-expand the edit row so the chips/slider is ready to use
-    const toggle = group.querySelector('.filter-change-toggle');
-    if (toggle && !group.classList.contains('editing')) toggle.click();
-  }, 80);
+  if (heroToldEditing === key) {
+    heroToldEditing = null;
+    updateHeroToldPanel();
+    return;
+  }
+  heroToldEditing = key;
+  updateHeroToldPanel();
+  if (key === 'budget') {
+    // Open the drawer for the slider; brief delay so the editor render lands first.
+    setTimeout(() => {
+      const side = document.querySelector('.side');
+      if (side && !side.classList.contains('open')) {
+        if (typeof toggleDrawer === 'function') toggleDrawer();
+      }
+      const group = document.querySelector(`.filter-group[data-key="budget"]`);
+      if (group) {
+        group.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const toggle = group.querySelector('.filter-change-toggle');
+        if (toggle && !group.classList.contains('editing')) toggle.click();
+      }
+      heroToldEditing = null;
+      updateHeroToldPanel();
+    }, 120);
+  }
+}
+
+function heroToldEditDone() {
+  heroToldEditing = null;
+  // buildSidebar() also calls updateHeroToldPanel — keep them in sync.
+  if (typeof buildSidebar === 'function') buildSidebar();
+  else updateHeroToldPanel();
+}
+
+// Toggle a chip from the inline hero editor — reuses the same activeChips
+// state the sidebar uses, then re-renders so the value/summary refreshes.
+function heroToldToggle(groupKey, opt) {
+  takeSnapshotIfNeeded();
+  const chipKey = `${groupKey}:${opt}`;
+  const wasOn = !!activeChips[chipKey];
+
+  // For "single-select" groups (size, fuel, seats), toggling on clears siblings.
+  const singleSelectGroups = new Set(['size', 'fuel', 'seats']);
+  if (!wasOn && singleSelectGroups.has(groupKey)) {
+    Object.keys(activeChips).forEach(k => {
+      if (k.startsWith(`${groupKey}:`)) delete activeChips[k];
+    });
+  }
+
+  if (wasOn) delete activeChips[chipKey];
+  else       activeChips[chipKey] = true;
+
+  if (dirtyChipKeys.has(chipKey)) dirtyChipKeys.delete(chipKey);
+  else dirtyChipKeys.add(chipKey);
+
+  setDirty(true);
+  // Full rebuild — picks up the sidebar AND re-renders the hero with the new value.
+  buildSidebar();
+  if (typeof refreshGroupSummary === 'function') refreshGroupSummary(groupKey);
+  if (typeof pushSidebarPreviewToInput === 'function') pushSidebarPreviewToInput();
 }
 
 function heroToldJump(key) {
@@ -5669,11 +5793,10 @@ async function sendMessage() {
     } else {
       const surprises = parseEVSurprises(aiText);
       const { cleanText: rawClean, suggestions } = parseSuggestions(aiText);
-      // Detect topic from BOTH the AI reply and the user's latest message —
-      // so e.g. asking "can I reach my cabin?" pops up the map even if the AI
-      // answer doesn't echo those exact keywords.
-      const userTopic = detectMessageTopic(combined);
-      const aiTopic   = detectMessageTopic(rawClean) || userTopic;
+      // Topic is driven by what the AI is asking — never by what the user
+      // just said. Otherwise the user saying "SUV" right before the
+      // must-have-features question would falsely pop the size cards.
+      const aiTopic = detectMessageTopic(rawClean);
       // Topic-specific text shrinking: when a rich panel is going to render
       // below, drop the AI's verbose explanation paragraph(s) — the cards
       // already convey the same info visually.
