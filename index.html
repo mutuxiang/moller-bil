@@ -2078,6 +2078,70 @@ body.mode-learning .col-spacer.right {
 .hero.is-told .hero-headline,
 .hero.is-told .hero-sub { display: none; }
 .hero.is-told .hero-told { display: flex; }
+
+/* ── First-time intro overlay (between welcome view and live profile) ── */
+.hero-told-intro {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 18, 38, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 80;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  animation: heroIntroFadeIn 360ms var(--ease-out) both;
+}
+.hero-told-intro.is-open { display: flex; }
+.hero-told-intro.is-closing { animation: heroIntroFadeOut 320ms var(--ease-out) both; }
+.hero-told-intro-inner {
+  max-width: 420px;
+  background: var(--cream-100);
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 28px 28px 24px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+  text-align: left;
+  animation: heroIntroCardIn 420ms var(--ease-out) both;
+}
+.hero-told-intro-eyebrow {
+  display: inline-block;
+  font-size: 11px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--salmon);
+  margin-bottom: 8px;
+}
+.hero-told-intro-title {
+  font-family: "Moller", sans-serif;
+  font-size: 28px; font-weight: 400;
+  line-height: 1.1; letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 14px;
+}
+.hero-told-intro-text {
+  font-size: 15px; line-height: 1.55;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+.hero-told-intro-text b { font-weight: 500; color: var(--ink); }
+.hero-told-intro-btn {
+  appearance: none; border: 0; cursor: pointer;
+  background: var(--action-blue); color: #fff;
+  font: 500 14px/1 "Moller", sans-serif;
+  padding: 12px 22px;
+  border-radius: var(--radius-pill);
+  transition: background 180ms;
+}
+.hero-told-intro-btn:hover { background: var(--action-blue-hover); }
+@keyframes heroIntroFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes heroIntroFadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes heroIntroCardIn {
+  0%   { opacity: 0; transform: translateY(12px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* Make hero a positioning context so the overlay can fill it */
+.col-spacer.left.hero { position: relative; }
 .hero-told-eyebrow {
   font-size: 15px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
@@ -2286,6 +2350,19 @@ body.mode-learning .col-spacer.right {
       <h1 class="hero-headline">Buying a car can feel overwhelming.<br>Don't worry — I'm here to <u>help</u>.</h1>
       <p class="hero-sub">You don't need to know a thing about cars. Just tell me about your life, needs and budget, and I'll capture what matters as we talk.</p>
       <div class="hero-told" id="heroTold"></div>
+      <!-- First-time intro overlay shown right before the told panel appears -->
+      <div class="hero-told-intro" id="heroToldIntro" aria-hidden="true">
+        <div class="hero-told-intro-inner">
+          <span class="hero-told-intro-eyebrow">New section</span>
+          <h2 class="hero-told-intro-title">Your live profile</h2>
+          <p class="hero-told-intro-text">
+            From here on, every answer you give me gets captured on this side as a
+            "live profile". You can tap <b>Change</b> on any item to update it, or
+            <b>Show in chat</b> to jump back to where it came up.
+          </p>
+          <button class="hero-told-intro-btn" type="button" onclick="heroToldIntroDismiss()">Got it</button>
+        </div>
+      </div>
       <div class="hero-bottom">
         <div class="hero-recs-head">
           <span class="hero-recs-label" id="heroRecsLabel">Popular near you</span>
@@ -3960,12 +4037,29 @@ function updateHeroToldPanel() {
   _heroToldPrevKeys = currentKeys;
   if (firstEverArrival) {
     _heroToldTipShown = true;
-    // auto-dismiss after a while so it doesn't linger
-    setTimeout(() => {
-      const t = document.getElementById('heroToldTip');
-      if (t) t.style.display = 'none';
-    }, 12000);
+    // Show the full-hero intro overlay BEFORE the user sees the live profile.
+    // The told panel content is already rendered behind it — once the user
+    // dismisses, it fades out and the panel is revealed.
+    const intro = document.getElementById('heroToldIntro');
+    if (intro) {
+      intro.classList.add('is-open');
+      intro.setAttribute('aria-hidden', 'false');
+    }
+    // Hide the small inline tip — overlay replaces it.
+    const t = document.getElementById('heroToldTip');
+    if (t) t.style.display = 'none';
   }
+}
+
+// Dismiss the first-time "Your live profile" intro overlay
+function heroToldIntroDismiss() {
+  const intro = document.getElementById('heroToldIntro');
+  if (!intro) return;
+  intro.classList.add('is-closing');
+  setTimeout(() => {
+    intro.classList.remove('is-open', 'is-closing');
+    intro.setAttribute('aria-hidden', 'true');
+  }, 320);
 }
 
 function heroToldTipClose() {
@@ -4628,13 +4722,42 @@ function appendAIMessage(text, onDone) {
   const displayText = sanitizeAssistantText(text);
   const full = formatText(displayText);
 
-  // Render the whole message at once — no typewriter intro animation.
-  function tick() {
-    bub.innerHTML = full;
+  // ── Typewriter animation ──────────────────────────────────────────────
+  // We reveal `full` (formatted HTML) character by character, but HTML tags
+  // are emitted atomically — never as separate `<`, `s`, `t`, `r`, `o`... chars.
+  // We also skip over HTML entities like `&amp;` so they appear as one glyph.
+  const CHAR_DELAY = 18; // ms per visible character (~55 cps — readable but quick)
+  let i = 0;
+  let cancelled = false;
+
+  function step() {
+    if (cancelled) return;
+    if (i >= full.length) {
+      bub.innerHTML = full;
+      stream.scrollTop = stream.scrollHeight;
+      if (typeof onDone === 'function') onDone(msgDiv);
+      return;
+    }
+    // Advance one "visible unit" — a char, a full HTML tag, or an entity
+    const ch = full[i];
+    if (ch === '<') {
+      // skip to the matching '>'
+      const close = full.indexOf('>', i);
+      i = (close === -1) ? full.length : (close + 1);
+    } else if (ch === '&') {
+      // skip to the matching ';' (HTML entity)
+      const semi = full.indexOf(';', i);
+      i = (semi === -1 || semi - i > 8) ? (i + 1) : (semi + 1);
+    } else {
+      i++;
+    }
+    bub.innerHTML = full.slice(0, i);
     stream.scrollTop = stream.scrollHeight;
-    if (typeof onDone === 'function') onDone(msgDiv);
+    setTimeout(step, CHAR_DELAY);
   }
-  tick();
+  // Allow callers to skip the animation if needed
+  msgDiv._finishTyping = () => { cancelled = true; bub.innerHTML = full; if (typeof onDone === 'function') onDone(msgDiv); };
+  step();
   return msgDiv;
 }
 
