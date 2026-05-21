@@ -1992,10 +1992,8 @@ body.mode-learning .col-spacer.right {
 
 /* Topbar restyle to match cream-bar look with dark filled Filters button */
 .topbar { height: 70px !important; }
-.app.is-onboarding .topbar {
-  background: var(--moller-blue) !important;
-  border-bottom-color: rgba(255,255,255,0.12) !important;
-}
+/* Onboarding topbar is the same cream-200 bar as the chat page — single
+   consistent header treatment across the whole app. */
 .app.is-onboarding .btn-filter { display: none !important; }
 .btn-reset-all, .btn-collection { height: 40px !important; padding: 0 18px !important; font-size: 14.5px !important; }
 .btn-filter {
@@ -2039,24 +2037,39 @@ body.mode-learning .col-spacer.right {
   max-width: none !important;
   min-width: 0 !important;
   flex: 1 1 100% !important;
-  padding: 44px 8vw 36px !important;
+  padding: 6vh 8vw !important;
   /* Onboarding is a fixed landing, never scrollable */
   overflow: hidden !important;
+  /* Vertically center the entire composition in the available space —
+     headline + CTAs sit as one block in the middle of the viewport. */
+  justify-content: center !important;
 }
-/* Compact the headline + recs during onboarding so the whole composition
-   fits inside the viewport on small screens without scrolling */
+/* Hero-top (the small Ø glyph at the top-right) anchors to the corner,
+   doesn't take part in the centered stack. */
+.app.is-onboarding .hero-top {
+  position: absolute;
+  top: 6vh;
+  right: 8vw;
+  margin-bottom: 0;
+}
+/* Headline — slightly smaller than full hero, tighter line-height, capped
+   width so the two lines feel intentional (not full-bleed running text) */
 .app.is-onboarding .hero-headline {
-  font-size: 44px;
-  line-height: 1.08;
-  margin-bottom: 18px;
+  font-size: 48px;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin-bottom: 28px;
+  max-width: 880px;
 }
-.app.is-onboarding .hero-cta { margin: 24px 0 22px; }
-.app.is-onboarding .hero-rec-card { padding: 12px 16px; gap: 14px; }
-.app.is-onboarding .hero-rec-card-img { width: 72px; height: 52px; }
-.app.is-onboarding .hero-rec-card-name { font-size: 17px; }
-.app.is-onboarding .hero-rec-card-meta { font-size: 13.5px; }
-.app.is-onboarding #heroRecsBody { gap: 8px; }
-.app.is-onboarding .hero-top { margin-bottom: 16px; }
+/* CTA stack sits directly under the headline, narrower than viewport for
+   a more deliberate landing-page feel */
+.app.is-onboarding .hero-cta {
+  margin: 0;
+  max-width: 480px;
+  gap: 12px;
+}
+/* Position context for the absolute hero-top glyph */
+.app.is-onboarding .col-spacer.left { position: relative; }
 .app.is-onboarding .col-center {
   display: none !important;
   transform: translateX(100%);
