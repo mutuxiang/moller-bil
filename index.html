@@ -2079,31 +2079,69 @@ body.mode-learning .col-spacer.right {
 .hero.is-told .hero-sub { display: none; }
 .hero.is-told .hero-told { display: flex; }
 
-/* ── First-time intro overlay (between welcome view and live profile) ── */
-.hero-told-intro {
-  position: absolute;
+/* ── First-time intro: full-screen spotlight on the told panel ──
+   Approach: dim everything with a fixed full-screen gray scrim, but raise
+   the told panel above it via z-index so it pokes through the dim layer.
+   The "everything else disabled" effect is achieved by making the scrim
+   pointer-events: auto (eats clicks) while the spotlit panel + the intro
+   card stay interactive. */
+.hero-spotlight-scrim {
+  position: fixed;
   inset: 0;
-  background: rgba(10, 18, 38, 0.78);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  z-index: 80;
+  background: rgba(10, 12, 22, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9000;
   display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  animation: heroIntroFadeIn 360ms var(--ease-out) both;
+  animation: spotlightScrimIn 360ms var(--ease-out) both;
 }
-.hero-told-intro.is-open { display: flex; }
-.hero-told-intro.is-closing { animation: heroIntroFadeOut 320ms var(--ease-out) both; }
-.hero-told-intro-inner {
-  max-width: 420px;
+.hero-spotlight-scrim.is-open { display: block; }
+.hero-spotlight-scrim.is-closing { animation: spotlightScrimOut 280ms var(--ease-out) both; }
+
+/* When spotlight is active: raise just the told panel above the scrim */
+.app.intro-spotlight .hero-told {
+  position: relative;
+  z-index: 9100;
+  padding: 14px 18px;
+  background: var(--moller-blue);
+  border-radius: 10px;
+  box-shadow: 0 0 0 4px rgba(225, 100, 75, 0.55),
+              0 30px 80px rgba(0,0,0,0.45);
+  animation: spotlightPanelPulse 1800ms ease-in-out infinite;
+}
+@keyframes spotlightPanelPulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(225,100,75,0.55), 0 30px 80px rgba(0,0,0,0.45); }
+  50%      { box-shadow: 0 0 0 7px rgba(225,100,75,0.85), 0 30px 80px rgba(0,0,0,0.45); }
+}
+
+/* Intro card — floats in the chat area pointing at the spotlight */
+.hero-told-intro {
+  position: fixed;
+  top: 50%;
+  left: calc(40vw + 60px);
+  transform: translateY(-50%);
+  z-index: 9200;
+  display: none;
+  width: 380px;
+  max-width: calc(100vw - 40vw - 100px);
   background: var(--cream-100);
   color: var(--ink);
   border-radius: 10px;
-  padding: 28px 28px 24px;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.35);
-  text-align: left;
-  animation: heroIntroCardIn 420ms var(--ease-out) both;
+  padding: 26px 28px 22px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+  animation: heroIntroCardIn 460ms var(--ease-out) 120ms both;
+}
+.hero-told-intro.is-open { display: block; }
+.hero-told-intro.is-closing { animation: heroIntroCardOut 260ms var(--ease-out) both; }
+/* Little arrow on the left of the card pointing at the spotlight panel */
+.hero-told-intro::before {
+  content: '';
+  position: absolute;
+  left: -8px; top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 16px; height: 16px;
+  background: var(--cream-100);
+  border-radius: 2px;
 }
 .hero-told-intro-eyebrow {
   display: inline-block;
@@ -2114,8 +2152,8 @@ body.mode-learning .col-spacer.right {
 }
 .hero-told-intro-title {
   font-family: "Moller", sans-serif;
-  font-size: 28px; font-weight: 400;
-  line-height: 1.1; letter-spacing: -0.01em;
+  font-size: 26px; font-weight: 400;
+  line-height: 1.15; letter-spacing: -0.01em;
   color: var(--ink);
   margin-bottom: 14px;
 }
@@ -2123,25 +2161,59 @@ body.mode-learning .col-spacer.right {
   font-size: 15px; line-height: 1.55;
   color: var(--muted);
   margin-bottom: 20px;
+  min-height: 88px; /* prevents layout shift while typewriter runs */
 }
 .hero-told-intro-text b { font-weight: 500; color: var(--ink); }
+/* Blinking caret while typewriter is running */
+.hero-told-intro-text.is-typing::after {
+  content: '';
+  display: inline-block;
+  width: 2px; height: 1em;
+  background: var(--ink);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: heroIntroCaret 800ms steps(2) infinite;
+}
+@keyframes heroIntroCaret { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 .hero-told-intro-btn {
   appearance: none; border: 0; cursor: pointer;
   background: var(--action-blue); color: #fff;
   font: 500 14px/1 "Moller", sans-serif;
   padding: 12px 22px;
   border-radius: var(--radius-pill);
-  transition: background 180ms;
+  transition: background 180ms, opacity 200ms;
 }
 .hero-told-intro-btn:hover { background: var(--action-blue-hover); }
-@keyframes heroIntroFadeIn  { from { opacity: 0; } to { opacity: 1; } }
-@keyframes heroIntroFadeOut { from { opacity: 1; } to { opacity: 0; } }
+.hero-told-intro-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+@keyframes spotlightScrimIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes spotlightScrimOut { from { opacity: 1; } to { opacity: 0; } }
 @keyframes heroIntroCardIn {
-  0%   { opacity: 0; transform: translateY(12px) scale(0.96); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  0%   { opacity: 0; transform: translateY(-50%) translateX(-10px); }
+  100% { opacity: 1; transform: translateY(-50%) translateX(0); }
 }
-/* Make hero a positioning context so the overlay can fill it */
+@keyframes heroIntroCardOut {
+  from { opacity: 1; transform: translateY(-50%) translateX(0); }
+  to   { opacity: 0; transform: translateY(-50%) translateX(-10px); }
+}
+/* Hero needs positioning context for the panel z-index lift to work */
 .col-spacer.left.hero { position: relative; }
+/* Narrow viewports: card sits below the hero instead of beside it */
+@media (max-width: 1100px) {
+  .hero-told-intro {
+    left: 50%;
+    top: auto;
+    bottom: 32px;
+    transform: translateX(-50%);
+    width: calc(100vw - 48px);
+    max-width: 420px;
+  }
+  .hero-told-intro::before { display: none; }
+  @keyframes heroIntroCardIn {
+    0%   { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+}
 .hero-told-eyebrow {
   font-size: 15px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
@@ -2157,9 +2229,9 @@ body.mode-learning .col-spacer.right {
 .hero-told-list { display: flex; flex-direction: column; gap: 0; position: relative; }
 .hero-told-item {
   display: flex; flex-direction: column;
-  padding: 14px 0;
+  padding: 10px 0;
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  gap: 6px;
+  gap: 3px;
   position: relative;
 }
 /* Newly-added rows animate in (fade + slide) */
@@ -2234,24 +2306,24 @@ body.mode-learning .col-spacer.right {
   gap: 16px;
 }
 .hero-told-item-label {
-  font-size: 14px; font-weight: 500;
+  font-size: 16px; font-weight: 500;
   letter-spacing: .12em; text-transform: uppercase;
   color: rgba(255,255,255,0.6);
 }
 .hero-told-item-value {
-  font-size: 18px; font-weight: 500;
+  font-size: 22px; font-weight: 500;
   color: var(--cream-100);
   text-align: right;
   max-width: 60%;
 }
 .hero-told-item-actions {
   display: flex; gap: 14px;
-  margin-top: 2px;
+  margin-top: 0;
 }
 .hero-told-action {
   appearance: none; border: 0; background: transparent;
   padding: 0; cursor: pointer;
-  font: 500 12.5px/1 "Moller", sans-serif;
+  font: 500 14px/1 "Moller", sans-serif;
   letter-spacing: 0.04em;
   color: var(--salmon);
   text-decoration: underline;
@@ -2350,19 +2422,7 @@ body.mode-learning .col-spacer.right {
       <h1 class="hero-headline">Buying a car can feel overwhelming.<br>Don't worry — I'm here to <u>help</u>.</h1>
       <p class="hero-sub">You don't need to know a thing about cars. Just tell me about your life, needs and budget, and I'll capture what matters as we talk.</p>
       <div class="hero-told" id="heroTold"></div>
-      <!-- First-time intro overlay shown right before the told panel appears -->
-      <div class="hero-told-intro" id="heroToldIntro" aria-hidden="true">
-        <div class="hero-told-intro-inner">
-          <span class="hero-told-intro-eyebrow">New section</span>
-          <h2 class="hero-told-intro-title">Your live profile</h2>
-          <p class="hero-told-intro-text">
-            From here on, every answer you give me gets captured on this side as a
-            "live profile". You can tap <b>Change</b> on any item to update it, or
-            <b>Show in chat</b> to jump back to where it came up.
-          </p>
-          <button class="hero-told-intro-btn" type="button" onclick="heroToldIntroDismiss()">Got it</button>
-        </div>
-      </div>
+      <!-- (intro overlay moved to body level — see below) -->
       <div class="hero-bottom">
         <div class="hero-recs-head">
           <span class="hero-recs-label" id="heroRecsLabel">Popular near you</span>
@@ -2476,6 +2536,16 @@ body.mode-learning .col-spacer.right {
 <div class="toast" id="toast"></div>
 <div class="drawer-backdrop" id="drawerBackdrop" onclick="toggleDrawer()"></div>
 
+<!-- First-time spotlight intro for the "Your live profile" panel -->
+<div class="hero-spotlight-scrim" id="heroSpotlightScrim" aria-hidden="true"></div>
+<div class="hero-told-intro" id="heroToldIntro" role="dialog" aria-modal="true" aria-hidden="true">
+  <span class="hero-told-intro-eyebrow">New section appeared</span>
+  <h2 class="hero-told-intro-title">Your live profile</h2>
+  <p class="hero-told-intro-text" id="heroToldIntroText"></p>
+  <button class="hero-told-intro-btn" id="heroToldIntroBtn" type="button" disabled
+          onclick="heroToldIntroDismiss()">Got it</button>
+</div>
+
 <script>
 // ── config ──────────────────────────────────────────────────────────────
 // Gemini API (proxied through /api/gemini so the key stays server-side)
@@ -2542,6 +2612,7 @@ Rules:
 - HIGH-PRIORITY OVERRIDE: If the user's message contains "Not sure yet", "I am not sure yet", "[NOT-SURE-YET", "unsure", or similar — DO NOT advance the conversation. Stay on the EXACT current topic. Briefly explain the options (1–2 sentences each), then re-ask the SAME question. The last sentence of your reply MUST be a question about the same topic. NEVER pivot to budget, seats, brand, must-haves, etc. when the user is asking for clarification on the current question. This rule overrides the normal B+C+D+F+G flow.
 - USER-DRIVEN TOPIC SWITCH: If the user's latest message clearly raises a NEW topic, a question of their own, or talks about something other than what you just asked (e.g. you asked about fuel and they reply about size, range, brand, or anything else) — DROP your previous question entirely. Do NOT repeat it, do NOT append "but back to my earlier question…". Acknowledge what they just said in 1–2 sentences, answer or react to it, then ask the next logical question driven by THEIR message. The conversation must always follow the user's energy, never force them back to a question they chose to skip.
 - Note: "Not sure yet" / "unsure" is NOT a topic switch — it's a clarification request, and the previous rule (re-ask the same question with explanation) still applies. Only treat substantive new content as a topic switch.
+- ACCEPT THE USER'S ANSWERS — DO NOT INTERROGATE: When the user gives a direct answer to your question (e.g. you ask "how many seats?" and they reply "5", "2-4 people", "around 6", "five seats"), ACCEPT IT AS THE FINAL ANSWER. Move on to the next REQUIRED area. NEVER re-ask the same question to "clarify", "reconcile", or "double-check" against something they said earlier (e.g. mentioning kids, a partner, dogs). If you sense a mismatch, you may briefly note it ("Got it — 4 seats. Just so I know, that's enough for daily use even with the kids?") but the NEXT sentence MUST move to a new REQUIRED area, NOT re-ask seats. NEVER ask the user to clarify a numeric answer they already gave. Doing so feels like an interrogation and is the #1 complaint about AI assistants.
 
 OPENING — read the user's mode from their FIRST reply:
 - If they say "Find my next car" / "replace my car" / "compare options" / "shopping" → SHOPPING MODE. Begin the discovery flow below.
@@ -4037,28 +4108,76 @@ function updateHeroToldPanel() {
   _heroToldPrevKeys = currentKeys;
   if (firstEverArrival) {
     _heroToldTipShown = true;
-    // Show the full-hero intro overlay BEFORE the user sees the live profile.
-    // The told panel content is already rendered behind it — once the user
-    // dismisses, it fades out and the panel is revealed.
-    const intro = document.getElementById('heroToldIntro');
-    if (intro) {
-      intro.classList.add('is-open');
-      intro.setAttribute('aria-hidden', 'false');
-    }
-    // Hide the small inline tip — overlay replaces it.
+    // Hide the old inline tip if any — the new spotlight intro supersedes it.
     const t = document.getElementById('heroToldTip');
     if (t) t.style.display = 'none';
+    // Defer slightly so the row entrance animation isn't fighting with the scrim
+    setTimeout(showHeroToldIntro, 350);
   }
 }
 
-// Dismiss the first-time "Your live profile" intro overlay
+// ── First-time spotlight intro for "Your live profile" ──
+// Dims the entire screen, highlights the told panel, types out the explanation,
+// and disables all other UI (the scrim eats clicks; only the intro card is live).
+function showHeroToldIntro() {
+  const scrim = document.getElementById('heroSpotlightScrim');
+  const card  = document.getElementById('heroToldIntro');
+  const textEl = document.getElementById('heroToldIntroText');
+  const btn   = document.getElementById('heroToldIntroBtn');
+  const app   = document.querySelector('.app');
+  if (!scrim || !card || !textEl || !app) return;
+
+  app.classList.add('intro-spotlight');
+  scrim.classList.add('is-open');
+  scrim.setAttribute('aria-hidden', 'false');
+  card.classList.add('is-open');
+  card.setAttribute('aria-hidden', 'false');
+
+  // Typewriter the explanation text. HTML tags are emitted atomically.
+  const html = `From here on, every answer you give me gets captured here as a <b>live profile</b>. Tap <b>Change</b> on any item to update it, or <b>Show in chat</b> to jump back to where it came up.`;
+  textEl.innerHTML = '';
+  textEl.classList.add('is-typing');
+  btn.disabled = true;
+
+  let i = 0;
+  const DELAY = 22; // ms per char — slightly slower than chat typewriter for emphasis
+  function step() {
+    if (i >= html.length) {
+      textEl.innerHTML = html;
+      textEl.classList.remove('is-typing');
+      btn.disabled = false;
+      return;
+    }
+    const ch = html[i];
+    if (ch === '<') {
+      const close = html.indexOf('>', i);
+      i = (close === -1) ? html.length : (close + 1);
+    } else if (ch === '&') {
+      const semi = html.indexOf(';', i);
+      i = (semi === -1 || semi - i > 8) ? (i + 1) : (semi + 1);
+    } else {
+      i++;
+    }
+    textEl.innerHTML = html.slice(0, i);
+    setTimeout(step, DELAY);
+  }
+  step();
+}
+
+// Dismiss the spotlight intro
 function heroToldIntroDismiss() {
-  const intro = document.getElementById('heroToldIntro');
-  if (!intro) return;
-  intro.classList.add('is-closing');
+  const scrim = document.getElementById('heroSpotlightScrim');
+  const card  = document.getElementById('heroToldIntro');
+  const app   = document.querySelector('.app');
+  if (!card || !scrim || !app) return;
+  card.classList.add('is-closing');
+  scrim.classList.add('is-closing');
   setTimeout(() => {
-    intro.classList.remove('is-open', 'is-closing');
-    intro.setAttribute('aria-hidden', 'true');
+    card.classList.remove('is-open', 'is-closing');
+    scrim.classList.remove('is-open', 'is-closing');
+    app.classList.remove('intro-spotlight');
+    card.setAttribute('aria-hidden', 'true');
+    scrim.setAttribute('aria-hidden', 'true');
   }, 320);
 }
 
