@@ -489,11 +489,6 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   color: var(--ink); font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
-.fuel-blurb {
-  font-size: 13.5px; line-height: 1.5;
-  color: var(--muted); margin: 0;
-}
-
 /* ── Budget tier cards (simplified ArtBudget — no rail, no cars) ── */
 .budget-cards {
   margin-top: 6px;
@@ -1930,6 +1925,47 @@ body.mode-learning .col-spacer.right {
 @media (max-width: 1100px) { .col-spacer.left { padding: 44px 36px 32px !important; min-width: 340px; } }
 @media (max-width: 900px)  { .col-spacer.left { display: none !important; } }
 
+/* ── Collapsible hero panel ── */
+/* Toggle button sits on the right edge of the hero panel */
+.hero-toggle-btn {
+  position: fixed;
+  top: 50%;
+  /* will be set dynamically, but fallback: approx right edge of 40vw panel */
+  left: calc(40vw - 18px);
+  transform: translateY(-50%);
+  z-index: 200;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: var(--moller-blue);
+  color: var(--cream-100);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.18);
+  transition: background 200ms, left 380ms var(--ease-out);
+  font-size: 14px;
+  line-height: 1;
+}
+.hero-toggle-btn:hover { background: var(--moller-blue-700); }
+/* Collapsed state — hide the hero panel, re-center chat */
+.app.hero-collapsed .col-spacer.left { display: none !important; }
+.app.hero-collapsed .col-center {
+  max-width: 820px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.app.hero-collapsed .hero-toggle-btn {
+  left: 0px;
+  border-radius: 0 50% 50% 0;
+  border-left: 0;
+  background: var(--cream-200);
+  color: var(--moller-blue);
+  border-color: var(--border-strong);
+  box-shadow: 2px 0 12px rgba(0,0,0,0.10);
+}
+.app.hero-collapsed .hero-toggle-btn:hover { background: var(--cream-300); }
+@media (max-width: 900px) { .hero-toggle-btn { display: none !important; } }
+
 .hero-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 26px; }
 .hero-eyebrow {
   font-size: 15px; font-weight: 500;
@@ -1982,30 +2018,30 @@ body.mode-learning .col-spacer.right {
   color: var(--cream-100);
   width: 100%;
   border-radius: 4px;
-  padding: 14px 16px;
-  display: flex; align-items: center; gap: 16px;
+  padding: 16px 18px;
+  display: flex; align-items: center; gap: 18px;
   text-align: left; cursor: pointer;
   font-family: inherit;
   transition: border-color 220ms var(--ease-out), background 220ms var(--ease-out);
 }
 .hero-rec-card:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.04); }
 .hero-rec-card-img {
-  width: 64px; height: 46px;
-  border-radius: 3px;
+  width: 88px; height: 64px;
+  border-radius: 4px;
   background: rgba(255,255,255,0.08);
   flex-shrink: 0;
   object-fit: cover;
 }
 .hero-rec-card-info {
-  flex: 1; display: flex; flex-direction: column; gap: 3px;
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
   min-width: 0;
 }
 .hero-rec-card-name {
-  font-size: 18px; font-weight: 500;
+  font-size: 20px; font-weight: 500;
   color: var(--cream-100);
 }
 .hero-rec-card-meta {
-  font-size: 14.5px;
+  font-size: 15px;
   color: rgba(255,255,255,0.6);
 }
 .hero-rec-card-cta {
@@ -2067,13 +2103,23 @@ body.mode-learning .col-spacer.right {
   0%   { opacity: 0; transform: translateY(8px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+/* Value appears with a brief spin-in on new rows */
+.hero-told-item.is-new .hero-told-item-value {
+  animation: heroValuePop 560ms var(--ease-out) 120ms both;
+}
+@keyframes heroValuePop {
+  0%   { opacity: 0; transform: scale(0.7) rotate(-8deg); }
+  60%  { opacity: 1; transform: scale(1.08) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
 
-/* First-use coachmark next to the very first told row */
+/* First-use coachmark — sits below the first told row (inside hero panel) */
 .hero-told-tip {
-  position: absolute;
-  left: calc(100% + 18px);
-  top: 8px;
-  width: 260px;
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100%;
+  margin-top: 10px;
   background: var(--cream-100);
   color: var(--ink);
   border-radius: 8px;
@@ -2085,7 +2131,7 @@ body.mode-learning .col-spacer.right {
 .hero-told-tip::before {
   content: '';
   position: absolute;
-  left: -7px; top: 16px;
+  left: 18px; top: -7px;
   width: 14px; height: 14px;
   background: var(--cream-100);
   transform: rotate(45deg);
@@ -2111,19 +2157,10 @@ body.mode-learning .col-spacer.right {
   text-underline-offset: 3px;
 }
 @keyframes heroTipIn {
-  0%   { opacity: 0; transform: translateX(-6px); }
-  100% { opacity: 1; transform: translateX(0); }
+  0%   { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
-@media (max-width: 1280px) {
-  /* On narrower screens the tip can't sit to the right of the hero — put it below the row */
-  .hero-told-tip {
-    left: 0; right: auto; top: calc(100% + 8px);
-    width: auto; max-width: 92%;
-  }
-  .hero-told-tip::before {
-    left: 18px; top: -7px;
-  }
-}
+/* tip is always positioned inline below the row, no override needed */
 .hero-told-item:last-child { border-bottom: 0; }
 .hero-told-item-top {
   display: flex; justify-content: space-between; align-items: baseline;
@@ -2254,6 +2291,13 @@ body.mode-learning .col-spacer.right {
         <div id="heroRecsBody"></div>
       </div>
     </aside>
+    <!-- Hero panel collapse toggle -->
+    <button class="hero-toggle-btn" id="heroToggleBtn" type="button" title="Toggle panel"
+            onclick="toggleHeroPanel()" aria-label="Toggle hero panel">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path id="heroToggleIcon" d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
     <div class="col-center">
 
     <div class="chat">
@@ -3910,6 +3954,47 @@ function heroToldTipClose() {
   if (t) t.style.display = 'none';
 }
 
+// ── Hero panel collapse / expand ──
+function toggleHeroPanel() {
+  const app = document.querySelector('.app');
+  const btn = document.getElementById('heroToggleBtn');
+  const icon = document.getElementById('heroToggleIcon');
+  const collapsed = app.classList.toggle('hero-collapsed');
+  // Flip the chevron direction
+  if (icon) {
+    icon.setAttribute('d', collapsed
+      ? 'M5 2L10 7L5 12'   // chevron right (expand)
+      : 'M9 2L4 7L9 12'    // chevron left (collapse)
+    );
+  }
+  // Update button position to sit at right edge of hero panel (0 when collapsed)
+  if (btn && !collapsed) {
+    const hero = document.getElementById('heroPanel');
+    if (hero) {
+      const rect = hero.getBoundingClientRect();
+      btn.style.left = (rect.right - 18) + 'px';
+    }
+  }
+}
+
+// Keep the toggle button aligned to the hero panel's right edge on resize
+(function() {
+  function syncToggleBtn() {
+    const app = document.querySelector('.app');
+    if (!app || app.classList.contains('hero-collapsed')) return;
+    const hero = document.getElementById('heroPanel');
+    const btn  = document.getElementById('heroToggleBtn');
+    if (hero && btn) {
+      const rect = hero.getBoundingClientRect();
+      btn.style.left = (rect.right - 18) + 'px';
+    }
+  }
+  window.addEventListener('resize', syncToggleBtn);
+  document.addEventListener('DOMContentLoaded', syncToggleBtn);
+  // also run after a short delay to catch any layout reflow
+  setTimeout(syncToggleBtn, 200);
+})();
+
 // Click "Change" on a hero-told row — flip just that row into edit mode.
 // All groups (including budget) edit inline; no drawer opens.
 function heroToldChange(key) {
@@ -4858,11 +4943,11 @@ function stripEVSurprisesBlock(text) {
 
 // ── Fuel-type comparison cards (renders when the AI is asking about fuel) ──
 const FUEL_CARDS = [
-  { tag:'Traditional',   name:'Petrol',          blurb:'Cheap to buy, costliest to refuel over time.', cost:1450, range:'750 km',   fill:'3 min',         co2:'150 g/km', glyph:'fossil' },
-  { tag:'Traditional',   name:'Diesel',          blurb:'Long range, but city tolls bite hardest.',     cost:1280, range:'1 100 km', fill:'3 min',         co2:'135 g/km', glyph:'fossil' },
-  { tag:'Self-charging', name:'Hybrid',          blurb:'Small motor helps in town. Refuel as normal.', cost:1120, range:'900 km',   fill:'3 min',         co2:'105 g/km', glyph:'blend' },
-  { tag:'Plug-in',       name:'Plug-in hybrid',  blurb:'Charge at home, petrol in reserve.',           cost: 870, range:'750 km',   fill:'4 h · 3 min',   co2:'45 g/km',  glyph:'blend',    tinted:true },
-  { tag:'Electric',      name:'EV',              blurb:'Cheapest to run. Needs a charging routine.',   cost: 320, range:'500 km',   fill:'20 min · DC',   co2:'0 g/km',   glyph:'electric', tinted:true, accent:true },
+  { tag:'Traditional',   name:'Petrol',         cost:1450, range:'Up to 750 km',   fill:'~3 min',                  co2:'150 g/km', glyph:'fossil' },
+  { tag:'Traditional',   name:'Diesel',         cost:1280, range:'Up to 1 100 km', fill:'~3 min',                  co2:'135 g/km', glyph:'fossil' },
+  { tag:'Self-charging', name:'Hybrid',         cost:1120, range:'Up to 900 km',   fill:'~3 min',                  co2:'105 g/km', glyph:'blend' },
+  { tag:'Plug-in',       name:'Plug-in hybrid', cost: 870, range:'Up to 750 km',   fill:'~4 h home / 3 min petrol', co2:'45 g/km',  glyph:'blend',    tinted:true },
+  { tag:'Electric',      name:'EV',             cost: 320, range:'Up to 500 km',   fill:'~20 min fast charge',     co2:'0 g/km',   glyph:'electric', tinted:true, accent:true },
 ];
 
 function renderFuelCards(msgEl) {
@@ -4891,7 +4976,6 @@ function renderFuelCards(msgEl) {
         <div class="fuel-row"><span>Refill / charge</span><span>${escapeHtml(f.fill)}</span></div>
         <div class="fuel-row"><span>CO₂</span><span>${escapeHtml(f.co2)}</span></div>
       </div>
-      <p class="fuel-blurb">${escapeHtml(f.blurb)}</p>
     `;
     wrap.appendChild(card);
   });
@@ -5349,6 +5433,10 @@ function renderRecs(recs, msgEl) {
   const content = msgEl.querySelector('.msg-content');
   const recsDiv = document.createElement('div');
   recsDiv.className = 'recs';
+  // 3 cards: force a single row so they all line up side by side
+  if (recs.length === 3) {
+    recsDiv.style.gridTemplateColumns = 'repeat(3, minmax(0, 380px))';
+  }
 
   recs.forEach((r) => {
     const card = document.createElement('div');
