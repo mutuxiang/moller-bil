@@ -2402,8 +2402,9 @@ body.mode-learning .col-spacer.right {
 <script>
 // ── config ──────────────────────────────────────────────────────────────
 // Gemini API (proxied through /api/gemini so the key stays server-side)
-// Using `gemini-2.0-flash` — GA, fast, and notably more stable than 2.5-flash.
-const GEMINI_MODEL = 'gemini-2.0-flash';
+// Using `gemini-2.5-pro` — slower than flash but the most stable / highest-quality
+// model in the current lineup. Avoids the inconsistency of 2.5-flash.
+const GEMINI_MODEL = 'gemini-2.5-pro';
 const GEMINI_URL   = `/api/gemini?model=${GEMINI_MODEL}`;
 
 // Convert OpenAI-style {role, content} messages into Gemini's {systemInstruction, contents}
