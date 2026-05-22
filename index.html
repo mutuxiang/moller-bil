@@ -187,7 +187,9 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
   background: var(--accent); color: var(--cream-100);
 }
 
-.main { flex: 1; display: flex; min-height: 0; }
+/* `row-reverse` puts the chat on the LEFT and the hero panel on the RIGHT,
+   without changing DOM order. Source order stays: hero → toggle → col-center. */
+.main { flex: 1; display: flex; flex-direction: row-reverse; min-height: 0; }
 
 .col-spacer {
   width: 80px; flex-shrink: 0; background: var(--bg);
@@ -2076,7 +2078,9 @@ body.mode-learning .col-spacer.right {
 .app.is-onboarding .col-spacer.left { position: relative; }
 .app.is-onboarding .col-center {
   display: none !important;
-  transform: translateX(100%);
+  /* Hero is on the right now → chat is parked off-screen LEFT during onboarding,
+     slides in from the left when the user picks a CTA. */
+  transform: translateX(-100%);
   opacity: 0;
   pointer-events: none;
 }
@@ -2195,8 +2199,10 @@ body.mode-learning .col-spacer.right {
 .hero-toggle-btn {
   position: fixed;
   top: 50%;
-  /* will be set dynamically, but fallback: approx right edge of 40vw panel */
-  left: calc(40vw - 18px);
+  /* will be set dynamically — sits at the LEFT edge of the hero panel, which
+     is the boundary between the chat (left) and the hero (right). Fallback
+     points to roughly that boundary at a 40vw hero. */
+  left: calc(60vw - 18px);
   transform: translateY(-50%);
   z-index: 200;
   width: 36px; height: 36px;
@@ -2228,14 +2234,16 @@ body.mode-learning .col-spacer.right {
   margin-right: auto !important;
 }
 .app.hero-collapsed .hero-toggle-btn {
-  /* Override inline left set by JS — pin to the screen's left edge */
-  left: 0 !important;
-  border-radius: 0 50% 50% 0;
-  border-left: 0;
+  /* Override inline left set by JS — pin to the screen's RIGHT edge so the
+     button parks at the far-right side of the viewport when hero is hidden. */
+  left: auto !important;
+  right: 0 !important;
+  border-radius: 50% 0 0 50%;
+  border-right: 0;
   background: var(--cream-200);
   color: var(--moller-blue);
   border-color: var(--border-strong);
-  box-shadow: 2px 0 12px rgba(0,0,0,0.10);
+  box-shadow: -2px 0 12px rgba(0,0,0,0.10);
 }
 .app.hero-collapsed .hero-toggle-btn:hover { background: var(--cream-300); }
 @media (max-width: 900px) { .hero-toggle-btn { display: none !important; } }
@@ -2772,7 +2780,7 @@ body.mode-learning .col-spacer.right {
     <button class="hero-toggle-btn" id="heroToggleBtn" type="button" title="Toggle panel"
             onclick="toggleHeroPanel()" aria-label="Toggle hero panel">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path id="heroToggleIcon" d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path id="heroToggleIcon" d="M5 2L10 7L5 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
     <div class="col-center">
@@ -4854,11 +4862,14 @@ function toggleHeroPanel() {
   const btn = document.getElementById('heroToggleBtn');
   const icon = document.getElementById('heroToggleIcon');
   const collapsed = app.classList.toggle('hero-collapsed');
-  // Flip the chevron direction
+  // Chevron points in the direction the panel will travel.
+  // Hero panel sits on the RIGHT side:
+  //   collapsed → click to reveal panel from the right → chevron LEFT
+  //   expanded  → click to push panel back to the right → chevron RIGHT
   if (icon) {
     icon.setAttribute('d', collapsed
-      ? 'M5 2L10 7L5 12'   // chevron right (expand)
-      : 'M9 2L4 7L9 12'    // chevron left (collapse)
+      ? 'M9 2L4 7L9 12'    // chevron LEFT — click to reveal hero from right
+      : 'M5 2L10 7L5 12'   // chevron RIGHT — click to hide hero to the right
     );
   }
   // Update button position
@@ -4892,11 +4903,14 @@ function syncHeroToggleBtn() {
     return;
   }
   if (app.classList.contains('hero-collapsed')) {
+    btn.style.left = '';  // let CSS rule (right: 0) take over
     btn.classList.add('is-positioned');
     return;
   }
+  // Hero is on the RIGHT now → toggle sits on the hero's LEFT edge,
+  // which is the visual boundary between chat (left) and hero (right).
   const rect = hero.getBoundingClientRect();
-  btn.style.left = (rect.right - 18) + 'px';
+  btn.style.left = (rect.left - 18) + 'px';
   btn.classList.add('is-positioned');
 }
 
