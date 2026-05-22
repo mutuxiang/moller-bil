@@ -2779,29 +2779,31 @@ body.v2-layout .hero-top,
 body.v2-layout .hero-told,           /* told-me lives in its own strip above chat */
 body.v2-layout .hero-recs-head { display: none !important; }
 
-/* Right dock — navy, fills 2/5 of the viewport. Reuses the existing hero
-   panel (heroPanel) so heroRecsBody keeps working as the live-recs body;
-   we inject a viz section in front of it via JS. */
+/* Right dock — navy, fills 2/3 of the viewport. Reuses the existing hero
+   panel (heroPanel). The dock is a vertical flex container: the viz section
+   grows + scrolls internally; live-recs is pinned to the bottom. */
 body.v2-layout .col-spacer.left.hero {
   background: var(--moller-blue) !important;
   color: var(--cream-100) !important;
-  width: 40vw !important;
-  min-width: 380px !important;
-  max-width: 760px !important;
-  padding: 24px 28px 28px !important;
+  width: calc(100vw * 2 / 3) !important;
+  min-width: 480px !important;
+  max-width: none !important;
+  padding: 36px 44px !important;
   border-left: 1px solid rgba(255,255,255,0.08) !important;
   border-right: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 22px !important;
-  overflow-y: auto !important;
+  gap: 28px !important;
+  /* The dock itself doesn't scroll — the viz section scrolls inside */
+  overflow: hidden !important;
 }
 body.v2-layout .hero-toggle-btn { display: none !important; }
 
-/* Chat — 3/5 of viewport */
+/* Chat — 1/3 of viewport, on the left */
 body.v2-layout .col-center {
-  flex: 0 0 60vw !important;
-  max-width: 60vw !important;
+  flex: 0 0 calc(100vw / 3) !important;
+  max-width: calc(100vw / 3) !important;
+  min-width: 320px !important;
   display: flex !important;
   flex-direction: column !important;
 }
@@ -2809,45 +2811,45 @@ body.v2-layout .chat { max-width: 100% !important; }
 
 /* ── Told-me strip above the chat ──
    Distinct cream-300 background (vs. cream-100 chat) so it reads as a
-   separate band. Title on its own line, chips below. Bigger type. */
+   separate band. Compact when empty (eyebrow + one-line intro); expands
+   when chips fill in. NO big title — the eyebrow alone identifies it. */
 .v2-told-strip {
-  padding: 20px 32px 18px;
+  padding: 14px 32px 14px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-surface-2);   /* cream-300 — visibly different from chat */
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
+.v2-told-strip.is-empty { padding: 12px 32px; }
 .v2-told-strip-head {
-  display: flex; flex-direction: column;
-  gap: 2px;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 .v2-told-strip-eyebrow {
-  font-size: 13px; font-weight: 500;
+  font-size: 12px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
+  white-space: nowrap;
 }
-.v2-told-strip-title {
-  font-family: "Moller", sans-serif;
-  font-size: 24px; font-weight: 400;
-  color: var(--ink);
-  line-height: 1.15;
-  margin: 0;
-}
+/* Inline intro — sits next to the eyebrow on the same line when there's room */
 .v2-told-strip-intro {
-  font-size: 14.5px;
+  font-size: 13.5px;
   color: var(--muted);
-  line-height: 1.45;
-  margin-top: 6px;
-  max-width: 640px;
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
 }
 .v2-told-strip-intro b { color: var(--ink); font-weight: 500; }
 .v2-told-strip-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 .v2-told-chip {
   display: inline-flex; align-items: center; gap: 10px;
@@ -2942,23 +2944,52 @@ body.v2-layout .chat { max-width: 100% !important; }
    visual language of the told-me strip. */
 .v2-dock-section {
   display: flex; flex-direction: column;
+  min-height: 0;
 }
 .v2-dock-section-head {
   display: flex; flex-direction: column;
-  gap: 2px;
-  margin-bottom: 14px;
+  gap: 4px;
+  margin-bottom: 18px;
+  flex-shrink: 0;
 }
 .v2-dock-section-eyebrow {
-  font-size: 12px; font-weight: 500;
+  font-size: 14px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
 }
 .v2-dock-section-title {
   font-family: "Moller", sans-serif;
-  font-size: 22px; font-weight: 400;
+  font-size: 32px; font-weight: 400;
+  letter-spacing: -0.01em;
   color: var(--cream-100);
   margin: 0;
-  line-height: 1.15;
+  line-height: 1.1;
+}
+
+/* The VIZ section grows + scrolls inside itself.
+   The LIVE-RECS section (heroBottom) is pinned to the bottom, never scrolls. */
+.v2-viz-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.v2-viz-wrap #v2VizBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;        /* room for the scrollbar */
+  margin-right: -6px;
+}
+.v2-viz-wrap #v2VizBody::-webkit-scrollbar { width: 6px; }
+.v2-viz-wrap #v2VizBody::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border-radius: 3px;
+}
+body.v2-layout .hero-bottom {
+  flex-shrink: 0;
+  margin-top: 0;
 }
 
 /* Viz panel — budget/size/fuel/rec cards relocated from chat go here */
@@ -7873,7 +7904,8 @@ function showToast(msg) {
     const heroBottom = hero.querySelector('.hero-bottom');
     if (heroBottom && !document.getElementById('v2VizBody')) {
       const vizSection = document.createElement('section');
-      vizSection.className = 'v2-dock-section';
+      // v2-viz-wrap class makes this section the flex-grow + scrollable area
+      vizSection.className = 'v2-dock-section v2-viz-wrap';
       vizSection.innerHTML = `
         <div class="v2-dock-section-head">
           <span class="v2-dock-section-eyebrow">Live visualization</span>
@@ -7980,24 +8012,20 @@ function showToast(msg) {
     const strip = document.getElementById('v2ToldStrip');
     if (!strip) return;
     const rows = collectToldRows();
-    // Header — eyebrow + title on their own lines, ALWAYS visible (not collapsed
-    // when empty), so the user sees this panel exists from the very first turn.
-    const headHtml = `
-      <div class="v2-told-strip-head">
-        <span class="v2-told-strip-eyebrow">What you've told me</span>
-        <h2 class="v2-told-strip-title">Your live profile</h2>
-      </div>`;
     if (!rows || rows.length === 0) {
-      // Initial intro — explains the feature when there's nothing yet
-      strip.className = 'v2-told-strip';
-      strip.innerHTML = headHtml + `
-        <p class="v2-told-strip-intro">
-          Your answers appear here as we chat — <b>budget</b>, <b>passengers</b>,
-          <b>powertrain</b>, <b>size</b>, brand. Tap any chip to <b>edit</b> or
-          <b>jump back</b> to the chat where it came up.
-        </p>`;
+      // Compact empty state: eyebrow + one-line intro on the SAME row
+      strip.className = 'v2-told-strip is-empty';
+      strip.innerHTML = `
+        <div class="v2-told-strip-head">
+          <span class="v2-told-strip-eyebrow">What you've told me</span>
+          <p class="v2-told-strip-intro">
+            Your answers appear here as we chat — <b>budget</b>, <b>passengers</b>,
+            <b>powertrain</b>, <b>size</b>, brand.
+          </p>
+        </div>`;
       return;
     }
+    // Filled state: eyebrow on its own row, chips below
     strip.className = 'v2-told-strip';
     const chips = rows.map(r => {
       const hasMsg = !!findLatestMessageForTopic(r.key);
@@ -8022,7 +8050,11 @@ function showToast(msg) {
           </span>
         </div>`;
     }).join('');
-    strip.innerHTML = headHtml + `<div class="v2-told-strip-chips">${chips}</div>`;
+    strip.innerHTML = `
+      <div class="v2-told-strip-head">
+        <span class="v2-told-strip-eyebrow">What you've told me</span>
+      </div>
+      <div class="v2-told-strip-chips">${chips}</div>`;
   }
 
   // Expose the edit-popover opener — uses the same data the heroToldChange
