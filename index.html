@@ -2063,6 +2063,42 @@ body.mode-learning .col-spacer.right {
   max-width: 880px;
   margin-bottom: 64px;  /* breathing room before the CTA stack */
 }
+/* ── Hero image cluster (onboarding only) ──
+   Three rectangular tiles laid out like the user's reference: a tall
+   portrait on the left, two stacked landscapes on the right. */
+.hero-cluster {
+  position: absolute;
+  right: 6vw;
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(560px, 40vw);
+  aspect-ratio: 5 / 6;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 14px;
+  pointer-events: none;
+  filter: drop-shadow(0 20px 50px rgba(0,0,0,0.30));
+}
+.hero-cluster-tile {
+  border-radius: var(--radius-card);   /* 4px, Møller card vocabulary */
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+}
+.hero-cluster-tile img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.hero-cluster-tile.big { grid-column: 1; grid-row: 1 / span 2; }
+.hero-cluster-tile.t1  { grid-column: 2; grid-row: 1; }
+.hero-cluster-tile.t2  { grid-column: 2; grid-row: 2; }
+/* Only visible during onboarding */
+.app:not(.is-onboarding) .hero-cluster { display: none; }
+/* Narrow viewports — hide the cluster so the headline + CTAs keep the stage */
+@media (max-width: 900px) {
+  .hero-cluster { display: none !important; }
+}
+
 /* CTA stack sits well below the headline — breathing room is the point */
 .app.is-onboarding .hero-cta {
   margin: 32px 0 0;     /* extra top breathing beyond the headline's 64px margin-bottom */
@@ -2763,6 +2799,13 @@ body.mode-learning .col-spacer.right {
             <path d="M5 11h12M12 6l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
+      </div>
+      <!-- Hero image cluster — onboarding only. Three rectangular masks
+           arranged as: tall portrait on the left, two stacked landscapes on the right. -->
+      <div class="hero-cluster" aria-hidden="true">
+        <div class="hero-cluster-tile big"><img src="hero/1.avif" alt="" loading="lazy"></div>
+        <div class="hero-cluster-tile t1"><img src="hero/2.avif" alt="" loading="lazy"></div>
+        <div class="hero-cluster-tile t2"><img src="hero/3.avif" alt="" loading="lazy"></div>
       </div>
       <div class="hero-told" id="heroTold"></div>
       <!-- (intro overlay moved to body level — see below) -->
