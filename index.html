@@ -2765,95 +2765,120 @@ body.mode-learning .col-spacer.right {
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   v2 LAYOUT — chat narrower in the center, right-dock with viz on top
-   + persistent live recs below, horizontal told-me strip above chat.
-   All scoped under `body.v2-layout` so it can be removed for a/b compare.
+   v2 LAYOUT — chat 3/5 of viewport on the left, navy right dock with
+   viz section on top + persistent live recs below, told-me strip above
+   the chat. All scoped under `body.v2-layout` for easy a/b compare.
    ════════════════════════════════════════════════════════════════════ */
 
 /* Skip the full-screen onboarding intro entirely — v2 lands in the chat */
-body.v2-layout .app.is-onboarding .col-spacer.left {
-  display: none !important;
-}
+body.v2-layout .app.is-onboarding .col-spacer.left { display: none !important; }
 body.v2-layout .hero-cluster,
 body.v2-layout .hero-headline,
 body.v2-layout .hero-cta,
 body.v2-layout .hero-top,
-body.v2-layout .hero-told,           /* told-me lives in the horizontal strip instead */
-body.v2-layout .hero-recs-head,
-body.v2-layout .hero-bottom > .hero-recs-head { display: none !important; }
+body.v2-layout .hero-told,           /* told-me lives in its own strip above chat */
+body.v2-layout .hero-recs-head { display: none !important; }
 
-/* Right dock — replaces the navy hero panel with a cream side dock */
+/* Right dock — navy, fills 2/5 of the viewport. Reuses the existing hero
+   panel (heroPanel) so heroRecsBody keeps working as the live-recs body;
+   we inject a viz section in front of it via JS. */
 body.v2-layout .col-spacer.left.hero {
-  background: var(--bg-surface) !important;
-  color: var(--ink) !important;
-  width: 45vw !important;
+  background: var(--moller-blue) !important;
+  color: var(--cream-100) !important;
+  width: 40vw !important;
   min-width: 380px !important;
-  max-width: 720px !important;
-  padding: 20px 24px 24px !important;
-  border-left: 1px solid var(--border) !important;
+  max-width: 760px !important;
+  padding: 24px 28px 28px !important;
+  border-left: 1px solid rgba(255,255,255,0.08) !important;
   border-right: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 18px !important;
+  gap: 22px !important;
   overflow-y: auto !important;
 }
-/* Hide the hero toggle button — v2 has a fixed right dock */
 body.v2-layout .hero-toggle-btn { display: none !important; }
 
-/* Chat: flex-cap at 42vw so the right dock has room */
+/* Chat — 3/5 of viewport */
 body.v2-layout .col-center {
-  flex: 1 1 auto !important;
-  max-width: 55vw !important;
+  flex: 0 0 60vw !important;
+  max-width: 60vw !important;
   display: flex !important;
   flex-direction: column !important;
 }
 body.v2-layout .chat { max-width: 100% !important; }
 
-/* ── Horizontal told-me strip — sits above the chat stream ── */
+/* ── Told-me strip above the chat ──
+   Distinct cream-300 background (vs. cream-100 chat) so it reads as a
+   separate band. Title on its own line, chips below. Bigger type. */
 .v2-told-strip {
+  padding: 20px 32px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface-2);   /* cream-300 — visibly different from chat */
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.v2-told-strip-head {
+  display: flex; flex-direction: column;
+  gap: 2px;
+}
+.v2-told-strip-eyebrow {
+  font-size: 13px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--salmon);
+}
+.v2-told-strip-title {
+  font-family: "Moller", sans-serif;
+  font-size: 24px; font-weight: 400;
+  color: var(--ink);
+  line-height: 1.15;
+  margin: 0;
+}
+.v2-told-strip-intro {
+  font-size: 14.5px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin-top: 6px;
+  max-width: 640px;
+}
+.v2-told-strip-intro b { color: var(--ink); font-weight: 500; }
+.v2-told-strip-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 14px 32px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
-  flex-shrink: 0;
-  align-items: center;
-}
-.v2-told-strip.is-empty { display: none; }
-.v2-told-strip-eyebrow {
-  font-size: 11px; font-weight: 500;
-  letter-spacing: .16em; text-transform: uppercase;
-  color: var(--eyebrow);
-  margin-right: 4px;
+  gap: 10px;
+  margin-top: 4px;
 }
 .v2-told-chip {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 7px 10px 7px 14px;
-  background: var(--bg-surface);
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 10px 12px 10px 16px;
+  background: var(--cream-100);
   border: 1px solid var(--border-strong);
   border-radius: 999px;
-  font: 500 13.5px/1 "Moller", sans-serif;
+  font: 500 15.5px/1 "Moller", sans-serif;
   color: var(--ink);
   white-space: nowrap;
   transition: background 180ms, border-color 180ms, border-radius 220ms;
 }
-.v2-told-chip:hover { background: var(--accent-soft); border-radius: 8px; }
+.v2-told-chip:hover { background: var(--accent-soft); border-radius: 10px; }
 .v2-told-chip-label {
   font-weight: 400;
+  font-size: 13px;
+  letter-spacing: .08em; text-transform: uppercase;
   color: var(--muted);
-  margin-right: 2px;
+  margin-right: 4px;
 }
 .v2-told-chip-value {
   color: var(--ink);
+  font-weight: 500;
 }
 .v2-told-chip-actions {
   display: inline-flex; align-items: center; gap: 4px;
-  margin-left: 4px;
+  margin-left: 6px;
 }
 .v2-told-chip-btn {
   appearance: none; border: 0; background: transparent;
-  width: 22px; height: 22px;
+  width: 26px; height: 26px;
   border-radius: 50%;
   color: var(--muted);
   cursor: pointer;
@@ -2862,7 +2887,7 @@ body.v2-layout .chat { max-width: 100% !important; }
 }
 .v2-told-chip-btn:hover { background: var(--accent-soft-2); color: var(--ink); }
 .v2-told-chip-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.v2-told-chip-btn svg { width: 13px; height: 13px; }
+.v2-told-chip-btn svg { width: 14px; height: 14px; }
 
 /* Edit popover — appears below the chip when its Edit button is clicked */
 .v2-edit-popover {
@@ -2911,87 +2936,56 @@ body.v2-layout .chat { max-width: 100% !important; }
 }
 .v2-edit-popover-done:hover { background: var(--action-blue-hover); border-radius: 6px; }
 
-/* ── Right dock sections ── */
+/* ── Right-dock sections (sit ON the navy hero panel) ──
+   Each section gets a cream-coloured header (eyebrow + title) flush with
+   the navy bg, then the body content below. Section heads share the
+   visual language of the told-me strip. */
 .v2-dock-section {
   display: flex; flex-direction: column;
-  background: var(--cream-100);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  padding: 18px 20px;
 }
 .v2-dock-section-head {
-  display: flex; align-items: baseline; gap: 8px;
+  display: flex; flex-direction: column;
+  gap: 2px;
   margin-bottom: 14px;
 }
 .v2-dock-section-eyebrow {
-  font-size: 11px; font-weight: 500;
+  font-size: 12px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
 }
 .v2-dock-section-title {
   font-family: "Moller", sans-serif;
   font-size: 22px; font-weight: 400;
-  color: var(--ink);
+  color: var(--cream-100);
   margin: 0;
   line-height: 1.15;
 }
-.v2-dock-section-body { display: flex; flex-direction: column; gap: 10px; }
 
-/* Viz panel — where budget/size/fuel/rec cards go (intercepted from chat) */
-#v2VizBody { gap: 14px; }
+/* Viz panel — budget/size/fuel/rec cards relocated from chat go here */
+#v2VizBody { display: flex; flex-direction: column; gap: 14px; }
 #v2VizBody:empty::after {
   content: 'Visualizations appear here as we discuss budget, size, fuel and more.';
   display: block;
-  font-size: 13.5px;
-  color: var(--muted);
+  font-size: 14px;
+  color: rgba(255,255,255,0.55);
   line-height: 1.5;
   padding: 8px 0 4px;
 }
-/* Scale down rendered cards to fit the dock width */
-#v2VizBody .budget-panel,
-#v2VizBody .budget-cards { gap: 12px; }
-#v2VizBody .budget-rail { padding: 18px 18px 16px; min-height: 200px; }
+/* Scale rendered cards to fit the narrower dock column */
+#v2VizBody .budget-panel { gap: 14px; }
+#v2VizBody .budget-rail { padding: 18px 22px 18px; min-height: 200px; }
 #v2VizBody .budget-rail-car svg { height: 110px; }
-#v2VizBody .budget-cards { grid-template-columns: 1fr; }   /* stack vertically in narrow dock */
+#v2VizBody .budget-cards { grid-template-columns: 1fr; gap: 10px; }
 #v2VizBody .budget-card { padding: 16px 18px; }
 #v2VizBody .recs { grid-template-columns: 1fr !important; gap: 12px; }
 #v2VizBody .size-panel { padding: 18px 20px 16px; }
 #v2VizBody .fuel-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 
-/* Live recs section (always visible) */
-#v2RecsBody { display: flex; flex-direction: column; gap: 10px; }
-.v2-rec-card {
-  appearance: none; border: 1px solid var(--border);
-  background: var(--cream-100); color: var(--ink);
-  width: 100%; border-radius: 6px;
-  padding: 12px 14px;
-  display: flex; align-items: center; gap: 14px;
-  text-align: left; cursor: pointer;
-  font-family: inherit;
-  transition: border-color 220ms, background 220ms, border-radius 220ms;
-}
-.v2-rec-card:hover { border-color: var(--ink); background: var(--accent-soft); border-radius: 8px; }
-.v2-rec-card-img {
-  width: 64px; height: 48px;
-  border-radius: 4px;
-  background: rgba(0,25,70,0.06);
-  flex-shrink: 0;
-  object-fit: cover;
-}
-.v2-rec-card-info { flex: 1; min-width: 0; }
-.v2-rec-card-name { font-size: 16px; font-weight: 500; color: var(--ink); }
-.v2-rec-card-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
-.v2-rec-card-cta {
-  font-size: 13px; font-weight: 500;
-  padding: 6px 14px; border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  color: var(--ink);
-  transition: background 180ms, border-color 180ms, border-radius 220ms;
-}
-.v2-rec-card:hover .v2-rec-card-cta {
-  background: var(--salmon); border-color: var(--salmon); color: var(--cream-100);
-  border-radius: 6px;
-}
+/* Existing heroRecsBody (navy live-rec cards) stays as-is — it's the
+   "Live recommendations" body inside the right dock. We just give it a
+   section header to match the v2 visual language. */
+body.v2-layout .hero-bottom { margin-top: 0; }
+body.v2-layout #heroRecsBody { display: flex; flex-direction: column; gap: 10px; }
 
 /* When cards are routed to the dock, the chat's inline copy is physically
    moved out by the JS hook. As a fallback (and for any leftover render),
@@ -7869,32 +7863,35 @@ function showToast(msg) {
     if (stream && !document.getElementById('v2ToldStrip')) {
       const strip = document.createElement('div');
       strip.id = 'v2ToldStrip';
-      strip.className = 'v2-told-strip is-empty';
+      strip.className = 'v2-told-strip';
       stream.parentNode.insertBefore(strip, stream);
     }
 
-    // ── Build the right-dock sections inside the hero panel ──
-    if (!document.getElementById('v2VizBody')) {
+    // ── Inject the viz section ABOVE the existing hero-bottom (live recs) ──
+    // Reuses the existing #heroRecsBody for live recs; just adds a matching
+    // section header above it for visual consistency.
+    const heroBottom = hero.querySelector('.hero-bottom');
+    if (heroBottom && !document.getElementById('v2VizBody')) {
       const vizSection = document.createElement('section');
       vizSection.className = 'v2-dock-section';
       vizSection.innerHTML = `
         <div class="v2-dock-section-head">
           <span class="v2-dock-section-eyebrow">Live visualization</span>
+          <h2 class="v2-dock-section-title">What we're discussing</h2>
         </div>
         <div id="v2VizBody"></div>
       `;
-      hero.appendChild(vizSection);
-    }
-    if (!document.getElementById('v2RecsBody')) {
-      const recsSection = document.createElement('section');
-      recsSection.className = 'v2-dock-section';
-      recsSection.innerHTML = `
-        <div class="v2-dock-section-head">
-          <span class="v2-dock-section-eyebrow">Live recommendations</span>
-        </div>
-        <div id="v2RecsBody"></div>
+      hero.insertBefore(vizSection, heroBottom);
+
+      // Add a header to the existing heroRecsBody too (in v2 we hid the
+      // original hero-recs-head; replace it with the v2 styled header).
+      const recsHead = document.createElement('div');
+      recsHead.className = 'v2-dock-section-head';
+      recsHead.innerHTML = `
+        <span class="v2-dock-section-eyebrow">Live recommendations</span>
+        <h2 class="v2-dock-section-title">In stock right now</h2>
       `;
-      hero.appendChild(recsSection);
+      heroBottom.insertBefore(recsHead, heroBottom.firstChild);
     }
 
     // First paint of the told-strip + recs (in case data already exists)
@@ -7983,13 +7980,25 @@ function showToast(msg) {
     const strip = document.getElementById('v2ToldStrip');
     if (!strip) return;
     const rows = collectToldRows();
+    // Header — eyebrow + title on their own lines, ALWAYS visible (not collapsed
+    // when empty), so the user sees this panel exists from the very first turn.
+    const headHtml = `
+      <div class="v2-told-strip-head">
+        <span class="v2-told-strip-eyebrow">What you've told me</span>
+        <h2 class="v2-told-strip-title">Your live profile</h2>
+      </div>`;
     if (!rows || rows.length === 0) {
-      strip.className = 'v2-told-strip is-empty';
-      strip.innerHTML = '';
+      // Initial intro — explains the feature when there's nothing yet
+      strip.className = 'v2-told-strip';
+      strip.innerHTML = headHtml + `
+        <p class="v2-told-strip-intro">
+          Your answers appear here as we chat — <b>budget</b>, <b>passengers</b>,
+          <b>powertrain</b>, <b>size</b>, brand. Tap any chip to <b>edit</b> or
+          <b>jump back</b> to the chat where it came up.
+        </p>`;
       return;
     }
     strip.className = 'v2-told-strip';
-    const eyebrow = `<span class="v2-told-strip-eyebrow">What you've told me</span>`;
     const chips = rows.map(r => {
       const hasMsg = !!findLatestMessageForTopic(r.key);
       return `
@@ -8013,7 +8022,7 @@ function showToast(msg) {
           </span>
         </div>`;
     }).join('');
-    strip.innerHTML = eyebrow + chips;
+    strip.innerHTML = headHtml + `<div class="v2-told-strip-chips">${chips}</div>`;
   }
 
   // Expose the edit-popover opener — uses the same data the heroToldChange
@@ -8076,52 +8085,9 @@ function showToast(msg) {
     if (typeof updateHeroToldPanel === 'function') updateHeroToldPanel();
   };
 
-  // 5) Wrap buildLiveRecs to ALSO mirror to the v2 recs body
-  const _origBuildRecs = window.buildLiveRecs;
-  window.buildLiveRecs = function() {
-    const result = _origBuildRecs && _origBuildRecs.apply(this, arguments);
-    v2RenderRecs();
-    return result;
-  };
-
-  function v2RenderRecs() {
-    const v2Body = document.getElementById('v2RecsBody');
-    if (!v2Body) return;
-    if (!inventoryLoaded) {
-      v2Body.innerHTML = '<div style="color: var(--muted); font-size: 13.5px; padding: 6px 0;">Finding picks in stock…</div>';
-      return;
-    }
-    const { cars } = (typeof getLiveRecommendations === 'function') ? getLiveRecommendations() : { cars: [] };
-    if (!cars.length) {
-      v2Body.innerHTML = '<div style="color: var(--muted); font-size: 13.5px; padding: 6px 0;">Tell me more so I can refine these picks.</div>';
-      return;
-    }
-    v2Body.innerHTML = '';
-    cars.slice(0, 4).forEach(car => {
-      const btn = document.createElement('button');
-      btn.className = 'v2-rec-card';
-      btn.type = 'button';
-      btn.onclick = () => {
-        btn.disabled = true;
-        loadInventory(car.name).finally(() => { btn.disabled = false; });
-      };
-      const imgHtml = car.image
-        ? `<img class="v2-rec-card-img" src="${escapeHtml(car.image)}" alt="" loading="lazy">`
-        : `<div class="v2-rec-card-img"></div>`;
-      const priceLabel = car.minPrice
-        ? `From ${formatNOK(car.minPrice)}`
-        : `${car.count} in stock`;
-      btn.innerHTML = `
-        ${imgHtml}
-        <div class="v2-rec-card-info">
-          <div class="v2-rec-card-name">${escapeHtml(car.name)}</div>
-          <div class="v2-rec-card-meta">${escapeHtml(priceLabel)}</div>
-        </div>
-        <span class="v2-rec-card-cta">View</span>
-      `;
-      v2Body.appendChild(btn);
-    });
-  }
+  // Live recs are populated by the original buildLiveRecs() into the existing
+  // navy #heroRecsBody — no v2 mirroring needed. The v2 dock-section-head we
+  // injected gives it the v2 visual treatment.
 })();
 
 // ── start ─────────────────────────────────────────────────────────────────
