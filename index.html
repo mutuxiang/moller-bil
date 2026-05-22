@@ -5,12 +5,12 @@
 <title>AI Car Assistant — Møller Bil</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-@font-face { font-family: "Moller"; src: url("fonts/Moller-Regular.otf") format("opentype"); font-weight: 400; font-style: normal; }
-@font-face { font-family: "Moller"; src: url("fonts/Moller-RegularItalic.otf") format("opentype"); font-weight: 400; font-style: italic; }
-@font-face { font-family: "Moller"; src: url("fonts/Moller-Book.otf") format("opentype"); font-weight: 450; font-style: normal; }
-@font-face { font-family: "Moller"; src: url("fonts/Moller-BookItalic.otf") format("opentype"); font-weight: 450; font-style: italic; }
-@font-face { font-family: "Moller"; src: url("fonts/Moller-Medium.otf") format("opentype"); font-weight: 500; font-style: normal; }
-@font-face { font-family: "Moller"; src: url("fonts/Moller-MediumItalic.otf") format("opentype"); font-weight: 500; font-style: italic; }
+@font-face { font-family: "Moller"; src: url("../fonts/Moller-Regular.otf") format("opentype"); font-weight: 400; font-style: normal; }
+@font-face { font-family: "Moller"; src: url("../fonts/Moller-RegularItalic.otf") format("opentype"); font-weight: 400; font-style: italic; }
+@font-face { font-family: "Moller"; src: url("../fonts/Moller-Book.otf") format("opentype"); font-weight: 450; font-style: normal; }
+@font-face { font-family: "Moller"; src: url("../fonts/Moller-BookItalic.otf") format("opentype"); font-weight: 450; font-style: italic; }
+@font-face { font-family: "Moller"; src: url("../fonts/Moller-Medium.otf") format("opentype"); font-weight: 500; font-style: normal; }
+@font-face { font-family: "Moller"; src: url("../fonts/Moller-MediumItalic.otf") format("opentype"); font-weight: 500; font-style: italic; }
 </style>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2763,15 +2763,274 @@ body.mode-learning .col-spacer.right {
   color: var(--cream-100);
   border-color: rgba(255,255,255,0.4);
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   v2 LAYOUT — chat narrower in the center, right-dock with viz on top
+   + persistent live recs below, horizontal told-me strip above chat.
+   All scoped under `body.v2-layout` so it can be removed for a/b compare.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* Skip the full-screen onboarding intro entirely — v2 lands in the chat */
+body.v2-layout .app.is-onboarding .col-spacer.left {
+  display: none !important;
+}
+body.v2-layout .hero-cluster,
+body.v2-layout .hero-headline,
+body.v2-layout .hero-cta,
+body.v2-layout .hero-top,
+body.v2-layout .hero-told,           /* told-me lives in the horizontal strip instead */
+body.v2-layout .hero-recs-head,
+body.v2-layout .hero-bottom > .hero-recs-head { display: none !important; }
+
+/* Right dock — replaces the navy hero panel with a cream side dock */
+body.v2-layout .col-spacer.left.hero {
+  background: var(--bg-surface) !important;
+  color: var(--ink) !important;
+  width: 45vw !important;
+  min-width: 380px !important;
+  max-width: 720px !important;
+  padding: 20px 24px 24px !important;
+  border-left: 1px solid var(--border) !important;
+  border-right: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 18px !important;
+  overflow-y: auto !important;
+}
+/* Hide the hero toggle button — v2 has a fixed right dock */
+body.v2-layout .hero-toggle-btn { display: none !important; }
+
+/* Chat: flex-cap at 42vw so the right dock has room */
+body.v2-layout .col-center {
+  flex: 1 1 auto !important;
+  max-width: 55vw !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+body.v2-layout .chat { max-width: 100% !important; }
+
+/* ── Horizontal told-me strip — sits above the chat stream ── */
+.v2-told-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+  align-items: center;
+}
+.v2-told-strip.is-empty { display: none; }
+.v2-told-strip-eyebrow {
+  font-size: 11px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--eyebrow);
+  margin-right: 4px;
+}
+.v2-told-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 10px 7px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  font: 500 13.5px/1 "Moller", sans-serif;
+  color: var(--ink);
+  white-space: nowrap;
+  transition: background 180ms, border-color 180ms, border-radius 220ms;
+}
+.v2-told-chip:hover { background: var(--accent-soft); border-radius: 8px; }
+.v2-told-chip-label {
+  font-weight: 400;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.v2-told-chip-value {
+  color: var(--ink);
+}
+.v2-told-chip-actions {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: 4px;
+}
+.v2-told-chip-btn {
+  appearance: none; border: 0; background: transparent;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background 180ms, color 180ms;
+}
+.v2-told-chip-btn:hover { background: var(--accent-soft-2); color: var(--ink); }
+.v2-told-chip-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.v2-told-chip-btn svg { width: 13px; height: 13px; }
+
+/* Edit popover — appears below the chip when its Edit button is clicked */
+.v2-edit-popover {
+  position: fixed;
+  z-index: 250;
+  background: var(--cream-100);
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 14px 16px 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+  display: none;
+  min-width: 260px;
+  max-width: 380px;
+}
+.v2-edit-popover.is-open { display: block; }
+.v2-edit-popover-title {
+  font-size: 11px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--salmon);
+  margin-bottom: 10px;
+}
+.v2-edit-popover-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 10px;
+}
+.v2-edit-popover-chip {
+  appearance: none; border: 1px solid var(--border-strong);
+  background: transparent; color: var(--ink);
+  font: 500 13px/1 "Moller", sans-serif;
+  padding: 7px 12px; border-radius: 999px;
+  cursor: pointer;
+  transition: background 180ms, border-color 180ms, border-radius 220ms;
+}
+.v2-edit-popover-chip:hover { border-color: var(--ink); border-radius: 8px; }
+.v2-edit-popover-chip.on {
+  background: var(--salmon); border-color: var(--salmon); color: var(--cream-100);
+}
+.v2-edit-popover-actions { display: flex; justify-content: flex-end; }
+.v2-edit-popover-done {
+  appearance: none; border: 0; background: var(--action-blue); color: #fff;
+  padding: 8px 18px; border-radius: 999px;
+  font: 500 13px/1 "Moller", sans-serif;
+  cursor: pointer;
+  transition: background 180ms, border-radius 220ms;
+}
+.v2-edit-popover-done:hover { background: var(--action-blue-hover); border-radius: 6px; }
+
+/* ── Right dock sections ── */
+.v2-dock-section {
+  display: flex; flex-direction: column;
+  background: var(--cream-100);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 18px 20px;
+}
+.v2-dock-section-head {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-bottom: 14px;
+}
+.v2-dock-section-eyebrow {
+  font-size: 11px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--salmon);
+}
+.v2-dock-section-title {
+  font-family: "Moller", sans-serif;
+  font-size: 22px; font-weight: 400;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.15;
+}
+.v2-dock-section-body { display: flex; flex-direction: column; gap: 10px; }
+
+/* Viz panel — where budget/size/fuel/rec cards go (intercepted from chat) */
+#v2VizBody { gap: 14px; }
+#v2VizBody:empty::after {
+  content: 'Visualizations appear here as we discuss budget, size, fuel and more.';
+  display: block;
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.5;
+  padding: 8px 0 4px;
+}
+/* Scale down rendered cards to fit the dock width */
+#v2VizBody .budget-panel,
+#v2VizBody .budget-cards { gap: 12px; }
+#v2VizBody .budget-rail { padding: 18px 18px 16px; min-height: 200px; }
+#v2VizBody .budget-rail-car svg { height: 110px; }
+#v2VizBody .budget-cards { grid-template-columns: 1fr; }   /* stack vertically in narrow dock */
+#v2VizBody .budget-card { padding: 16px 18px; }
+#v2VizBody .recs { grid-template-columns: 1fr !important; gap: 12px; }
+#v2VizBody .size-panel { padding: 18px 20px 16px; }
+#v2VizBody .fuel-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+/* Live recs section (always visible) */
+#v2RecsBody { display: flex; flex-direction: column; gap: 10px; }
+.v2-rec-card {
+  appearance: none; border: 1px solid var(--border);
+  background: var(--cream-100); color: var(--ink);
+  width: 100%; border-radius: 6px;
+  padding: 12px 14px;
+  display: flex; align-items: center; gap: 14px;
+  text-align: left; cursor: pointer;
+  font-family: inherit;
+  transition: border-color 220ms, background 220ms, border-radius 220ms;
+}
+.v2-rec-card:hover { border-color: var(--ink); background: var(--accent-soft); border-radius: 8px; }
+.v2-rec-card-img {
+  width: 64px; height: 48px;
+  border-radius: 4px;
+  background: rgba(0,25,70,0.06);
+  flex-shrink: 0;
+  object-fit: cover;
+}
+.v2-rec-card-info { flex: 1; min-width: 0; }
+.v2-rec-card-name { font-size: 16px; font-weight: 500; color: var(--ink); }
+.v2-rec-card-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.v2-rec-card-cta {
+  font-size: 13px; font-weight: 500;
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--ink);
+  transition: background 180ms, border-color 180ms, border-radius 220ms;
+}
+.v2-rec-card:hover .v2-rec-card-cta {
+  background: var(--salmon); border-color: var(--salmon); color: var(--cream-100);
+  border-radius: 6px;
+}
+
+/* When cards are routed to the dock, the chat's inline copy is physically
+   moved out by the JS hook. As a fallback (and for any leftover render),
+   visually suppress these in the chat. Inventory lists stay inline. */
+body.v2-layout .msg.has-recs .recs,
+body.v2-layout .msg.has-fuel .fuel-cards,
+body.v2-layout .msg.has-budget .budget-panel,
+body.v2-layout .msg.has-budget .budget-cards,
+body.v2-layout .msg.has-size .size-panel { display: none !important; }
+/* Keep the chat bubble at normal width even when the AI message had cards —
+   since the cards are relocated to the dock, the bubble can stay slim. */
+body.v2-layout .msg.has-recs,
+body.v2-layout .msg.has-fuel,
+body.v2-layout .msg.has-budget,
+body.v2-layout .msg.has-size,
+body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !important; }
+/* Little "see right panel" indicator that appears under chat messages whose
+   cards got moved to the dock. Added inline by the relocate hook. */
+.v2-moved-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 8px;
+  padding: 5px 10px;
+  font-size: 12px; font-weight: 500;
+  letter-spacing: .04em;
+  color: var(--salmon);
+  background: rgba(225, 100, 75, 0.08);
+  border-radius: 999px;
+}
+.v2-moved-tag svg { width: 12px; height: 12px; }
+
 </style>
 </head>
-<body>
+<body class="v2-layout">
 
 <div class="app is-onboarding">
 
   <div class="topbar">
     <a class="topbar-brand" href="#" aria-label="Møller Bil">
-      <img class="topbar-logo" src="logo.svg" alt="Møller Bil">
+      <img class="topbar-logo" src="../logo.svg" alt="Møller Bil">
     </a>
     <div class="topbar-spacer"></div>
     <button class="btn-collection" id="btnCollection" onclick="toggleCollection()" title="Saved cars">
@@ -2786,7 +3045,7 @@ body.mode-learning .col-spacer.right {
   <div class="main">
     <aside class="col-spacer left hero" id="heroPanel">
       <div class="hero-top">
-        <span class="hero-glyph"><img src="logo-2.svg" alt=""></span>
+        <span class="hero-glyph"><img src="../logo-2.svg" alt=""></span>
       </div>
       <h1 class="hero-headline" id="heroHeadline"></h1>
       <!-- Two CTA buttons revealed after the typewriter sequence finishes -->
@@ -2809,9 +3068,9 @@ body.mode-learning .col-spacer.right {
       <!-- Hero image cluster — onboarding only. Three rectangular masks
            arranged as: tall portrait on the left, two stacked landscapes on the right. -->
       <div class="hero-cluster" aria-hidden="true">
-        <div class="hero-cluster-tile big"><img src="hero/1.avif" alt="" loading="lazy"></div>
-        <div class="hero-cluster-tile t1"><img src="hero/2.avif" alt="" loading="lazy"></div>
-        <div class="hero-cluster-tile t2"><img src="hero/3.avif" alt="" loading="lazy"></div>
+        <div class="hero-cluster-tile big"><img src="../hero/1.avif" alt="" loading="lazy"></div>
+        <div class="hero-cluster-tile t1"><img src="../hero/2.avif" alt="" loading="lazy"></div>
+        <div class="hero-cluster-tile t2"><img src="../hero/3.avif" alt="" loading="lazy"></div>
       </div>
       <div class="hero-told" id="heroTold"></div>
       <!-- (intro overlay moved to body level — see below) -->
@@ -3774,7 +4033,7 @@ let _heroTypewriterStarted = false;
 // (Kept as a no-op so existing call sites don't need to be untangled.)
 function setTopbarOnboardingState(_isOnboarding) {
   const logo = document.querySelector('.topbar-logo');
-  if (logo) logo.src = 'logo.svg';
+  if (logo) logo.src = '../logo.svg';
 }
 
 function startOnboardingIntro(options = {}) {
@@ -7574,6 +7833,295 @@ function showToast(msg) {
     window.addEventListener('mouseup', onUp);
     e.preventDefault();
   });
+})();
+
+// ════════════════════════════════════════════════════════════════════════
+// V2 LAYOUT BOOTSTRAP
+// Skips onboarding entirely, builds the new DOM structure (told-strip,
+// viz dock, recs dock), and wraps the existing render functions so that
+// budget/size/fuel/rec cards go into the right-side viz dock instead of
+// rendering inline in the chat stream.
+// ════════════════════════════════════════════════════════════════════════
+(function v2Bootstrap() {
+  // 1) Skip onboarding — open straight into the chat experience
+  const _origStartOnboarding = window.startOnboardingIntro;
+  window.startOnboardingIntro = function() {
+    const app = document.querySelector('.app');
+    if (app) app.classList.remove('is-onboarding', 'is-ready');
+    _onboardingLoopStopped = true;
+  };
+
+  // 2) After init has run, restructure the DOM to add v2 panels
+  const _origInit = window.init;
+  window.init = function() {
+    _origInit.apply(this, arguments);
+    setTimeout(v2BuildLayout, 0);
+  };
+
+  function v2BuildLayout() {
+    // Defensive — wait for hero panel
+    const hero = document.getElementById('heroPanel');
+    const chatRoot = document.querySelector('.col-center .chat');
+    if (!hero || !chatRoot) return;
+
+    // ── Build the horizontal told-me strip above the chat stream ──
+    const stream = document.getElementById('stream');
+    if (stream && !document.getElementById('v2ToldStrip')) {
+      const strip = document.createElement('div');
+      strip.id = 'v2ToldStrip';
+      strip.className = 'v2-told-strip is-empty';
+      stream.parentNode.insertBefore(strip, stream);
+    }
+
+    // ── Build the right-dock sections inside the hero panel ──
+    if (!document.getElementById('v2VizBody')) {
+      const vizSection = document.createElement('section');
+      vizSection.className = 'v2-dock-section';
+      vizSection.innerHTML = `
+        <div class="v2-dock-section-head">
+          <span class="v2-dock-section-eyebrow">Live visualization</span>
+        </div>
+        <div id="v2VizBody"></div>
+      `;
+      hero.appendChild(vizSection);
+    }
+    if (!document.getElementById('v2RecsBody')) {
+      const recsSection = document.createElement('section');
+      recsSection.className = 'v2-dock-section';
+      recsSection.innerHTML = `
+        <div class="v2-dock-section-head">
+          <span class="v2-dock-section-eyebrow">Live recommendations</span>
+        </div>
+        <div id="v2RecsBody"></div>
+      `;
+      hero.appendChild(recsSection);
+    }
+
+    // First paint of the told-strip + recs (in case data already exists)
+    if (typeof updateHeroToldPanel === 'function') updateHeroToldPanel();
+    if (typeof buildLiveRecs === 'function') buildLiveRecs();
+
+    // Kick off the AI greeting (originally fired by onboardingChoose, which
+    // we bypass in v2). Default mode is 'shopping' — same as the original CTA.
+    if (typeof showOnboarding === 'function' && !_v2GreetingStarted) {
+      _v2GreetingStarted = true;
+      conversationMode = 'shopping';
+      if (typeof applyConversationMode === 'function') applyConversationMode();
+      showOnboarding();
+    }
+  }
+  let _v2GreetingStarted = false;
+
+  // 3) Wrap rendering functions to redirect cards into the viz dock
+  function relocateLatest(selector, sourceMsgEl, kindLabel) {
+    const node = sourceMsgEl.querySelector(selector);
+    if (!node) return;
+    const dock = document.getElementById('v2VizBody');
+    if (!dock) return;
+    dock.innerHTML = '';                 // only the LATEST viz is shown
+    dock.appendChild(node);              // physically move the element
+
+    // Drop a small "→ see right panel" tag where the cards used to be,
+    // so the user knows where they went.
+    if (!sourceMsgEl.querySelector('.v2-moved-tag')) {
+      const tag = document.createElement('div');
+      tag.className = 'v2-moved-tag';
+      tag.innerHTML = `
+        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>${escapeHtml(kindLabel || 'Visualization')} updated on the right →</span>
+      `;
+      const content = sourceMsgEl.querySelector('.msg-content') || sourceMsgEl;
+      content.appendChild(tag);
+    }
+  }
+
+  ['renderBudgetCards', 'renderFuelCards', 'renderSizeCards', 'renderRecs'].forEach(name => {
+    const orig = window[name];
+    if (typeof orig !== 'function') return;
+    window[name] = function(arg1, arg2) {
+      const result = orig.apply(this, arguments);
+      // Identify the source message element (it's either arg1 or arg2 depending on signature)
+      const msgEl = (arg1 && arg1.nodeType) ? arg1 : arg2;
+      if (!msgEl || !msgEl.querySelector) return result;
+      setTimeout(() => {
+        if      (name === 'renderBudgetCards') relocateLatest('.budget-panel, .budget-cards', msgEl, 'Budget tiers');
+        else if (name === 'renderFuelCards')   relocateLatest('.fuel-cards', msgEl, 'Fuel comparison');
+        else if (name === 'renderSizeCards')   relocateLatest('.size-panel', msgEl, 'Size comparison');
+        else if (name === 'renderRecs')        relocateLatest('.recs', msgEl, 'Recommended models');
+      }, 0);
+      return result;
+    };
+  });
+
+  // 4) Wrap updateHeroToldPanel to ALSO populate the horizontal told-strip
+  const _origUpdateTold = window.updateHeroToldPanel;
+  window.updateHeroToldPanel = function() {
+    const result = _origUpdateTold && _origUpdateTold.apply(this, arguments);
+    v2RenderToldStrip();
+    return result;
+  };
+
+  // Mirror of the row-building logic inside the original updateHeroToldPanel
+  function collectToldRows() {
+    const rows = [];
+    if (typeof FILTERS !== 'undefined') {
+      FILTERS.forEach(g => {
+        const s = getConfirmedSummary(g.key);
+        if (s) rows.push({ key: g.key, label: g.title, value: s, options: g.options });
+      });
+    }
+    const brandS = getConfirmedSummary('brand');
+    if (brandS) rows.push({ key: 'brand', label: 'Brand preference', value: brandS, options: (typeof BRANDS !== 'undefined' ? BRANDS : []) });
+    const budgetS = getBudgetSummary();
+    if (budgetS) rows.push({ key: 'budget', label: 'Budget', value: budgetS, options: null });
+    return rows;
+  }
+
+  function v2RenderToldStrip() {
+    const strip = document.getElementById('v2ToldStrip');
+    if (!strip) return;
+    const rows = collectToldRows();
+    if (!rows || rows.length === 0) {
+      strip.className = 'v2-told-strip is-empty';
+      strip.innerHTML = '';
+      return;
+    }
+    strip.className = 'v2-told-strip';
+    const eyebrow = `<span class="v2-told-strip-eyebrow">What you've told me</span>`;
+    const chips = rows.map(r => {
+      const hasMsg = !!findLatestMessageForTopic(r.key);
+      return `
+        <div class="v2-told-chip" data-key="${escapeHtml(r.key)}">
+          <span class="v2-told-chip-label">${escapeHtml(r.label)}</span>
+          <span class="v2-told-chip-value">${escapeHtml(r.value)}</span>
+          <span class="v2-told-chip-actions">
+            <button class="v2-told-chip-btn" type="button" title="Edit" aria-label="Edit"
+                    onclick="v2OpenEdit(event, '${r.key}')">
+              <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.5 1.5l3 3-8 8-3.5.5.5-3.5 8-8z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="v2-told-chip-btn" type="button" title="Show in chat" aria-label="Show in chat"
+                    ${hasMsg ? '' : 'disabled'}
+                    onclick="heroToldJump('${r.key}')">
+              <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </span>
+        </div>`;
+    }).join('');
+    strip.innerHTML = eyebrow + chips;
+  }
+
+  // Expose the edit-popover opener — uses the same data the heroToldChange
+  // editor would have used but renders it as a floating popover above the chip.
+  window.v2OpenEdit = function(event, key) {
+    event.stopPropagation();
+    // Remove any existing popover
+    document.querySelectorAll('.v2-edit-popover').forEach(el => el.remove());
+    const rows = collectToldRows();
+    const row = rows.find(r => r.key === key);
+    if (!row) return;
+
+    const pop = document.createElement('div');
+    pop.className = 'v2-edit-popover is-open';
+    let chipsHtml = '';
+    if (key === 'budget') {
+      chipsHtml = BUDGET_PRESETS.map(p => {
+        const sMin = document.getElementById('budgetMin');
+        const sMax = document.getElementById('budgetMax');
+        const curMin = sMin ? parseInt(sMin.value) : null;
+        const curMax = sMax ? parseInt(sMax.value) : null;
+        const on = curMin === p.min && curMax === p.max;
+        return `<button class="v2-edit-popover-chip${on ? ' on' : ''}" type="button"
+                  onclick="heroToldBudgetPick(${p.min}, ${p.max}); v2RefreshAfterEdit();">${escapeHtml(p.label)}</button>`;
+      }).join('');
+    } else {
+      chipsHtml = (row.options || []).map(opt => {
+        const chipKey = `${key}:${opt}`;
+        const on = !!activeChips[chipKey];
+        return `<button class="v2-edit-popover-chip${on ? ' on' : ''}" type="button"
+                  onclick="heroToldToggle('${key}', ${JSON.stringify(opt).replace(/"/g, '&quot;')}); v2RefreshAfterEdit();">${escapeHtml(opt)}</button>`;
+      }).join('');
+    }
+    pop.innerHTML = `
+      <div class="v2-edit-popover-title">Edit ${escapeHtml(row.label).toLowerCase()}</div>
+      <div class="v2-edit-popover-chips">${chipsHtml}</div>
+      <div class="v2-edit-popover-actions">
+        <button class="v2-edit-popover-done" type="button" onclick="this.parentNode.parentNode.remove()">Done</button>
+      </div>
+    `;
+    document.body.appendChild(pop);
+    const btnRect = event.currentTarget.getBoundingClientRect();
+    const popW = pop.offsetWidth;
+    pop.style.left = Math.max(12, Math.min(window.innerWidth - popW - 12, btnRect.left - popW / 2 + btnRect.width / 2)) + 'px';
+    pop.style.top  = (btnRect.bottom + 8) + 'px';
+
+    // Dismiss on outside click
+    setTimeout(() => {
+      document.addEventListener('click', function dismiss(e) {
+        if (!pop.contains(e.target)) {
+          pop.remove();
+          document.removeEventListener('click', dismiss);
+        }
+      });
+    }, 0);
+  };
+
+  window.v2RefreshAfterEdit = function() {
+    // Re-render strip and the (still-open) popover content
+    if (typeof updateHeroToldPanel === 'function') updateHeroToldPanel();
+  };
+
+  // 5) Wrap buildLiveRecs to ALSO mirror to the v2 recs body
+  const _origBuildRecs = window.buildLiveRecs;
+  window.buildLiveRecs = function() {
+    const result = _origBuildRecs && _origBuildRecs.apply(this, arguments);
+    v2RenderRecs();
+    return result;
+  };
+
+  function v2RenderRecs() {
+    const v2Body = document.getElementById('v2RecsBody');
+    if (!v2Body) return;
+    if (!inventoryLoaded) {
+      v2Body.innerHTML = '<div style="color: var(--muted); font-size: 13.5px; padding: 6px 0;">Finding picks in stock…</div>';
+      return;
+    }
+    const { cars } = (typeof getLiveRecommendations === 'function') ? getLiveRecommendations() : { cars: [] };
+    if (!cars.length) {
+      v2Body.innerHTML = '<div style="color: var(--muted); font-size: 13.5px; padding: 6px 0;">Tell me more so I can refine these picks.</div>';
+      return;
+    }
+    v2Body.innerHTML = '';
+    cars.slice(0, 4).forEach(car => {
+      const btn = document.createElement('button');
+      btn.className = 'v2-rec-card';
+      btn.type = 'button';
+      btn.onclick = () => {
+        btn.disabled = true;
+        loadInventory(car.name).finally(() => { btn.disabled = false; });
+      };
+      const imgHtml = car.image
+        ? `<img class="v2-rec-card-img" src="${escapeHtml(car.image)}" alt="" loading="lazy">`
+        : `<div class="v2-rec-card-img"></div>`;
+      const priceLabel = car.minPrice
+        ? `From ${formatNOK(car.minPrice)}`
+        : `${car.count} in stock`;
+      btn.innerHTML = `
+        ${imgHtml}
+        <div class="v2-rec-card-info">
+          <div class="v2-rec-card-name">${escapeHtml(car.name)}</div>
+          <div class="v2-rec-card-meta">${escapeHtml(priceLabel)}</div>
+        </div>
+        <span class="v2-rec-card-cta">View</span>
+      `;
+      v2Body.appendChild(btn);
+    });
+  }
 })();
 
 // ── start ─────────────────────────────────────────────────────────────────
