@@ -3021,35 +3021,15 @@ body.v2-layout .chat { max-width: 100% !important; }
   font-size: 14px;
   padding: 14px 0;
 }
-.v2-inv-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px;
+/* When the chat's renderInventory output is hosted in the dock, scale its
+   grid to the dock width (3 cards per row at typical widths) */
+body.v2-layout .hero-bottom .inv-block { margin: 0; }
+body.v2-layout .hero-bottom .inv-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px !important;
 }
-.v2-inv-card {
-  background: var(--cream-100);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-  display: flex; flex-direction: column;
-}
-.v2-inv-card-img {
-  width: 100%; height: 130px;
-  background: rgba(0,25,70,0.06);
-  object-fit: cover;
-  display: block;
-}
-.v2-inv-card-body { padding: 12px 14px 14px; }
-.v2-inv-card-price {
-  font-size: 16px; font-weight: 500;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-.v2-inv-card-meta {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 4px;
-  line-height: 1.4;
+body.v2-layout .hero-bottom .inv-card {
+  background: var(--cream-100) !important;
 }
 
 /* The VIZ section grows + scrolls inside itself.
@@ -3208,6 +3188,83 @@ body.v2-layout .msg.has-fuel,
 body.v2-layout .msg.has-budget,
 body.v2-layout .msg.has-size,
 body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !important; }
+/* ── Pending-edit banners — replace the quick-reply chips while there
+   are queued changes from the Change popover. Apply on Send (or via the
+   "Apply now" button). ── */
+.v2-pending-banners {
+  display: flex; flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 14px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+}
+.v2-pending-banners-label {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--salmon);
+  margin-bottom: 2px;
+}
+.v2-pending-banner {
+  display: flex; align-items: center;
+  gap: 14px;
+  padding: 10px 12px 10px 14px;
+  background: var(--cream-100);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.v2-pending-banner-label {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.v2-pending-banner-diff {
+  display: inline-flex; align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.v2-pending-old {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(0,25,70,0.35);
+}
+.v2-pending-arrow {
+  color: var(--salmon);
+  font-weight: 500;
+}
+.v2-pending-new {
+  color: var(--salmon);
+  font-weight: 500;
+}
+.v2-pending-banner-cancel {
+  appearance: none; border: 0; background: transparent;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 18px; line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background 180ms, color 180ms;
+}
+.v2-pending-banner-cancel:hover { background: var(--accent-soft); color: var(--ink); }
+.v2-pending-apply {
+  appearance: none; border: 0;
+  align-self: flex-end;
+  background: var(--action-blue); color: #fff;
+  padding: 9px 20px;
+  border-radius: 999px;
+  font: 500 13.5px/1 "Moller", sans-serif;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 180ms, border-radius 220ms;
+}
+.v2-pending-apply:hover { background: var(--action-blue-hover); border-radius: 6px; }
+
 /* "See right panel" indicator that appears under chat messages whose cards
    got moved to the dock. Text only — bigger and bolder than before. */
 .v2-moved-tag {
@@ -8212,18 +8269,24 @@ function showToast(msg) {
       <div class="v2-told-strip-chips">${chips}</div>`;
   }
 
-  // Popover edit flow:
-  //  - Click "Change" on a chip → opens floating popover anchored to that chip
-  //  - Popover shows a "Show in chat" link + the option chips + Done button
-  //  - Clicking an option only updates LOCAL state (activeChips / budget sliders)
-  //    and re-renders the popover so the user sees their click registered
-  //  - LIVE RECS / sidebar are NOT refreshed until Done is clicked — avoids the
-  //    flash-on-every-click and keeps recs stable until the user commits
+  // ── Popover edit flow with QUEUED edits ──
+  // 1) Click "Change" → popover opens, captures the current value as "from"
+  // 2) Click an option chip → updates POPOVER-LOCAL pending state ONLY
+  //    (does NOT touch activeChips / live recs)
+  // 3) Click Done (or outside) → popover closes. If pending differs from
+  //    current, push to _v2QueuedEdits and render a diff banner in the
+  //    quick-reply area (e.g. "Passengers: 6 seats → 5 seats")
+  // 4) Apply via the banner's "Apply" button OR clicking Send — the queued
+  //    edits commit (activeChips/budget update), recs rebuild, banner clears
+
   let _v2DeferLiveRecs = false;
-  // Wrap buildLiveRecs to no-op while the user is mid-edit in a popover
+  let _v2PopoverPending = null;   // { key, label, fromValue, toOption?, toBudget? }
+  let _v2QueuedEdits   = {};      // keyed by chip key
+
+  // Wrap buildLiveRecs — no-op while popover is open (extra safety)
   const _origBuildLiveRecs = window.buildLiveRecs;
   window.buildLiveRecs = function() {
-    if (_v2DeferLiveRecs) return;          // defer until Done
+    if (_v2DeferLiveRecs) return;
     return _origBuildLiveRecs.apply(this, arguments);
   };
 
@@ -8231,19 +8294,34 @@ function showToast(msg) {
     event.stopPropagation();
     document.querySelectorAll('.v2-edit-popover').forEach(el => el.remove());
     const anchor = event.currentTarget;
-    _v2DeferLiveRecs = true;               // enter edit mode — recs frozen
+    _v2DeferLiveRecs = true;
+
+    // Capture current state so we can compute the diff on close
+    const rows = collectToldRows();
+    const row = rows.find(r => r.key === key);
+    const currentOption = v2GetCurrentSingleOption(key);
+    const sMin = document.getElementById('budgetMin');
+    const sMax = document.getElementById('budgetMax');
+    _v2PopoverPending = {
+      key,
+      label: row ? row.label : key,
+      fromValue: row ? row.value : '',
+      // Pending equals current at the start (no change yet)
+      toOption: currentOption,
+      toBudget: (sMin && sMax) ? { min: parseInt(sMin.value), max: parseInt(sMax.value) } : null,
+    };
+
     const pop = document.createElement('div');
     pop.className = 'v2-edit-popover is-open';
     pop.dataset.key = key;
     document.body.appendChild(pop);
     v2RenderPopoverContent(pop, key);
-    // Position relative to the clicked Change button
+
     const btnRect = anchor.getBoundingClientRect();
     const popW = pop.offsetWidth;
     pop.style.left = Math.max(12, Math.min(window.innerWidth - popW - 12, btnRect.left - popW / 2 + btnRect.width / 2)) + 'px';
     pop.style.top  = (btnRect.bottom + 8) + 'px';
 
-    // Outside click dismisses + commits the edit
     setTimeout(() => {
       document.addEventListener('click', function dismiss(e) {
         if (!pop.contains(e.target)) {
@@ -8254,28 +8332,36 @@ function showToast(msg) {
     }, 0);
   };
 
-  // Render the popover's content (called on open and after every chip click)
+  // Get the currently-active single option for a key (for radio-style groups)
+  function v2GetCurrentSingleOption(key) {
+    const prefix = key + ':';
+    const match = Object.keys(activeChips).find(k => k.startsWith(prefix) && activeChips[k]);
+    return match ? match.slice(prefix.length) : null;
+  }
+
   function v2RenderPopoverContent(pop, key) {
-    const rows = collectToldRows();
-    const row = rows.find(r => r.key === key);
-    if (!row) return;
+    const row = collectToldRows().find(r => r.key === key);
     const hasMsg = !!findLatestMessageForTopic(key);
+    const label = (row && row.label) || (_v2PopoverPending && _v2PopoverPending.label) || key;
 
     let chipsHtml = '';
     if (key === 'budget') {
-      const sMin = document.getElementById('budgetMin');
-      const sMax = document.getElementById('budgetMax');
-      const curMin = sMin ? parseInt(sMin.value) : null;
-      const curMax = sMax ? parseInt(sMax.value) : null;
+      const pendBudget = _v2PopoverPending && _v2PopoverPending.toBudget;
       chipsHtml = BUDGET_PRESETS.map(p => {
-        const on = curMin === p.min && curMax === p.max;
+        const on = pendBudget && pendBudget.min === p.min && pendBudget.max === p.max;
         return `<button class="v2-edit-popover-chip${on ? ' on' : ''}" type="button"
                   onclick="v2PopoverPick('${key}', null, ${p.min}, ${p.max})">${escapeHtml(p.label)}</button>`;
       }).join('');
     } else {
-      chipsHtml = (row.options || []).map(opt => {
-        const chipKey = `${key}:${opt}`;
-        const on = !!activeChips[chipKey];
+      // Use the per-row options if available, otherwise pull from FILTERS
+      let opts = (row && row.options) || [];
+      if (!opts.length && typeof FILTERS !== 'undefined') {
+        const grp = FILTERS.find(g => g.key === key);
+        if (grp) opts = grp.options;
+      }
+      const pendOpt = _v2PopoverPending && _v2PopoverPending.toOption;
+      chipsHtml = opts.map(opt => {
+        const on = pendOpt === opt;
         const safeOpt = JSON.stringify(opt).replace(/"/g, '&quot;');
         return `<button class="v2-edit-popover-chip${on ? ' on' : ''}" type="button"
                   onclick="v2PopoverPick('${key}', ${safeOpt})">${escapeHtml(opt)}</button>`;
@@ -8283,7 +8369,7 @@ function showToast(msg) {
     }
     pop.innerHTML = `
       <div class="v2-edit-popover-head">
-        <span class="v2-edit-popover-title">Change ${escapeHtml(row.label).toLowerCase()}</span>
+        <span class="v2-edit-popover-title">Change ${escapeHtml(label).toLowerCase()}</span>
         <button class="v2-edit-popover-show" type="button"
                 ${hasMsg ? '' : 'disabled'}
                 onclick="v2ClosePopoverAndJump('${key}')">Show in chat</button>
@@ -8296,43 +8382,52 @@ function showToast(msg) {
     `;
   }
 
-  // Chip click inside popover — updates local state, re-renders popover only
+  // Chip click inside popover — updates POPOVER-LOCAL state only
   window.v2PopoverPick = function(key, opt, min, max) {
+    if (!_v2PopoverPending || _v2PopoverPending.key !== key) return;
     if (key === 'budget') {
-      // Apply preset to budget sliders directly (mirror of heroToldBudgetPick
-      // but without triggering the live-recs rebuild)
-      const sMin = document.getElementById('budgetMin');
-      const sMax = document.getElementById('budgetMax');
-      if (sMin && sMax) {
-        sMin.value = min;
-        sMax.value = max;
-        if (typeof setBudgetRange === 'function') setBudgetRange(min, max, true);
-      }
+      _v2PopoverPending.toBudget = { min, max };
     } else {
-      // Toggle the chip's activeChips entry — for radio-style groups
-      // (one-pick-only), clear other options first
-      const allOpts = (typeof FILTERS !== 'undefined')
-        ? (FILTERS.find(g => g.key === key) || {}).options || []
-        : [];
-      // For groups where only one option should be selected at a time, replace
-      // (this matches how heroToldToggle behaves for size/seats/fuel/usage).
-      // For multi-select groups we'd toggle. We treat them all single-select here.
-      Object.keys(activeChips).forEach(k => { if (k.startsWith(key + ':')) delete activeChips[k]; });
-      activeChips[`${key}:${opt}`] = true;
+      _v2PopoverPending.toOption = opt;
     }
-    // Re-render the popover so the .on highlight updates immediately
     const pop = document.querySelector('.v2-edit-popover');
     if (pop) v2RenderPopoverContent(pop, key);
   };
 
-  // Close popover — commits the deferred live-rec update
+  // Close popover — if pending differs from current, queue it as a diff
   window.v2ClosePopover = function(pop) {
+    if (_v2PopoverPending) {
+      const p = _v2PopoverPending;
+      let newValue = '';
+      let changed = false;
+      if (p.key === 'budget' && p.toBudget) {
+        const newStr = `${formatNOK(p.toBudget.min)} – ${formatNOK(p.toBudget.max)}`;
+        if (newStr !== p.fromValue) { newValue = newStr; changed = true; }
+      } else if (p.toOption) {
+        // Compare to fromValue (which is the display string of the current
+        // confirmed option). Quick heuristic: if the new option isn't already
+        // the substring of the from value, it's a change.
+        const currentOpt = v2GetCurrentSingleOption(p.key);
+        if (p.toOption !== currentOpt) {
+          newValue = p.toOption;
+          changed = true;
+        }
+      }
+      if (changed) {
+        _v2QueuedEdits[p.key] = {
+          key: p.key,
+          label: p.label,
+          oldValue: p.fromValue,
+          newValue,
+          newOption: p.toOption,
+          newBudget: p.toBudget,
+        };
+      }
+    }
+    _v2PopoverPending = null;
     if (pop) pop.remove();
     _v2DeferLiveRecs = false;
-    // Now flush — recompute everything and refresh strip + recs
-    if (typeof buildSidebar === 'function') buildSidebar();
-    if (typeof updateHeroToldPanel === 'function') updateHeroToldPanel();
-    if (typeof _origBuildLiveRecs === 'function') _origBuildLiveRecs();
+    v2RenderPendingBanners();
   };
 
   window.v2ClosePopoverAndJump = function(key) {
@@ -8341,10 +8436,101 @@ function showToast(msg) {
     if (typeof heroToldJump === 'function') heroToldJump(key);
   };
 
-  window.v2RefreshAfterEdit = function() {
-    // Kept for backwards-compat with any leftover handler; commits the edit.
-    v2ClosePopover(document.querySelector('.v2-edit-popover'));
+  // Render pending-edit diff banners in the quick-reply area
+  function v2RenderPendingBanners() {
+    const wrap = document.getElementById('suggestionsWrap');
+    if (!wrap) return;
+    let banners = document.getElementById('v2PendingBanners');
+    const edits = Object.values(_v2QueuedEdits);
+    if (edits.length === 0) {
+      // No pending edits — remove banners
+      if (banners) banners.remove();
+      return;
+    }
+    // Create the banners container if it doesn't exist; place it inside the
+    // quick-reply wrap, replacing the chip rendering temporarily.
+    if (!banners) {
+      banners = document.createElement('div');
+      banners.id = 'v2PendingBanners';
+      banners.className = 'v2-pending-banners';
+      wrap.appendChild(banners);
+    }
+    wrap.classList.remove('empty');
+    // Hide the original chips while pending banners are showing
+    const origLabel = wrap.querySelector('.quick-reply-label');
+    const origChips = wrap.querySelector('.quick-chips');
+    if (origLabel) origLabel.style.display = 'none';
+    if (origChips) origChips.style.display = 'none';
+
+    banners.innerHTML = `
+      <span class="v2-pending-banners-label">Pending change${edits.length > 1 ? 's' : ''} — apply on Send</span>
+      ${edits.map(e => `
+        <div class="v2-pending-banner" data-key="${escapeHtml(e.key)}">
+          <span class="v2-pending-banner-label">${escapeHtml(e.label)}</span>
+          <span class="v2-pending-banner-diff">
+            <span class="v2-pending-old">${escapeHtml(e.oldValue || '—')}</span>
+            <span class="v2-pending-arrow">→</span>
+            <span class="v2-pending-new">${escapeHtml(e.newValue)}</span>
+          </span>
+          <button class="v2-pending-banner-cancel" type="button"
+                  onclick="v2CancelEdit('${e.key}')" aria-label="Cancel">×</button>
+        </div>`).join('')}
+      <button class="v2-pending-apply" type="button" onclick="v2ApplyQueuedEdits()">Apply now</button>
+    `;
+  }
+
+  window.v2CancelEdit = function(key) {
+    delete _v2QueuedEdits[key];
+    v2RenderPendingBanners();
+    // If no edits left, restore the original quick-reply UI
+    if (Object.keys(_v2QueuedEdits).length === 0) v2RestoreQuickReplyUI();
   };
+
+  function v2RestoreQuickReplyUI() {
+    const wrap = document.getElementById('suggestionsWrap');
+    if (!wrap) return;
+    const origLabel = wrap.querySelector('.quick-reply-label');
+    const origChips = wrap.querySelector('.quick-chips');
+    if (origLabel) origLabel.style.display = '';
+    if (origChips) origChips.style.display = '';
+    if (origChips && origChips.children.length === 0) wrap.classList.add('empty');
+  }
+
+  // Apply all queued edits immediately
+  window.v2ApplyQueuedEdits = function() {
+    Object.values(_v2QueuedEdits).forEach(edit => {
+      if (edit.newBudget) {
+        const sMin = document.getElementById('budgetMin');
+        const sMax = document.getElementById('budgetMax');
+        if (sMin && sMax) {
+          sMin.value = edit.newBudget.min;
+          sMax.value = edit.newBudget.max;
+          if (typeof setBudgetRange === 'function') setBudgetRange(edit.newBudget.min, edit.newBudget.max, true);
+        }
+      } else if (edit.newOption) {
+        Object.keys(activeChips).forEach(k => { if (k.startsWith(edit.key + ':')) delete activeChips[k]; });
+        activeChips[`${edit.key}:${edit.newOption}`] = true;
+      }
+    });
+    _v2QueuedEdits = {};
+    if (typeof buildSidebar === 'function') buildSidebar();
+    if (typeof updateHeroToldPanel === 'function') updateHeroToldPanel();
+    if (typeof _origBuildLiveRecs === 'function') _origBuildLiveRecs();
+    const banners = document.getElementById('v2PendingBanners');
+    if (banners) banners.remove();
+    v2RestoreQuickReplyUI();
+  };
+
+  // Wrap sendMessage so that pending edits are flushed BEFORE the message goes
+  const _origSendMessage = window.sendMessage;
+  window.sendMessage = function() {
+    if (Object.keys(_v2QueuedEdits).length > 0) {
+      v2ApplyQueuedEdits();
+    }
+    return _origSendMessage.apply(this, arguments);
+  };
+
+  window.v2RefreshAfterEdit = function() { /* deprecated — kept for backwards compat */ };
 
   // After the original buildLiveRecs populates #heroRecsBody, swap each View
   // button's handler so it opens the inventory IN THE DOCK (right side) rather
@@ -8412,13 +8598,13 @@ function showToast(msg) {
   }
 
   // ── Open inventory FOR a model inside the LIVE RECS section ──
-  // Replaces the live-rec cards with a list of matched inventory cars + a
-  // "← Back" button. Click Back to restore the live recs.
+  // Reuses the chat's renderInventory() so cards have the same beautiful
+  // layout (photo, title, price box, location, "Why this one" callout,
+  // Save/View buttons). Adds a "← Back" header above. Click Back to restore.
   let _v2RecsSnapshot = null;
   window.v2OpenInventoryInDock = async function(modelName) {
     const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
     if (!heroBottom) return;
-    // Snapshot the current live recs (header + body) so Back can restore
     _v2RecsSnapshot = heroBottom.innerHTML;
 
     heroBottom.innerHTML = `
@@ -8438,8 +8624,25 @@ function showToast(msg) {
     `;
 
     try {
-      if (typeof matchInventory !== 'function') throw new Error('inventory unavailable');
-      const items = matchInventory(modelName);
+      // Wait for inventory cache if it's still loading
+      if (!inventoryLoaded && inventoryLoadPromise) {
+        await Promise.race([
+          inventoryLoadPromise,
+          new Promise(r => setTimeout(r, 12000)),
+        ]);
+      }
+      const rawMatches = (typeof matchInventory === 'function') ? matchInventory(modelName) : [];
+      if (!rawMatches.length) {
+        v2InvShowEmpty(modelName);
+        return;
+      }
+      // Transform raw API cars to renderInventory's expected item shape,
+      // including the proper image url, price, trim, location, edge, etc.
+      const items = rawMatches.map((car, i) => {
+        const it = apiCarToItem(car);
+        if (typeof generateEdge === 'function') it.edge = generateEdge(rawMatches, i);
+        return it;
+      });
       v2RenderInventoryInRecs(modelName, items);
     } catch (err) {
       const loading = heroBottom.querySelector('.v2-inv-loading');
@@ -8447,43 +8650,43 @@ function showToast(msg) {
     }
   };
 
+  function v2InvShowEmpty(modelName) {
+    const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
+    if (!heroBottom) return;
+    const loading = heroBottom.querySelector('.v2-inv-loading');
+    if (loading) loading.remove();
+    const empty = document.createElement('div');
+    empty.className = 'v2-inv-empty';
+    empty.textContent = `No ${modelName}s in stock right now.`;
+    heroBottom.appendChild(empty);
+  }
+
   function v2RenderInventoryInRecs(modelName, items) {
     const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
     if (!heroBottom) return;
     const loading = heroBottom.querySelector('.v2-inv-loading');
     if (loading) loading.remove();
-    if (!items || items.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'v2-inv-empty';
-      empty.textContent = `No ${modelName}s in stock right now.`;
-      heroBottom.appendChild(empty);
-      return;
+
+    // Use the chat's renderInventory() so we inherit its full card layout.
+    // We build a tiny synthetic "message" container that renderInventory expects,
+    // then extract the .inv-block and place it in the dock.
+    const synthetic = document.createElement('div');
+    synthetic.className = 'msg ai v2-inv-host';
+    synthetic.innerHTML = '<div class="msg-content"></div>';
+    document.body.appendChild(synthetic);   // briefly attach so queries work
+    try {
+      renderInventory(items, modelName, synthetic, true /* realData */);
+    } finally {
+      // Pull the rendered .inv-block out into the dock
+      const block = synthetic.querySelector('.inv-block');
+      if (block) {
+        // Drop the redundant header — we already have the dock header above
+        const header = block.querySelector('.inv-header');
+        if (header) header.remove();
+        heroBottom.appendChild(block);
+      }
+      synthetic.remove();
     }
-    const grid = document.createElement('div');
-    grid.className = 'v2-inv-grid';
-    items.slice(0, 12).forEach(car => {
-      const card = document.createElement('div');
-      card.className = 'v2-inv-card';
-      const img = car.image
-        ? `<img class="v2-inv-card-img" src="${escapeHtml(car.image)}" alt="" loading="lazy">`
-        : `<div class="v2-inv-card-img"></div>`;
-      const price = (typeof car.price === 'number' && car.price > 0)
-        ? formatNOK(car.price)
-        : 'Price on request';
-      const year    = car.year    || '';
-      const mileage = (typeof car.km === 'number') ? `${car.km.toLocaleString('no-NO')} km` : '';
-      const fuel    = (typeof humanFuel === 'function' && car.fuel) ? humanFuel(car.fuel) : (car.fuel || '');
-      const meta = [year, mileage, fuel].filter(Boolean).join(' · ');
-      card.innerHTML = `
-        ${img}
-        <div class="v2-inv-card-body">
-          <div class="v2-inv-card-price">${escapeHtml(price)}</div>
-          <div class="v2-inv-card-meta">${escapeHtml(meta)}</div>
-        </div>
-      `;
-      grid.appendChild(card);
-    });
-    heroBottom.appendChild(grid);
   }
 
   window.v2CloseInventoryInDock = function() {
@@ -8492,7 +8695,6 @@ function showToast(msg) {
     if (_v2RecsSnapshot != null) {
       heroBottom.innerHTML = _v2RecsSnapshot;
       _v2RecsSnapshot = null;
-      // Re-attach the View click handlers we wired before
       v2RewireRecCardClicks();
     }
   };
