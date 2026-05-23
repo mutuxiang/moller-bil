@@ -3075,13 +3075,12 @@ body.v2-layout .chat { max-width: 100% !important; }
   border-radius: 3px;
 }
 body.v2-layout .hero-bottom {
-  /* Live recs section now takes 1.5× the viz section's height (it was 1:1
-     before — equal halves). With viz at flex:1 and recs at flex:1.5, recs
-     occupies ~60% of the dock content area, which is exactly 1.5× the old
-     50%. Bottom stays anchored to the dock bottom; the section expands
-     UPWARD to make room for the bigger cards. */
-  flex: 1.5 1 0 !important;
-  min-height: 0;
+  /* Live recs needs enough room for 1.5× cards (image 270 + body ~250 =
+     ~520px) + the section header (~70px). 600px min-height guarantees
+     the View buttons aren't clipped. Flex weight 2 also grabs more share
+     than 50% if the dock has extra room. */
+  flex: 2 1 0 !important;
+  min-height: 600px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -4016,12 +4015,21 @@ function humanFuel(raw) {
   if (!raw) return '';
   const map = {
     'Electricity': 'Electric',
-    'GasolinAndElectricityHybrid': 'Hybrid (petrol)',
-    'DieselAndElectricityHybrid': 'Hybrid (diesel)',
+    'GasolinAndElectricityHybrid':       'Hybrid (petrol)',
+    'DieselAndElectricityHybrid':        'Hybrid (diesel)',
+    'GasolinAndElectricityPluginHybrid': 'Plug-in hybrid',
+    'DieselAndElectricityPluginHybrid':  'Plug-in hybrid (diesel)',
     'Gasolin': 'Petrol',
-    'Diesel': 'Diesel',
+    'Diesel':  'Diesel',
   };
-  return map[raw] || raw;
+  if (map[raw]) return map[raw];
+  // Fallback for unrecognized API codes: split CamelCase into spaced words
+  // so we don't surface raw "GasolinAndElectricityPluginHybrid" garbage.
+  return String(raw)
+    .replace(/([a-z])([A-Z])/g, '$1 $2')   // GasolinAndElectricity → Gasolin And Electricity
+    .replace(/\bGasolin\b/g, 'Petrol')
+    .replace(/\bElectricity\b/g, 'electric')
+    .replace(/\bAnd\b/g, '+');
 }
 
 // ── Live recommendations (sidebar) ────────────────────────────────────────
