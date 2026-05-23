@@ -2773,19 +2773,25 @@ body.mode-learning .col-spacer.right {
    the chat. All scoped under `body.v2-layout` for easy a/b compare.
    ════════════════════════════════════════════════════════════════════ */
 
-/* Skip the full-screen onboarding intro entirely — v2 lands in the chat */
-body.v2-layout .app.is-onboarding .col-spacer.left { display: none !important; }
-body.v2-layout .hero-cluster,
-body.v2-layout .hero-headline,
-body.v2-layout .hero-cta,
-body.v2-layout .hero-top,
-body.v2-layout .hero-told,           /* told-me lives in its own strip above chat */
-body.v2-layout .hero-recs-head { display: none !important; }
+/* During onboarding, the chat's original full-screen hero takes over (with
+   typewriter + image cluster + CTAs). These v2 hides only kick in AFTER
+   the user picks a mode and the chat slides into view. */
+body.v2-layout .app:not(.is-onboarding) .hero-cluster,
+body.v2-layout .app:not(.is-onboarding) .hero-headline,
+body.v2-layout .app:not(.is-onboarding) .hero-cta,
+body.v2-layout .app:not(.is-onboarding) .hero-top,
+body.v2-layout .app:not(.is-onboarding) .hero-told,
+body.v2-layout .app:not(.is-onboarding) .hero-recs-head { display: none !important; }
 
-/* Right dock — navy, fills 3/5 of the viewport. The dock is a vertical flex
-   container: the viz section grows + scrolls internally; live-recs is pinned
-   to the bottom. */
-body.v2-layout .col-spacer.left.hero {
+/* During onboarding the told-strip + viz dock shouldn't show */
+body.v2-layout .app.is-onboarding .v2-told-strip,
+body.v2-layout .app.is-onboarding .v2-viz-wrap,
+body.v2-layout .app.is-onboarding .v2-dock-section-head { display: none !important; }
+
+/* Right dock — navy, fills 3/5 of viewport. ONLY post-onboarding — during
+   onboarding the chat hero rules (.app.is-onboarding .col-spacer.left)
+   give the hero its full-screen treatment. */
+body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero {
   background: var(--moller-blue) !important;
   color: var(--cream-100) !important;
   width: 60vw !important;
@@ -2807,8 +2813,10 @@ body.v2-layout .col-spacer.left.hero {
 }
 body.v2-layout .hero-toggle-btn { display: none !important; }
 
-/* Chat — 2/5 of viewport, on the left */
-body.v2-layout .col-center {
+/* Chat — 2/5 of viewport, on the left. Only post-onboarding (during
+   onboarding the chat is slid off-stage per the original .app.is-onboarding
+   .col-center { transform: translateX(...) } rule). */
+body.v2-layout .app:not(.is-onboarding) .col-center {
   flex: 0 0 40vw !important;
   max-width: 40vw !important;
   min-width: 360px !important;
@@ -8139,28 +8147,30 @@ function showToast(msg) {
 // rendering inline in the chat stream.
 // ════════════════════════════════════════════════════════════════════════
 (function v2Bootstrap() {
-  // 1) Skip onboarding — open straight into the chat experience
-  const _origStartOnboarding = window.startOnboardingIntro;
-  window.startOnboardingIntro = function() {
-    const app = document.querySelector('.app');
-    if (app) app.classList.remove('is-onboarding', 'is-ready');
-    _onboardingLoopStopped = true;
-  };
+  // 1) KEEP the chat's onboarding intro — full-screen navy hero with the
+  //    typewriter headline, image cluster, and "Find a car / Just learning"
+  //    CTAs. v2 only takes over AFTER the user picks a mode.
+  //    (No override of startOnboardingIntro here.)
 
-  // 2) After init has run, restructure the DOM to add v2 panels
-  const _origInit = window.init;
-  window.init = function() {
-    _origInit.apply(this, arguments);
-    setTimeout(v2BuildLayout, 0);
-  };
+  // 2) Wrap onboardingChoose — after the chat slides in, build the v2 dock
+  const _origOnboardingChoose = window.onboardingChoose;
+  if (typeof _origOnboardingChoose === 'function') {
+    window.onboardingChoose = function(mode) {
+      _origOnboardingChoose.apply(this, arguments);
+      // Original transition is ~650ms — schedule v2 layout setup just after
+      setTimeout(v2BuildLayout, 700);
+    };
+  }
 
+  let _v2LayoutBuilt = false;
   function v2BuildLayout() {
-    // Defensive — wait for hero panel
+    if (_v2LayoutBuilt) return;       // build only once per session
     const hero = document.getElementById('heroPanel');
     const chatRoot = document.querySelector('.col-center .chat');
     if (!hero || !chatRoot) return;
+    _v2LayoutBuilt = true;
 
-    // ── Build the horizontal told-me strip above the chat stream ──
+    // ── Told-me strip above the chat stream ──
     const stream = document.getElementById('stream');
     if (stream && !document.getElementById('v2ToldStrip')) {
       const strip = document.createElement('div');
@@ -8169,13 +8179,10 @@ function showToast(msg) {
       stream.parentNode.insertBefore(strip, stream);
     }
 
-    // ── Inject the viz section ABOVE the existing hero-bottom (live recs) ──
-    // Reuses the existing #heroRecsBody for live recs; just adds a matching
-    // section header above it for visual consistency.
+    // ── Viz section ABOVE hero-bottom; reuses #heroRecsBody for live recs ──
     const heroBottom = hero.querySelector('.hero-bottom');
     if (heroBottom && !document.getElementById('v2VizBody')) {
       const vizSection = document.createElement('section');
-      // v2-viz-wrap class makes this section the flex-grow + scrollable area
       vizSection.className = 'v2-dock-section v2-viz-wrap';
       vizSection.innerHTML = `
         <div class="v2-dock-section-head">
@@ -8186,8 +8193,6 @@ function showToast(msg) {
       `;
       hero.insertBefore(vizSection, heroBottom);
 
-      // Add a header to the existing heroRecsBody too (in v2 we hid the
-      // original hero-recs-head; replace it with the v2 styled header).
       const recsHead = document.createElement('div');
       recsHead.className = 'v2-dock-section-head';
       recsHead.innerHTML = `
@@ -8197,20 +8202,12 @@ function showToast(msg) {
       heroBottom.insertBefore(recsHead, heroBottom.firstChild);
     }
 
-    // First paint of the told-strip + recs (in case data already exists)
+    // First paint
     if (typeof updateHeroToldPanel === 'function') updateHeroToldPanel();
     if (typeof buildLiveRecs === 'function') buildLiveRecs();
-
-    // Kick off the AI greeting (originally fired by onboardingChoose, which
-    // we bypass in v2). Default mode is 'shopping' — same as the original CTA.
-    if (typeof showOnboarding === 'function' && !_v2GreetingStarted) {
-      _v2GreetingStarted = true;
-      conversationMode = 'shopping';
-      if (typeof applyConversationMode === 'function') applyConversationMode();
-      showOnboarding();
-    }
+    // The AI greeting is kicked off by the original onboardingChoose(); no
+    // need to call showOnboarding() here.
   }
-  let _v2GreetingStarted = false;
 
   // 3) Wrap rendering functions to redirect cards into the viz dock
   function relocateLatest(selector, sourceMsgEl, kindLabel) {
