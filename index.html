@@ -2806,11 +2806,17 @@ body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero {
   border-right: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  /* Tighter gap between viz + live-recs sections — gives the viz section
-     more breathing room above. */
   gap: 14px !important;
-  /* The dock itself doesn't scroll — the viz section scrolls inside */
-  overflow: hidden !important;
+  /* DOCK scrolls vertically if the combined sections exceed the viewport.
+     Prevents View buttons from getting clipped on smaller screens, and
+     eliminates awkward empty middle gaps from forced flex sizing. */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero::-webkit-scrollbar { width: 6px; }
+body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border-radius: 3px;
 }
 body.v2-layout .hero-toggle-btn { display: none !important; }
 
@@ -3056,21 +3062,18 @@ body.v2-layout .chat { max-width: 100% !important; }
 /* The VIZ section grows + scrolls inside itself.
    The LIVE-RECS section (heroBottom) is pinned to the bottom, never scrolls. */
 .v2-viz-wrap {
-  flex: 1 1 auto;
-  /* Guarantee ~320px so the fuel cards (compacted, no glyph) and size
-     cards fit fully without clipping. If they STILL exceed this, the
-     inner #v2VizBody scrolls. */
-  min-height: 320px;
+  /* Content-sized so the section is exactly tall enough for whatever viz
+     is showing (fuel cards / budget rail / size panel). No artificial
+     min-height — the WHOLE DOCK scrolls if total exceeds the viewport. */
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
 }
 .v2-viz-wrap #v2VizBody {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 6px;        /* room for the scrollbar */
-  margin-right: -6px;
+  /* No internal scroll — the dock handles scrolling now */
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 .v2-viz-wrap #v2VizBody::-webkit-scrollbar { width: 6px; }
 .v2-viz-wrap #v2VizBody::-webkit-scrollbar-thumb {
@@ -3078,28 +3081,22 @@ body.v2-layout .chat { max-width: 100% !important; }
   border-radius: 3px;
 }
 body.v2-layout .hero-bottom {
-  /* Live recs gets the lion's share of dock space but leaves a guaranteed
-     ~320px for the viz section above (enough for compacted fuel cards and
-     size panel). flex: 1.5 keeps the bottom half larger than the top, and
-     min-height keeps the live-rec cards (1.5× sized) fully visible. */
-  flex: 1.5 1 0 !important;
-  min-height: 540px;
-  overflow: hidden;
+  /* Content-sized — section is exactly tall enough to fit the header +
+     3 live-rec cards (or inventory cards) with all their buttons visible.
+     If the combined sections exceed the dock height, the WHOLE DOCK
+     scrolls (set on .col-spacer.left.hero). Cards are never clipped. */
+  flex: 0 0 auto !important;
   display: flex;
   flex-direction: column;
 }
 body.v2-layout .hero-bottom > * { flex-shrink: 0; }
-/* Within the section: header pinned at top, cards pushed to the BOTTOM
-   (so the cards' bottom edge stays flush with the dock bottom regardless
-   of how much vertical space the section has). */
+/* Cards flow naturally right after the header (no margin-top: auto since
+   the section is now content-sized — no empty space to fill). */
 body.v2-layout .hero-bottom .v2-dock-section-head,
 body.v2-layout .hero-bottom .v2-inv-head { flex-shrink: 0; }
 body.v2-layout .hero-bottom #heroRecsBody,
 body.v2-layout .hero-bottom .v2-inv-grid {
-  margin-top: auto;          /* push to bottom of the flex column */
-  min-height: 0;
-  overflow-y: auto;
-  flex-shrink: 1;
+  flex-shrink: 0;
 }
 body.v2-layout .hero-bottom::-webkit-scrollbar,
 body.v2-layout .hero-bottom #heroRecsBody::-webkit-scrollbar,
@@ -3130,27 +3127,9 @@ body.v2-layout .hero-bottom .v2-inv-grid::-webkit-scrollbar-thumb {
 #v2VizBody .budget-card { padding: 16px 18px; }
 /* Recommendations: up to 3 cards in a row */
 #v2VizBody .recs { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 14px; max-width: none !important; }
-/* Size cards in v2 — keep compact so they match fuel card height */
-#v2VizBody .size-panel { padding: 14px 16px 12px; }
-/* Fuel: all 5 fuel types in a row — compact layout to fit in the viz section */
+#v2VizBody .size-panel { padding: 18px 20px 16px; }
+/* Fuel: all 5 fuel types in a row, at their natural full size — no compacting */
 #v2VizBody .fuel-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
-#v2VizBody .fuel-card {
-  padding: 12px 14px 14px;
-  gap: 8px;
-}
-#v2VizBody .fuel-card-head { min-height: 0; gap: 2px; }
-#v2VizBody .fuel-card .fuel-name { font-size: 17px; }
-#v2VizBody .fuel-card .fuel-tag { font-size: 11px; }
-/* Drop the glyph illustration — saves ~70px vertical, the fuel-name already
-   tells the user which fuel this is. */
-#v2VizBody .fuel-glyph { display: none; }
-#v2VizBody .fuel-cost { gap: 4px; }
-#v2VizBody .fuel-bar { height: 6px; }
-#v2VizBody .fuel-cost-num { font-size: 15px; margin-top: 0; }
-#v2VizBody .fuel-stats { gap: 5px; }
-#v2VizBody .fuel-row { padding-bottom: 4px; }
-#v2VizBody .fuel-row-label,
-#v2VizBody .fuel-row span:first-child { font-size: 11px; }
 
 /* v2 compact car card — same SIZE as the previous v2 rec cards, used for
    BOTH live recommendations and in-stock inventory. Cream surface, ~180px
