@@ -3142,13 +3142,18 @@ body.v2-layout .hero-bottom { margin-top: 0; }
   gap: 14px;
   align-items: stretch;
 }
+.v2-inv-grid > * { height: 100%; }
 /* Override the base `#heroRecsBody { display: flex; flex-direction: column }`
-   rule — in v2 the live recs are a 3-column grid, same as inventory. */
+   rule — in v2 the live recs are a 3-column grid, same as inventory.
+   `align-items: stretch` (default) + matching card heights ensures all 3
+   buttons sit at the same Y so none get clipped by the section bottom. */
 body.v2-layout #heroRecsBody {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 14px !important;
+  align-items: stretch !important;
 }
+body.v2-layout #heroRecsBody > * { height: 100%; }
 .v2-rec-state-msg {
   font-size: 14px;
   color: rgba(255,255,255,0.55);
@@ -3195,12 +3200,18 @@ body.v2-layout #heroRecsBody {
   line-height: 1.4;
 }
 .v2-card-reason {
-  font-size: 15px; line-height: 1.4;     /* 13 → 15 */
-  padding: 12px 14px;                     /* 8/10 → 12/14 */
+  font-size: 15px; line-height: 1.4;
+  padding: 12px 14px;
   background: rgba(225, 100, 75, 0.08);
   border-radius: 4px;
   color: var(--ink);
   margin: 6px 0 2px;
+  /* Lock to a single line so every card is the same height in the grid —
+     prevents 2-line reasons (e.g. "Newest model year in this selection")
+     from pushing some cards taller than others and clipping their buttons. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .v2-card-reason-label {
   color: var(--salmon);
