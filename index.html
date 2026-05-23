@@ -3075,27 +3075,28 @@ body.v2-layout .chat { max-width: 100% !important; }
   border-radius: 3px;
 }
 body.v2-layout .hero-bottom {
-  flex-shrink: 0;
-  margin-top: auto;          /* push to BOTTOM of the dock column */
-  /* LOCKED min-height (~480px) so the section reserves its full footprint
-     from the very first frame — the "LIVE RECOMMENDATIONS / Popular in the
-     Oslo area" header sits at the SAME Y position whether cards are loading,
-     loaded, or empty. No more upward shift when picks arrive.
-     Capped at 60vh so a tall inventory list (12 cards) doesn't swallow the
-     viz section above; the inner grid scrolls if it overflows. */
-  min-height: 480px;
-  max-height: 60vh;
+  /* Live recs section = the BOTTOM HALF of the dock. Both viz (above) and
+     this section split the dock content area equally via flex: 1.
+     Bottom is naturally anchored to the dock's bottom edge (no margin-top
+     needed once flex: 1 takes over). Content scrolls inside if it overflows. */
+  flex: 1 1 0 !important;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 body.v2-layout .hero-bottom > * { flex-shrink: 0; }
-/* The cards grid itself scrolls inside if it overflows (rare since both
-   modes show 3 short cards by default) */
+/* Within the section: header pinned at top, cards pushed to the BOTTOM
+   (so the cards' bottom edge stays flush with the dock bottom regardless
+   of how much vertical space the section has). */
+body.v2-layout .hero-bottom .v2-dock-section-head,
+body.v2-layout .hero-bottom .v2-inv-head { flex-shrink: 0; }
 body.v2-layout .hero-bottom #heroRecsBody,
 body.v2-layout .hero-bottom .v2-inv-grid {
+  margin-top: auto;          /* push to bottom of the flex column */
   min-height: 0;
   overflow-y: auto;
+  flex-shrink: 1;
 }
 body.v2-layout .hero-bottom::-webkit-scrollbar,
 body.v2-layout .hero-bottom #heroRecsBody::-webkit-scrollbar,
@@ -8791,8 +8792,11 @@ function showToast(msg) {
     const card = document.createElement('div');
     card.className = 'v2-card';
 
-    const subParts = [it.trim, it.color, it.mileage].filter(Boolean);
-    const subText  = subParts.slice(0, 2).join(' · ');   // keep it brief
+    // Skip raw API trim/color — they're Norwegian dealer codes like
+    // "Pro 77 kWh 286hk 75-Jubileum" or "Aquamar.blue met/bla" that read
+    // as garbage. Use mileage + fuel — both are pre-cleaned & informative.
+    const subParts = [it.mileage, it.fuel].filter(Boolean);
+    const subText  = subParts.join(' · ');
 
     const imageHtml = it.image
       ? `<img class="v2-card-img" src="${escapeHtml(it.image)}" alt="${escapeHtml(modelName)}" loading="lazy">`
