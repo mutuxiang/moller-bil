@@ -3097,28 +3097,103 @@ body.v2-layout .hero-bottom::-webkit-scrollbar-thumb {
 #v2VizBody .fuel-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
 #v2VizBody .fuel-card { padding: 12px 14px; gap: 10px; }
 
-/* v2 live recs + inventory both render as full .inv-card cards via the
-   shared v2BuildInvCard helper. The body uses a 3-column grid; cards
-   inherit all .inv-card styles from the chat's CSS so they read identically
-   to the inventory cards in image 1. */
+/* v2 compact car card — same SIZE as the previous v2 rec cards, used for
+   BOTH live recommendations and in-stock inventory. Cream surface, ~180px
+   photo on top, name + price + reason + Save/View buttons. */
 body.v2-layout .hero-bottom { margin-top: 0; }
 .v2-inv-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
   align-items: stretch;
 }
-/* Loading / empty state message */
 .v2-rec-state-msg {
   font-size: 14px;
   color: rgba(255,255,255,0.55);
   padding: 14px 0;
 }
-/* The .inv-card has a chat-tuned background; ensure it reads cleanly on navy */
-body.v2-layout .inv-card {
-  background: var(--cream-100) !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+.v2-card {
+  background: var(--cream-100);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.14);
 }
+.v2-card-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background: rgba(0,25,70,0.06);
+  display: block;
+}
+.v2-card-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.v2-card-name {
+  font-size: 16px; font-weight: 500;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.v2-card-price {
+  font-size: 18px; font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.v2-card-sub {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.v2-card-reason {
+  font-size: 13px; line-height: 1.4;
+  padding: 8px 10px;
+  background: rgba(225, 100, 75, 0.08);
+  border-radius: 4px;
+  color: var(--ink);
+  margin: 4px 0 2px;
+}
+.v2-card-reason-label {
+  color: var(--salmon);
+  font-weight: 500;
+  margin-right: 4px;
+}
+.v2-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+.v2-card-save,
+.v2-card-cta {
+  appearance: none; cursor: pointer;
+  padding: 9px 12px;
+  border-radius: 999px;
+  font: 500 13px/1 "Moller", sans-serif;
+  transition: background 180ms, border-color 180ms, color 180ms, border-radius 220ms;
+}
+.v2-card-save {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+}
+.v2-card-save:hover { border-color: var(--ink); border-radius: 8px; }
+.v2-card-save.on {
+  background: var(--accent-soft);
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.v2-card-cta {
+  background: var(--ink);
+  color: var(--cream-100);
+  border: 1px solid var(--ink);
+}
+.v2-card-cta:hover { background: var(--moller-blue-700); border-radius: 8px; }
 
 /* When cards are routed to the dock, the chat's inline copy is physically
    moved out by the JS hook. As a fallback (and for any leftover render),
@@ -8331,7 +8406,10 @@ function showToast(msg) {
     `;
   }
 
-  // Chip click inside popover — updates POPOVER-LOCAL state only
+  // Chip click inside popover — updates the popover-local pending state,
+  // re-renders the popover for the .on highlight, AND commits the pending
+  // change into the queue so the "Quick update" banner appears in real time
+  // (the user sees the diff form as they pick, not only after Done).
   window.v2PopoverPick = function(key, opt, min, max) {
     if (!_v2PopoverPending || _v2PopoverPending.key !== key) return;
     if (key === 'budget') {
@@ -8341,44 +8419,53 @@ function showToast(msg) {
     }
     const pop = document.querySelector('.v2-edit-popover');
     if (pop) v2RenderPopoverContent(pop, key);
+    // LIVE COMMIT — push current pending into the queue and update banner
+    v2CommitPendingToQueue();
+    v2RenderPendingBanners();
   };
 
-  // Close popover — diff against the ORIGINAL active state. If the pending
-  // selection differs from what's currently in activeChips, queue it. If it
-  // matches the original, REMOVE any queued edit (the user reverted).
-  window.v2ClosePopover = function(pop) {
-    if (_v2PopoverPending) {
-      const p = _v2PopoverPending;
-      const currentOpt = v2GetCurrentSingleOption(p.key);
-      const sMin = document.getElementById('budgetMin');
-      const sMax = document.getElementById('budgetMax');
-      const curBudget = (sMin && sMax) ? { min: parseInt(sMin.value), max: parseInt(sMax.value) } : null;
-
-      let newValueDisplay = '';
-      let changed = false;
-      if (p.key === 'budget' && p.toBudget) {
-        if (!curBudget || p.toBudget.min !== curBudget.min || p.toBudget.max !== curBudget.max) {
-          newValueDisplay = `${formatNOK(p.toBudget.min)} – ${formatNOK(p.toBudget.max)}`;
-          changed = true;
-        }
-      } else if (p.toOption && p.toOption !== currentOpt) {
-        newValueDisplay = p.toOption;
+  // Push the popover's current pending state into _v2QueuedEdits (or remove
+  // it if the user reverted back to the original value).
+  function v2CommitPendingToQueue() {
+    const p = _v2PopoverPending;
+    if (!p) return;
+    const currentOpt = v2GetCurrentSingleOption(p.key);
+    const sMin = document.getElementById('budgetMin');
+    const sMax = document.getElementById('budgetMax');
+    const curBudget = (sMin && sMax)
+      ? { min: parseInt(sMin.value), max: parseInt(sMax.value) }
+      : null;
+    let changed = false;
+    let newValueDisplay = '';
+    if (p.key === 'budget' && p.toBudget) {
+      if (!curBudget || p.toBudget.min !== curBudget.min || p.toBudget.max !== curBudget.max) {
+        newValueDisplay = `${formatNOK(p.toBudget.min)} – ${formatNOK(p.toBudget.max)}`;
         changed = true;
       }
-      if (changed) {
-        _v2QueuedEdits[p.key] = {
-          key: p.key,
-          label: p.label,
-          oldValue: p.fromValue,
-          newValue: newValueDisplay,
-          newOption: p.toOption,
-          newBudget: p.toBudget,
-        };
-      } else {
-        // Reverted to the original — drop any queued edit for this key
-        delete _v2QueuedEdits[p.key];
-      }
+    } else if (p.toOption && p.toOption !== currentOpt) {
+      newValueDisplay = p.toOption;
+      changed = true;
     }
+    if (changed) {
+      _v2QueuedEdits[p.key] = {
+        key: p.key,
+        label: p.label,
+        oldValue: p.fromValue,
+        newValue: newValueDisplay,
+        newOption: p.toOption,
+        newBudget: p.toBudget,
+      };
+    } else {
+      // User reverted to original — remove the queued edit
+      delete _v2QueuedEdits[p.key];
+    }
+  }
+
+  // Close popover — the queue was kept up-to-date live during picks, so we
+  // just need to tear down the popover state here.
+  window.v2ClosePopover = function(pop) {
+    // Final sync in case the popover never received any picks (no-op then)
+    v2CommitPendingToQueue();
     _v2PopoverPending = null;
     if (pop) pop.remove();
     _v2DeferLiveRecs = false;
@@ -8611,59 +8698,39 @@ function showToast(msg) {
     return parts;
   }
 
-  // Shared inv-card builder — produces the SAME card layout for both
-  // "live recommendations" and "in stock inventory". Uses the chat's .inv-card
-  // CSS vocabulary so the cards look like image 1.
+  // Shared COMPACT card builder — same SIZE as the previous v2 rec cards
+  // (cream surface, ~180px photo on top, name + price + reason + Save/View
+  // buttons), used for BOTH live recommendations and in-stock inventory.
   function v2BuildInvCard(it, modelName, opts) {
     opts = opts || {};
     const card = document.createElement('div');
-    card.className = 'inv-card';
+    card.className = 'v2-card';
 
     const subParts = [it.trim, it.color, it.mileage].filter(Boolean);
-    const subHtml  = subParts.map(p => `<span>${enrichTerms(escapeHtml(p))}</span>`).join('');
+    const subText  = subParts.slice(0, 2).join(' · ');   // keep it brief
 
     const imageHtml = it.image
-      ? `<img class="inv-img" src="${escapeHtml(it.image)}" alt="${escapeHtml(modelName)}" loading="lazy">`
-      : `<div class="inv-ph">[ ${escapeHtml(modelName)} ]</div>`;
-
-    const stat2Html = `
-      <div class="inv-stat">
-        <span class="inv-stat-label">Location</span>
-        <span class="inv-stat-value">${escapeHtml(it.location || 'Møller Bil')}</span>
-        <span class="inv-stat-note">
-          ${it.fuel  ? `<span>${enrichTerms(escapeHtml(it.fuel))}</span>` : ''}
-          ${it.range ? `<span>${enrichTerms('Range: ' + escapeHtml(it.range))}</span>` : ''}
-        </span>
-      </div>`;
+      ? `<img class="v2-card-img" src="${escapeHtml(it.image)}" alt="${escapeHtml(modelName)}" loading="lazy">`
+      : `<div class="v2-card-img"></div>`;
 
     const ctaLabel = opts.ctaLabel || 'View details';
 
     card.innerHTML = `
       ${imageHtml}
-      <div class="inv-body">
-        <div class="inv-head">
-          <div class="inv-title">${escapeHtml(it.year || '')} ${escapeHtml(modelName)}</div>
-          <div class="inv-sub">${subHtml}</div>
-        </div>
-        <div class="inv-stats">
-          <div class="inv-stat is-price">
-            <span class="inv-stat-label">Car price</span>
-            <span class="inv-stat-value">${escapeHtml(it.price || '')}</span>
-            <span class="inv-stat-note"><span>Incl. VAT &amp; registration</span></span>
-          </div>
-          ${stat2Html}
-        </div>
-        ${it.edge ? `<div class="inv-edge"><div class="inv-edge-text"><span class="inv-edge-label">Why this one</span>${escapeHtml(it.edge)}</div></div>` : ''}
-        <div class="inv-actions">
-          <button class="inv-save">Save</button>
-          <button class="inv-cta">${escapeHtml(ctaLabel)}</button>
+      <div class="v2-card-body">
+        <div class="v2-card-name">${escapeHtml(it.year || '')} ${escapeHtml(modelName)}</div>
+        <div class="v2-card-price">${escapeHtml(it.price || '')}</div>
+        ${subText ? `<div class="v2-card-sub">${escapeHtml(subText)}</div>` : ''}
+        ${it.edge ? `<div class="v2-card-reason"><span class="v2-card-reason-label">Why this one</span> ${escapeHtml(it.edge)}</div>` : ''}
+        <div class="v2-card-actions">
+          <button class="v2-card-save" type="button">Save</button>
+          <button class="v2-card-cta" type="button">${escapeHtml(ctaLabel)}</button>
         </div>
       </div>
     `;
 
-    // Wire Save — pins/unpins via the global pinnedCars system
     const id = `${modelName} · ${it.year || ''} ${it.trim || ''}`.trim();
-    const saveBtn = card.querySelector('.inv-save');
+    const saveBtn = card.querySelector('.v2-card-save');
     if (typeof pinnedCars !== 'undefined' && pinnedCars.some(c => c.model === id)) {
       card.classList.add('pinned');
       saveBtn.classList.add('on');
@@ -8681,8 +8748,7 @@ function showToast(msg) {
       }
     });
 
-    // Wire View details / custom CTA
-    const ctaBtn = card.querySelector('.inv-cta');
+    const ctaBtn = card.querySelector('.v2-card-cta');
     ctaBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (typeof opts.onViewDetails === 'function') {
