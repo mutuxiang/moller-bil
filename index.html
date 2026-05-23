@@ -2788,7 +2788,10 @@ body.v2-layout .col-spacer.left.hero {
   width: 60vw !important;
   min-width: 480px !important;
   max-width: none !important;
-  padding: 36px 44px !important;
+  /* Bottom padding matches the chat composer's bottom padding (24px) so
+     the bottom of the inventory cards aligns with the bottom of the chat
+     input box on the left. */
+  padding: 36px 44px 24px !important;
   border-left: 1px solid rgba(255,255,255,0.08) !important;
   border-right: 0 !important;
   display: flex !important;
@@ -3010,16 +3013,17 @@ body.v2-layout .chat { max-width: 100% !important; }
   gap: 4px;
   min-width: 0;
 }
+/* Match the LIVE RECOMMENDATIONS header sizes exactly (.v2-dock-section-*) */
 .v2-inv-eyebrow {
-  font-size: 12px; font-weight: 500;
+  font-size: 14px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
 }
 .v2-inv-title {
   font-family: "Moller", sans-serif;
-  font-size: 28px; font-weight: 400;
+  font-size: 32px; font-weight: 400;
   color: var(--cream-100);
-  margin: 0; line-height: 1.05;
+  margin: 0; line-height: 1.1;
   letter-spacing: -0.01em;
 }
 .v2-inv-loading, .v2-inv-empty {
