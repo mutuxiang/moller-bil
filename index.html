@@ -2825,9 +2825,8 @@ body.v2-layout .chat { max-width: 100% !important; }
 .v2-told-strip.is-empty { padding: 12px 32px; }
 .v2-told-strip-head {
   display: flex;
-  align-items: baseline;
-  gap: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 6px;
 }
 .v2-told-strip-eyebrow {
   font-size: 12px; font-weight: 500;
@@ -2995,17 +2994,18 @@ body.v2-layout .chat { max-width: 100% !important; }
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .v2-inv-back {
-  appearance: none; border: 1px solid rgba(255,255,255,0.25);
-  background: transparent; color: var(--cream-100);
-  padding: 9px 16px;
-  border-radius: 999px;
+  appearance: none; border: 0;
+  background: rgba(225, 100, 75, 0.18);
+  color: var(--salmon);
+  padding: 10px 16px;
+  border-radius: 6px;
   display: inline-flex; align-items: center; gap: 8px;
   font: 500 13.5px/1 "Moller", sans-serif;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 180ms, border-color 180ms, border-radius 220ms;
+  transition: background 180ms, color 180ms;
 }
-.v2-inv-back:hover { background: rgba(255,255,255,0.06); border-color: var(--cream-100); border-radius: 8px; }
+.v2-inv-back:hover { background: var(--salmon); color: var(--cream-100); }
 .v2-inv-back svg { width: 14px; height: 14px; }
 .v2-inv-head-text {
   display: flex; flex-direction: column;
@@ -3107,6 +3107,13 @@ body.v2-layout .hero-bottom { margin-top: 0; }
   gap: 14px;
   align-items: stretch;
 }
+/* Override the base `#heroRecsBody { display: flex; flex-direction: column }`
+   rule — in v2 the live recs are a 3-column grid, same as inventory. */
+body.v2-layout #heroRecsBody {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
 .v2-rec-state-msg {
   font-size: 14px;
   color: rgba(255,255,255,0.55);
@@ -3169,6 +3176,7 @@ body.v2-layout .hero-bottom { margin-top: 0; }
   margin-top: auto;
   padding-top: 8px;
 }
+.v2-card-actions.single { grid-template-columns: 1fr; }
 .v2-card-save,
 .v2-card-cta {
   appearance: none; cursor: pointer;
@@ -8654,9 +8662,17 @@ function showToast(msg) {
       heroRecsBody.innerHTML = `<div class="v2-rec-state-msg">Tell me more so I can refine these picks.</div>`;
       return;
     }
-    heroRecsBody.className = 'v2-inv-grid';   // reuse inventory grid layout
+    heroRecsBody.className = 'v2-inv-grid';
     heroRecsBody.innerHTML = '';
     const baseReasons = v2DeriveRecReasons();
+    const hasFilters = baseReasons.length > 0;
+    // Update the "Live recommendations" section title to reflect context
+    const titleEl = document.querySelector('body.v2-layout .hero-bottom .v2-dock-section-title');
+    if (titleEl) {
+      titleEl.textContent = hasFilters
+        ? `Matched for your needs`
+        : `Popular in the Oslo area`;
+    }
     cars.forEach(rec => {
       const matches = (typeof matchInventory === 'function') ? matchInventory(rec.name) : [];
       if (!matches.length) return;
@@ -8664,12 +8680,13 @@ function showToast(msg) {
       const it  = apiCarToItem(top);
       // Edge text — first base reason + stock count (when more than 1)
       const parts = [];
-      if (baseReasons.length) parts.push(baseReasons[0]);
+      if (hasFilters) parts.push(baseReasons[0]);
       if (rec.count > 1) parts.push(`${rec.count} in stock`);
-      it.edge = parts.join(' · ') || 'Popular near you';
+      it.edge = parts.join(' · ') || `${rec.count} in stock`;
       const card = v2BuildInvCard(it, rec.name, {
         onViewDetails: () => v2OpenInventoryInDock(rec.name),
         ctaLabel: 'See all in stock',
+        hideSave: true,    // live recs are model-level — no Save button
       });
       heroRecsBody.appendChild(card);
     });
@@ -8714,6 +8731,7 @@ function showToast(msg) {
       : `<div class="v2-card-img"></div>`;
 
     const ctaLabel = opts.ctaLabel || 'View details';
+    const showSave = !opts.hideSave;
 
     card.innerHTML = `
       ${imageHtml}
@@ -8722,8 +8740,8 @@ function showToast(msg) {
         <div class="v2-card-price">${escapeHtml(it.price || '')}</div>
         ${subText ? `<div class="v2-card-sub">${escapeHtml(subText)}</div>` : ''}
         ${it.edge ? `<div class="v2-card-reason"><span class="v2-card-reason-label">Why this one</span> ${escapeHtml(it.edge)}</div>` : ''}
-        <div class="v2-card-actions">
-          <button class="v2-card-save" type="button">Save</button>
+        <div class="v2-card-actions${showSave ? '' : ' single'}">
+          ${showSave ? `<button class="v2-card-save" type="button">Save</button>` : ''}
           <button class="v2-card-cta" type="button">${escapeHtml(ctaLabel)}</button>
         </div>
       </div>
@@ -8731,22 +8749,24 @@ function showToast(msg) {
 
     const id = `${modelName} · ${it.year || ''} ${it.trim || ''}`.trim();
     const saveBtn = card.querySelector('.v2-card-save');
-    if (typeof pinnedCars !== 'undefined' && pinnedCars.some(c => c.model === id)) {
-      card.classList.add('pinned');
-      saveBtn.classList.add('on');
-      saveBtn.textContent = 'Saved';
-    }
-    saveBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const wasPinned = card.classList.toggle('pinned');
-      saveBtn.classList.toggle('on', wasPinned);
-      saveBtn.textContent = wasPinned ? 'Saved' : 'Save';
-      if (wasPinned && typeof pinCar === 'function') {
-        pinCar({ model: id, year: it.year, badge: it.price, image: it.image });
-      } else if (typeof unpinCar === 'function') {
-        unpinCar(id);
+    if (showSave && saveBtn) {
+      if (typeof pinnedCars !== 'undefined' && pinnedCars.some(c => c.model === id)) {
+        card.classList.add('pinned');
+        saveBtn.classList.add('on');
+        saveBtn.textContent = 'Saved';
       }
-    });
+      saveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wasPinned = card.classList.toggle('pinned');
+        saveBtn.classList.toggle('on', wasPinned);
+        saveBtn.textContent = wasPinned ? 'Saved' : 'Save';
+        if (wasPinned && typeof pinCar === 'function') {
+          pinCar({ model: id, year: it.year, badge: it.price, image: it.image });
+        } else if (typeof unpinCar === 'function') {
+          unpinCar(id);
+        }
+      });
+    }
 
     const ctaBtn = card.querySelector('.v2-card-cta');
     ctaBtn.addEventListener('click', (e) => {
