@@ -2889,29 +2889,29 @@ body.v2-layout .chat { max-width: 100% !important; }
 }
 .v2-told-chip-change:hover { text-decoration-color: var(--salmon); }
 
-/* Edit popover — appears below the chip when "Change" is clicked. Contains
-   "Show in chat" at the top, the option chips, and a Done button. */
+/* Edit popover — appears below the chip when "Change" is clicked. Generous
+   padding + spacing so it feels like a proper edit surface, not a tooltip. */
 .v2-edit-popover {
   position: fixed;
   z-index: 250;
   background: var(--cream-100);
   color: var(--ink);
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  padding: 16px 18px 14px;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+  border-radius: 10px;
+  padding: 24px 26px 22px;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.22);
   display: none;
-  min-width: 280px;
-  max-width: 420px;
+  min-width: 360px;
+  max-width: 480px;
 }
 .v2-edit-popover.is-open { display: block; }
 .v2-edit-popover-head {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 12px;
-  gap: 12px;
+  margin-bottom: 20px;
+  gap: 16px;
 }
 .v2-edit-popover-title {
-  font-size: 12px; font-weight: 500;
+  font-size: 14px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
 }
@@ -2920,10 +2920,10 @@ body.v2-layout .chat { max-width: 100% !important; }
   padding: 0;
   color: var(--action-blue);
   cursor: pointer;
-  font: 500 13px/1 "Moller", sans-serif;
+  font: 500 15px/1 "Moller", sans-serif;
   text-decoration: underline;
   text-decoration-color: rgba(0,0,255,0.3);
-  text-underline-offset: 3px;
+  text-underline-offset: 4px;
   transition: text-decoration-color 180ms;
 }
 .v2-edit-popover-show:hover { text-decoration-color: var(--action-blue); }
@@ -2931,14 +2931,14 @@ body.v2-layout .chat { max-width: 100% !important; }
   opacity: 0.35; cursor: not-allowed; text-decoration: none;
 }
 .v2-edit-popover-chips {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  margin-bottom: 12px;
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 22px;
 }
 .v2-edit-popover-chip {
   appearance: none; border: 1px solid var(--border-strong);
   background: transparent; color: var(--ink);
-  font: 500 13px/1 "Moller", sans-serif;
-  padding: 8px 14px; border-radius: 999px;
+  font: 500 15px/1 "Moller", sans-serif;
+  padding: 11px 18px; border-radius: 999px;
   cursor: pointer;
   transition: background 180ms, border-color 180ms, border-radius 220ms, color 180ms;
 }
@@ -2949,8 +2949,8 @@ body.v2-layout .chat { max-width: 100% !important; }
 .v2-edit-popover-actions { display: flex; justify-content: flex-end; }
 .v2-edit-popover-done {
   appearance: none; border: 0; background: var(--action-blue); color: #fff;
-  padding: 9px 20px; border-radius: 999px;
-  font: 500 13.5px/1 "Moller", sans-serif;
+  padding: 12px 26px; border-radius: 999px;
+  font: 500 15px/1 "Moller", sans-serif;
   cursor: pointer;
   transition: background 180ms, border-radius 220ms;
 }
@@ -3076,6 +3076,16 @@ body.v2-layout .chat { max-width: 100% !important; }
 body.v2-layout .hero-bottom {
   flex-shrink: 0;
   margin-top: 0;
+  /* When inventory mode replaces the recs, the section may grow beyond its
+     natural height — cap it and allow internal scroll. The viz section still
+     handles its own scrolling above. */
+  max-height: 65vh;
+  overflow-y: auto;
+}
+body.v2-layout .hero-bottom::-webkit-scrollbar { width: 6px; }
+body.v2-layout .hero-bottom::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border-radius: 3px;
 }
 
 /* Viz panel — cards relocated from chat go here. HORIZONTAL layout: cards
@@ -3131,29 +3141,45 @@ body.v2-layout .hero-rec-card:hover {
 }
 body.v2-layout .hero-rec-card-img {
   width: 100% !important;
-  height: 110px !important;
+  height: 220px !important;        /* 2x — was 110px */
   border-radius: 0 !important;
   background: rgba(0,25,70,0.06) !important;
   object-fit: cover;
 }
 body.v2-layout .hero-rec-card-info {
-  padding: 12px 14px 6px;
-  gap: 4px !important;
+  padding: 16px 18px 8px !important;
+  gap: 6px !important;
 }
 body.v2-layout .hero-rec-card-name {
   color: var(--ink) !important;
-  font-size: 16px !important;
+  font-size: 18px !important;
   font-weight: 500;
+  line-height: 1.2;
 }
 body.v2-layout .hero-rec-card-meta {
   color: var(--muted) !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
+}
+/* Per-card reason chips — injected by v2 after buildLiveRecs runs */
+.v2-rec-reasons {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 4px 18px 12px;
+}
+.v2-rec-reason-chip {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: .02em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(225, 100, 75, 0.10);
+  color: var(--salmon);
+  border: 1px solid rgba(225, 100, 75, 0.25);
+  white-space: nowrap;
 }
 body.v2-layout .hero-rec-card-cta {
-  margin: 0 14px 12px;
+  margin: 0 18px 18px;
   align-self: flex-start;
-  font-size: 13px !important;
-  padding: 7px 16px !important;
+  font-size: 14px !important;
+  padding: 9px 20px !important;
   border: 1px solid var(--border-strong) !important;
   color: var(--ink) !important;
   background: transparent !important;
@@ -3182,19 +3208,18 @@ body.v2-layout .msg.has-fuel,
 body.v2-layout .msg.has-budget,
 body.v2-layout .msg.has-size,
 body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !important; }
-/* Little "see right panel" indicator that appears under chat messages whose
-   cards got moved to the dock. Added inline by the relocate hook. */
+/* "See right panel" indicator that appears under chat messages whose cards
+   got moved to the dock. Text only — bigger and bolder than before. */
 .v2-moved-tag {
-  display: inline-flex; align-items: center; gap: 6px;
-  margin-top: 8px;
-  padding: 5px 10px;
-  font-size: 12px; font-weight: 500;
-  letter-spacing: .04em;
+  display: inline-block;
+  margin-top: 12px;
+  padding: 9px 16px;
+  font-size: 15px; font-weight: 500;
+  letter-spacing: .02em;
   color: var(--salmon);
-  background: rgba(225, 100, 75, 0.08);
+  background: rgba(225, 100, 75, 0.10);
   border-radius: 999px;
 }
-.v2-moved-tag svg { width: 12px; height: 12px; }
 
 </style>
 </head>
@@ -8099,17 +8124,12 @@ function showToast(msg) {
     dock.innerHTML = '';                 // only the LATEST viz is shown
     dock.appendChild(node);              // physically move the element
 
-    // Drop a small "→ see right panel" tag where the cards used to be,
-    // so the user knows where they went.
+    // Drop a "see right panel" tag where the cards used to be — text only,
+    // bigger font, no left icon.
     if (!sourceMsgEl.querySelector('.v2-moved-tag')) {
       const tag = document.createElement('div');
       tag.className = 'v2-moved-tag';
-      tag.innerHTML = `
-        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>${escapeHtml(kindLabel || 'Visualization')} updated on the right →</span>
-      `;
+      tag.textContent = `${kindLabel || 'Visualization'} updated on the right →`;
       const content = sourceMsgEl.querySelector('.msg-content') || sourceMsgEl;
       content.appendChild(tag);
     }
@@ -8338,39 +8358,76 @@ function showToast(msg) {
   };
 
   function v2RewireRecCardClicks() {
+    // Compute per-card reason chips ONCE per render — all cards share the same
+    // reasons since they're filtered by the same activeChips
+    const reasons = v2DeriveRecReasons();
     document.querySelectorAll('#heroRecsBody .hero-rec-card').forEach(btn => {
-      if (btn.dataset.v2Wired === '1') return;
-      btn.dataset.v2Wired = '1';
-      // Find the model name from the rendered name span
-      const nameEl = btn.querySelector('.hero-rec-card-name');
-      const modelName = nameEl ? nameEl.textContent.trim() : null;
-      if (!modelName) return;
-      btn.onclick = (e) => {
-        e.preventDefault();
-        v2OpenInventoryInDock(modelName);
-      };
+      // Rewire the View handler
+      if (btn.dataset.v2Wired !== '1') {
+        btn.dataset.v2Wired = '1';
+        const nameEl = btn.querySelector('.hero-rec-card-name');
+        const modelName = nameEl ? nameEl.textContent.trim() : null;
+        if (modelName) {
+          btn.onclick = (e) => { e.preventDefault(); v2OpenInventoryInDock(modelName); };
+        }
+      }
+      // Inject reason chips if they aren't already present
+      if (!btn.querySelector('.v2-rec-reasons') && reasons.length > 0) {
+        const reasonsEl = document.createElement('div');
+        reasonsEl.className = 'v2-rec-reasons';
+        reasonsEl.innerHTML = reasons.map(r =>
+          `<span class="v2-rec-reason-chip">${escapeHtml(r)}</span>`
+        ).join('');
+        const cta = btn.querySelector('.hero-rec-card-cta');
+        if (cta) btn.insertBefore(reasonsEl, cta);
+        else btn.appendChild(reasonsEl);
+      }
     });
   }
 
-  // ── Open inventory FOR a model inside the right dock ──
-  // Replaces the viz section content with a list of matched cars and a
-  // "← Back" button. Cards use a compact cream layout that mirrors the chat
-  // .rec cards. Click Back to restore the previous viz content.
-  let _v2VizSnapshot = null;
-  window.v2OpenInventoryInDock = async function(modelName) {
-    const vizBody = document.getElementById('v2VizBody');
-    if (!vizBody) return;
-    // Snapshot the current viz so we can restore on Back
-    _v2VizSnapshot = vizBody.innerHTML;
+  // Derive per-card reason chips from confirmed user filters. All cards in a
+  // batch share the same reasons (they were filtered by the same chips).
+  function v2DeriveRecReasons() {
+    const parts = [];
+    const get = (k) => (typeof getConfirmedOptionsForGroup === 'function')
+      ? getConfirmedOptionsForGroup(k)
+      : [];
+    const fuels = get('fuel');
+    const seats = get('seats');
+    const sizes = get('size');
+    const brands = get('brand');
+    if (fuels.length) parts.push(`${fuels[0]} powertrain`);
+    if (seats.length) parts.push(seats[0] === '7+' ? '7+ seats' : `${seats[0]} seats`);
+    if (sizes.length) parts.push(`${sizes[0]} body`);
+    if (brands.length) parts.push(brands[0]);
+    // Budget fit indicator
+    const sMin = document.getElementById('budgetMin');
+    const sMax = document.getElementById('budgetMax');
+    if (sMin && sMax) {
+      const lo = parseInt(sMin.value, 10), hi = parseInt(sMax.value, 10);
+      if (!(lo === 50000 && hi === 1500000)) parts.push('Within budget');
+    }
+    if (parts.length === 0) parts.push('Popular near you');
+    return parts.slice(0, 3); // cap at 3 chips so we don't overflow
+  }
 
-    // Loading state
-    vizBody.innerHTML = `
+  // ── Open inventory FOR a model inside the LIVE RECS section ──
+  // Replaces the live-rec cards with a list of matched inventory cars + a
+  // "← Back" button. Click Back to restore the live recs.
+  let _v2RecsSnapshot = null;
+  window.v2OpenInventoryInDock = async function(modelName) {
+    const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
+    if (!heroBottom) return;
+    // Snapshot the current live recs (header + body) so Back can restore
+    _v2RecsSnapshot = heroBottom.innerHTML;
+
+    heroBottom.innerHTML = `
       <div class="v2-inv-head">
         <button class="v2-inv-back" type="button" onclick="v2CloseInventoryInDock()">
           <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" width="14" height="14">
             <path d="M12 7H2M6 3L2 7l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Back
+          Back to recommendations
         </button>
         <div class="v2-inv-head-text">
           <span class="v2-inv-eyebrow">Inventory</span>
@@ -8380,27 +8437,26 @@ function showToast(msg) {
       <div class="v2-inv-loading">Finding cars in stock…</div>
     `;
 
-    // Use the cached inventory match
     try {
       if (typeof matchInventory !== 'function') throw new Error('inventory unavailable');
       const items = matchInventory(modelName);
-      v2RenderInventoryInDock(modelName, items);
+      v2RenderInventoryInRecs(modelName, items);
     } catch (err) {
-      const loading = vizBody.querySelector('.v2-inv-loading');
+      const loading = heroBottom.querySelector('.v2-inv-loading');
       if (loading) loading.textContent = "Couldn't load inventory right now.";
     }
   };
 
-  function v2RenderInventoryInDock(modelName, items) {
-    const vizBody = document.getElementById('v2VizBody');
-    if (!vizBody) return;
-    const loading = vizBody.querySelector('.v2-inv-loading');
+  function v2RenderInventoryInRecs(modelName, items) {
+    const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
+    if (!heroBottom) return;
+    const loading = heroBottom.querySelector('.v2-inv-loading');
     if (loading) loading.remove();
     if (!items || items.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'v2-inv-empty';
       empty.textContent = `No ${modelName}s in stock right now.`;
-      vizBody.appendChild(empty);
+      heroBottom.appendChild(empty);
       return;
     }
     const grid = document.createElement('div');
@@ -8427,17 +8483,17 @@ function showToast(msg) {
       `;
       grid.appendChild(card);
     });
-    vizBody.appendChild(grid);
+    heroBottom.appendChild(grid);
   }
 
   window.v2CloseInventoryInDock = function() {
-    const vizBody = document.getElementById('v2VizBody');
-    if (!vizBody) return;
-    if (_v2VizSnapshot != null) {
-      vizBody.innerHTML = _v2VizSnapshot;
-      _v2VizSnapshot = null;
-    } else {
-      vizBody.innerHTML = '';
+    const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
+    if (!heroBottom) return;
+    if (_v2RecsSnapshot != null) {
+      heroBottom.innerHTML = _v2RecsSnapshot;
+      _v2RecsSnapshot = null;
+      // Re-attach the View click handlers we wired before
+      v2RewireRecCardClicks();
     }
   };
 })();
