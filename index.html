@@ -3075,11 +3075,12 @@ body.v2-layout .chat { max-width: 100% !important; }
   border-radius: 3px;
 }
 body.v2-layout .hero-bottom {
-  /* Live recs section = the BOTTOM HALF of the dock. Both viz (above) and
-     this section split the dock content area equally via flex: 1.
-     Bottom is naturally anchored to the dock's bottom edge (no margin-top
-     needed once flex: 1 takes over). Content scrolls inside if it overflows. */
-  flex: 1 1 0 !important;
+  /* Live recs section now takes 1.5× the viz section's height (it was 1:1
+     before — equal halves). With viz at flex:1 and recs at flex:1.5, recs
+     occupies ~60% of the dock content area, which is exactly 1.5× the old
+     50%. Bottom stays anchored to the dock bottom; the section expands
+     UPWARD to make room for the bigger cards. */
+  flex: 1.5 1 0 !important;
   min-height: 0;
   overflow: hidden;
   display: flex;
@@ -3162,42 +3163,45 @@ body.v2-layout #heroRecsBody {
   flex-direction: column;
   box-shadow: 0 4px 14px rgba(0,0,0,0.14);
 }
+/* 1.5× scaled cards — image taller, fonts bigger, more padding */
 .v2-card-img {
   width: 100%;
-  height: 180px;
+  height: 270px;             /* 180 × 1.5 */
   object-fit: cover;
   background: rgba(0,25,70,0.06);
   display: block;
 }
 .v2-card-body {
-  padding: 14px 16px 16px;
+  padding: 20px 22px 22px;   /* 14/16/16 × ~1.4 */
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;                  /* 6 × ~1.3 */
   flex: 1;
 }
 .v2-card-name {
-  font-size: 16px; font-weight: 500;
+  font-size: 19px;           /* 16 → 19 */
+  font-weight: 500;
   color: var(--ink);
   line-height: 1.2;
 }
 .v2-card-price {
-  font-size: 18px; font-weight: 500;
+  font-size: 24px;           /* 18 → 24 */
+  font-weight: 500;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 .v2-card-sub {
-  font-size: 13px;
+  font-size: 15px;           /* 13 → 15 */
   color: var(--muted);
   line-height: 1.4;
 }
 .v2-card-reason {
-  font-size: 13px; line-height: 1.4;
-  padding: 8px 10px;
+  font-size: 15px; line-height: 1.4;     /* 13 → 15 */
+  padding: 12px 14px;                     /* 8/10 → 12/14 */
   background: rgba(225, 100, 75, 0.08);
   border-radius: 4px;
   color: var(--ink);
-  margin: 4px 0 2px;
+  margin: 6px 0 2px;
 }
 .v2-card-reason-label {
   color: var(--salmon);
@@ -3207,17 +3211,17 @@ body.v2-layout #heroRecsBody {
 .v2-card-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 10px;                              /* 8 → 10 */
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 10px;                      /* 8 → 10 */
 }
 .v2-card-actions.single { grid-template-columns: 1fr; }
 .v2-card-save,
 .v2-card-cta {
   appearance: none; cursor: pointer;
-  padding: 9px 12px;
+  padding: 13px 16px;                     /* 9/12 → 13/16 */
   border-radius: 999px;
-  font: 500 13px/1 "Moller", sans-serif;
+  font: 500 15px/1 "Moller", sans-serif;  /* 13 → 15 */
   transition: background 180ms, border-color 180ms, color 180ms, border-radius 220ms;
 }
 .v2-card-save {
