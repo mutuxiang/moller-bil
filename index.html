@@ -621,9 +621,10 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .budget-card.accent {
   background: var(--ink);
   color: var(--cream-100);
-  /* Salmon outline so the "MOST CHOSEN" card stands out against the navy
-     dock — without it the navy card blends right into the dock background. */
-  border: 1.5px solid var(--salmon);
+  /* Salmon ring around the "MOST CHOSEN" card so it stands out against the
+     navy dock. Using box-shadow (not border) so it can't be affected by
+     box-sizing or any downstream padding/grid overrides. */
+  box-shadow: 0 0 0 2px var(--salmon);
 }
 .budget-card-head {
   display: flex; justify-content: space-between; align-items: baseline;
@@ -3076,12 +3077,15 @@ body.v2-layout .chat { max-width: 100% !important; }
 body.v2-layout .hero-bottom {
   flex-shrink: 0;
   margin-top: auto;          /* push to BOTTOM of the dock column */
-  /* Auto-height (content-driven). Both live recs and inventory render 3
-     cards in the same .v2-card layout, so heights match across modes. We
-     cap at 60vh so the inventory's full list (up to 12 cards) doesn't
-     swallow the viz section. */
+  /* LOCKED min-height (~480px) so the section reserves its full footprint
+     from the very first frame — the "LIVE RECOMMENDATIONS / Popular in the
+     Oslo area" header sits at the SAME Y position whether cards are loading,
+     loaded, or empty. No more upward shift when picks arrive.
+     Capped at 60vh so a tall inventory list (12 cards) doesn't swallow the
+     viz section above; the inner grid scrolls if it overflows. */
+  min-height: 480px;
   max-height: 60vh;
-  overflow: hidden;          /* outer doesn't scroll; inner grid handles it */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
