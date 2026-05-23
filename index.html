@@ -2810,45 +2810,43 @@ body.v2-layout .col-center {
 body.v2-layout .chat { max-width: 100% !important; }
 
 /* ── Told-me strip above the chat ──
-   Distinct cream-300 background (vs. cream-100 chat) so it reads as a
-   separate band. Compact when empty (eyebrow + one-line intro); expands
-   when chips fill in. NO big title — the eyebrow alone identifies it. */
+   Floating block — margin from the screen edges, outlined border,
+   bigger type. Stays visually distinct from the chat surface. */
 .v2-told-strip {
-  padding: 14px 32px 14px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-surface-2);   /* cream-300 — visibly different from chat */
+  margin: 16px 24px;            /* breathing room from the chat edges */
+  padding: 18px 22px;
+  background: var(--bg-surface-2);   /* cream-300 */
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.v2-told-strip.is-empty { padding: 16px 22px; }
+.v2-told-strip-head {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.v2-told-strip.is-empty { padding: 12px 32px; }
-.v2-told-strip-head {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
 .v2-told-strip-eyebrow {
-  font-size: 12px; font-weight: 500;
+  font-size: 14px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
   white-space: nowrap;
 }
-/* Inline intro — sits next to the eyebrow on the same line when there's room */
 .v2-told-strip-intro {
-  font-size: 13.5px;
+  font-size: 15.5px;
   color: var(--muted);
-  line-height: 1.4;
+  line-height: 1.5;
   margin: 0;
-  flex: 1;
-  min-width: 0;
 }
 .v2-told-strip-intro b { color: var(--ink); font-weight: 500; }
 .v2-told-strip-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 .v2-told-chip {
   display: inline-flex; align-items: center; gap: 12px;
@@ -3061,14 +3059,30 @@ body.v2-layout .chat { max-width: 100% !important; }
 body.v2-layout .hero-bottom {
   flex-shrink: 0;
   margin-top: 0;
-  /* When inventory mode replaces the recs, the section may grow beyond its
-     natural height — cap it and allow internal scroll. The viz section still
-     handles its own scrolling above. */
-  max-height: 65vh;
+  /* LOCKED height — same vertical space whether we're showing live recs OR
+     inventory. Content scrolls inside if it overflows. No more height jump
+     when the user clicks "See all in stock" or "Back to recommendations". */
+  height: 60vh;
+  max-height: 60vh;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
-body.v2-layout .hero-bottom::-webkit-scrollbar { width: 6px; }
-body.v2-layout .hero-bottom::-webkit-scrollbar-thumb {
+body.v2-layout .hero-bottom > * { flex-shrink: 0; }
+/* The cards grid itself should scroll inside; head stays pinned */
+body.v2-layout .hero-bottom #heroRecsBody,
+body.v2-layout .hero-bottom .v2-inv-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: flex-start;
+}
+body.v2-layout .hero-bottom::-webkit-scrollbar,
+body.v2-layout .hero-bottom #heroRecsBody::-webkit-scrollbar,
+body.v2-layout .hero-bottom .v2-inv-grid::-webkit-scrollbar { width: 6px; }
+body.v2-layout .hero-bottom::-webkit-scrollbar-thumb,
+body.v2-layout .hero-bottom #heroRecsBody::-webkit-scrollbar-thumb,
+body.v2-layout .hero-bottom .v2-inv-grid::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.18);
   border-radius: 3px;
 }
@@ -8538,19 +8552,22 @@ function showToast(msg) {
     return String(s).replace(/\s+seats?$/i, '').trim();
   }
 
-  // Build the autotext sentence describing all queued edits
+  // Build the autotext sentence describing all queued edits.
+  // IMPORTANT: do NOT include the OLD value in the text — when sendMessage
+  // runs, syncFiltersFromText scans the message and would re-add the old
+  // value to activeChips, undoing the queued change.
   function v2BuildAutotext() {
     const edits = Object.values(_v2QueuedEdits);
     if (edits.length === 0) return '';
     if (edits.length === 1) {
       const e = edits[0];
       const labelLower = String(e.label || '').toLowerCase();
-      return `I want to change my ${labelLower} from ${e.oldValue || '?'} to ${e.newValue}.`;
+      return `Updated my ${labelLower} to ${e.newValue}.`;
     }
     const parts = edits.map(e =>
-      `${(e.label || '').toLowerCase()} from ${e.oldValue || '?'} to ${e.newValue}`
+      `${(e.label || '').toLowerCase()} to ${e.newValue}`
     );
-    return `I want to update: ${parts.join('; ')}.`;
+    return `Updated my profile — ${parts.join('; ')}.`;
   }
 
   // Write the autotext into the input field, ONLY if the field is currently
@@ -8678,11 +8695,10 @@ function showToast(msg) {
       if (!matches.length) return;
       const top = matches[0];     // matchInventory sorts cheapest first
       const it  = apiCarToItem(top);
-      // Edge text — first base reason + stock count (when more than 1)
-      const parts = [];
-      if (hasFilters) parts.push(baseReasons[0]);
-      if (rec.count > 1) parts.push(`${rec.count} in stock`);
-      it.edge = parts.join(' · ') || `${rec.count} in stock`;
+      // Edge text — filter-based reason only. Stock count is NOT a reason
+      // ("224 in stock" doesn't tell the user why this car suits them).
+      // Falls back to generic copy when no filters are set.
+      it.edge = hasFilters ? baseReasons[0] : 'Popular near you';
       const card = v2BuildInvCard(it, rec.name, {
         onViewDetails: () => v2OpenInventoryInDock(rec.name),
         ctaLabel: 'See all in stock',
@@ -8867,11 +8883,17 @@ function showToast(msg) {
   window.v2CloseInventoryInDock = function() {
     const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
     if (!heroBottom) return;
+    // Restore the section structure from snapshot (rebuilds the header + the
+    // #heroRecsBody container), then re-render live recs fresh so the cards
+    // have working onclick handlers (addEventListener is lost across innerHTML).
     if (_v2RecsSnapshot != null) {
       heroBottom.innerHTML = _v2RecsSnapshot;
       _v2RecsSnapshot = null;
-      v2RewireRecCardClicks();
     }
+    // Force a fresh render — re-creates buttons with live event handlers.
+    // This ALSO fixes "See all in stock only works once" since the snapshot
+    // restore would otherwise leave dead buttons.
+    v2RenderLiveRecsAsInv();
   };
 })();
 
