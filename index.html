@@ -621,6 +621,9 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
 .budget-card.accent {
   background: var(--ink);
   color: var(--cream-100);
+  /* Salmon outline so the "MOST CHOSEN" card stands out against the navy
+     dock — without it the navy card blends right into the dock background. */
+  border: 1.5px solid var(--salmon);
 }
 .budget-card-head {
   display: flex; justify-content: space-between; align-items: baseline;
@@ -2796,7 +2799,9 @@ body.v2-layout .col-spacer.left.hero {
   border-right: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 28px !important;
+  /* Tighter gap between viz + live-recs sections — gives the viz section
+     more breathing room above. */
+  gap: 14px !important;
   /* The dock itself doesn't scroll — the viz section scrolls inside */
   overflow: hidden !important;
 }
