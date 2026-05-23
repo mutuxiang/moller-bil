@@ -8643,13 +8643,56 @@ function showToast(msg) {
     v2RestoreQuickReplyUI();
   };
 
-  // Wrap sendMessage so that pending edits are flushed BEFORE the message goes
+  // Wrap sendMessage so pending edits commit cleanly around the send.
+  // Order:
+  //   1) Close any open popover (commits its live pending state into the queue)
+  //   2) Snapshot the queued edits, apply them (clears stale chips + sets new)
+  //   3) Run the original sendMessage (which syncs filters from the message text)
+  //   4) RE-APPLY the snapshot AFTER send — guarantees our intended state
+  //      wins, even if syncFiltersFromText re-added a stale chip from text
   const _origSendMessage = window.sendMessage;
   window.sendMessage = function() {
+    // Step 1: flush any open popover so its pending picks become queue items
+    const openPop = document.querySelector('.v2-edit-popover.is-open');
+    if (openPop) v2ClosePopover(openPop);
+
+    // Step 2: snapshot + apply
+    let snapshot = null;
     if (Object.keys(_v2QueuedEdits).length > 0) {
+      snapshot = JSON.parse(JSON.stringify(_v2QueuedEdits));
       v2ApplyQueuedEdits();
     }
-    return _origSendMessage.apply(this, arguments);
+
+    // Step 3: actual send
+    const result = _origSendMessage.apply(this, arguments);
+
+    // Step 4: re-apply snapshot — wins against anything syncFiltersFromText
+    // may have re-added from the message text. Tiny defer so it runs AFTER
+    // the original sendMessage's filter sync has settled.
+    if (snapshot) {
+      setTimeout(() => {
+        Object.values(snapshot).forEach(edit => {
+          if (edit.newOption && edit.key !== 'budget') {
+            Object.keys(activeChips).forEach(k => {
+              if (k.startsWith(edit.key + ':')) delete activeChips[k];
+            });
+            activeChips[`${edit.key}:${edit.newOption}`] = true;
+          } else if (edit.newBudget) {
+            const sMin = document.getElementById('budgetMin');
+            const sMax = document.getElementById('budgetMax');
+            if (sMin && sMax) {
+              sMin.value = edit.newBudget.min;
+              sMax.value = edit.newBudget.max;
+              if (typeof setBudgetRange === 'function') setBudgetRange(edit.newBudget.min, edit.newBudget.max, true);
+            }
+          }
+        });
+        if (typeof buildSidebar === 'function') buildSidebar();
+        if (typeof updateHeroToldPanel === 'function') updateHeroToldPanel();
+        v2RenderLiveRecsAsInv();
+      }, 60);
+    }
+    return result;
   };
 
   window.v2RefreshAfterEdit = function() { /* deprecated — kept for backwards compat */ };
