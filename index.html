@@ -3115,10 +3115,39 @@ body.v2-layout .hero-bottom .v2-inv-grid::-webkit-scrollbar-thumb {
   line-height: 1.5;
   padding: 8px 0 4px;
 }
-/* Budget: rail spans full width (row 1), 3 tier cards side-by-side (row 2) */
+/* Slide-up + fade-in when viz content appears — mirrors the chat's
+   quick-reply chips animation. Triggers on every new viz that lands here. */
+#v2VizBody > * {
+  animation: v2VizSlide 380ms var(--ease-out) both;
+}
+@keyframes v2VizSlide {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Stagger any grid items inside (budget cards, fuel cards, etc.) so they
+   cascade in for a more lively reveal */
+#v2VizBody .budget-cards > *,
+#v2VizBody .fuel-cards > *,
+#v2VizBody .recs > * {
+  animation: v2VizSlide 380ms var(--ease-out) both;
+}
+#v2VizBody .budget-cards > *:nth-child(1),
+#v2VizBody .fuel-cards > *:nth-child(1),
+#v2VizBody .recs > *:nth-child(1)  { animation-delay: 60ms; }
+#v2VizBody .budget-cards > *:nth-child(2),
+#v2VizBody .fuel-cards > *:nth-child(2),
+#v2VizBody .recs > *:nth-child(2)  { animation-delay: 120ms; }
+#v2VizBody .budget-cards > *:nth-child(3),
+#v2VizBody .fuel-cards > *:nth-child(3),
+#v2VizBody .recs > *:nth-child(3)  { animation-delay: 180ms; }
+#v2VizBody .fuel-cards > *:nth-child(4) { animation-delay: 240ms; }
+#v2VizBody .fuel-cards > *:nth-child(5) { animation-delay: 300ms; }
+/* Budget in v2: just the 3 tier cards — the long price-rail (cars hanging
+   on a price axis) is dropped here so the viz stays the same height as
+   the fuel and size visualizations. The rail's info is redundant with the
+   tier cards (price ranges shown in headers). */
 #v2VizBody .budget-panel { gap: 14px; }
-#v2VizBody .budget-rail { padding: 18px 22px 18px; min-height: 200px; }
-#v2VizBody .budget-rail-car svg { height: 110px; }
+#v2VizBody .budget-rail { display: none; }
 #v2VizBody .budget-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 #v2VizBody .budget-card { padding: 16px 18px; }
 /* Recommendations: up to 3 cards in a row */
@@ -8236,6 +8265,18 @@ function showToast(msg) {
     if (!dock) return;
     dock.innerHTML = '';                 // only the LATEST viz is shown
     dock.appendChild(node);              // physically move the element
+    // Force the slide-up animation to restart even on moved nodes — CSS
+    // animations sometimes don't re-trigger on appendChild alone.
+    node.style.animation = 'none';
+    // eslint-disable-next-line no-unused-expressions
+    void node.offsetHeight;              // forces reflow
+    node.style.animation = '';
+    // Cascade restart for staggered children
+    node.querySelectorAll(':scope > .budget-cards > *, :scope > .fuel-cards > *, :scope > .recs > *, .budget-cards > *, .fuel-cards > *, .recs > *').forEach(el => {
+      el.style.animation = 'none';
+      void el.offsetHeight;
+      el.style.animation = '';
+    });
 
     // Drop a "see right panel" tag where the cards used to be — text only,
     // bigger font, no left icon.
