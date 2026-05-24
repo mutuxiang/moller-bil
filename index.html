@@ -3124,6 +3124,42 @@ body.v2-layout .hero-bottom .v2-inv-grid::-webkit-scrollbar-thumb {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* Loading state — applied to the viz section while the AI is generating
+   a reply on the left. A subtle shimmer block previews where the next
+   visualization will land. */
+.v2-viz-wrap.is-loading #v2VizBody {
+  position: relative;
+  min-height: 120px;
+}
+.v2-viz-wrap.is-loading #v2VizBody::before {
+  content: '';
+  display: block;
+  height: 280px;
+  border-radius: 6px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,0.04) 0%,
+      rgba(255,255,255,0.10) 50%,
+      rgba(255,255,255,0.04) 100%
+    );
+  background-size: 200% 100%;
+  animation: v2VizShimmer 1.4s ease-in-out infinite;
+}
+.v2-viz-wrap.is-loading #v2VizBody > * { display: none; }
+.v2-viz-wrap.is-loading #v2VizBody:empty::after { display: none; }
+@keyframes v2VizShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+/* Pulse the section title while loading so the eyebrow reads as "active" */
+.v2-viz-wrap.is-loading .v2-dock-section-title {
+  animation: v2VizTitlePulse 1.4s ease-in-out infinite;
+}
+@keyframes v2VizTitlePulse {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
 /* Stagger any grid items inside (budget cards, fuel cards, etc.) so they
    cascade in for a more lively reveal */
 #v2VizBody .budget-cards > *,
@@ -3191,40 +3227,39 @@ body.v2-layout #heroRecsBody > * { height: 100%; }
   flex-direction: column;
   box-shadow: 0 4px 14px rgba(0,0,0,0.14);
 }
-/* Moderately scaled cards — image 210px (was 270 in 1.5×, 180 original).
-   Strikes a balance between "big enough to read" and "fits in the dock
-   alongside the fuel/budget viz at full size". */
+/* Bigger cards (image 290) to fill the dock vertical space — eliminates
+   the awkward empty middle gap between viz and live recs. */
 .v2-card-img {
   width: 100%;
-  height: 210px;
+  height: 290px;
   object-fit: cover;
   background: rgba(0,25,70,0.06);
   display: block;
 }
 .v2-card-body {
-  padding: 16px 18px 18px;
+  padding: 18px 20px 20px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   flex: 1;
 }
 .v2-card-name {
-  font-size: 17px; font-weight: 500;
+  font-size: 18px; font-weight: 500;
   color: var(--ink); line-height: 1.2;
 }
 .v2-card-price {
-  font-size: 20px; font-weight: 500;
+  font-size: 22px; font-weight: 500;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 .v2-card-sub {
-  font-size: 14px;
+  font-size: 14.5px;
   color: var(--muted);
   line-height: 1.4;
 }
 .v2-card-reason {
-  font-size: 14px; line-height: 1.4;
-  padding: 10px 12px;
+  font-size: 14.5px; line-height: 1.4;
+  padding: 11px 13px;
   background: rgba(225, 100, 75, 0.08);
   border-radius: 4px;
   color: var(--ink);
@@ -8265,6 +8300,8 @@ function showToast(msg) {
     if (!dock) return;
     dock.innerHTML = '';                 // only the LATEST viz is shown
     dock.appendChild(node);              // physically move the element
+    // Update the viz section's title to match what just appeared
+    if (typeof v2UpdateVizTitle === 'function') v2UpdateVizTitle(kindLabel);
     // Force the slide-up animation to restart even on moved nodes — CSS
     // animations sometimes don't re-trigger on appendChild alone.
     node.style.animation = 'none';
@@ -9005,6 +9042,40 @@ function showToast(msg) {
     // This ALSO fixes "See all in stock only works once" since the snapshot
     // restore would otherwise leave dead buttons.
     v2RenderLiveRecsAsInv();
+  };
+
+  // ── Wrap typing-indicator functions to toggle a loading shimmer on the
+  //    viz section while the AI is generating its reply. Subtle visual cue
+  //    that "something is coming" to the right side.
+  const _origAppendTyping = window.appendTypingIndicator;
+  const _origRemoveTyping = window.removeTypingIndicator;
+  if (typeof _origAppendTyping === 'function') {
+    window.appendTypingIndicator = function() {
+      const wrap = document.querySelector('.v2-viz-wrap');
+      if (wrap) wrap.classList.add('is-loading');
+      return _origAppendTyping.apply(this, arguments);
+    };
+  }
+  if (typeof _origRemoveTyping === 'function') {
+    window.removeTypingIndicator = function() {
+      const wrap = document.querySelector('.v2-viz-wrap');
+      if (wrap) wrap.classList.remove('is-loading');
+      return _origRemoveTyping.apply(this, arguments);
+    };
+  }
+
+  // Update the viz section's title to match the type of card that just
+  // appeared. Called from relocateLatest with the kindLabel hint.
+  window.v2UpdateVizTitle = function(kindLabel) {
+    const titleEl = document.querySelector('.v2-viz-wrap .v2-dock-section-title');
+    if (!titleEl) return;
+    const map = {
+      'Budget tiers':       'Your budget options',
+      'Fuel comparison':    'Powertrain trade-offs',
+      'Size comparison':    'Cars next to a person',
+      'Recommended models': 'Your top picks',
+    };
+    titleEl.textContent = map[kindLabel] || "What we're discussing";
   };
 })();
 
