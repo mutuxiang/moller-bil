@@ -3104,12 +3104,12 @@ body.v2-layout .hero-bottom {
 body.v2-layout .hero-bottom > * { flex-shrink: 0; }
 body.v2-layout .hero-bottom .v2-dock-section-head,
 body.v2-layout .hero-bottom .v2-inv-head { flex-shrink: 0; }
-/* Cards push to the BOTTOM of the section so they always sit flush against
-   the dock's bottom edge (= aligned with chat input bottom). If they exceed
-   the section's height, they scroll inside (overflow-y: auto). */
+/* Cards flow IMMEDIATELY under the header — no auto-margin gap. If the
+   section is taller than the cards, the empty space goes BELOW the cards.
+   If the cards exceed the section height, they scroll inside. */
 body.v2-layout .hero-bottom #heroRecsBody,
 body.v2-layout .hero-bottom .v2-inv-grid {
-  margin-top: auto;
+  margin-top: 0;
   min-height: 0;
   overflow-y: auto;
   flex-shrink: 1;
