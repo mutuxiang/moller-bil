@@ -2804,13 +2804,13 @@ body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero {
   padding: 36px 44px 24px !important;
   border-left: 1px solid rgba(255,255,255,0.08) !important;
   border-right: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  /* No gap — sections control their own spacing via auto-margin so live-recs
-     ends up flush at the dock bottom regardless of viz section height. */
-  gap: 0 !important;
-  /* Dock height is fixed at viewport-minus-topbar. Both sections stay in
-     their assigned positions (viz top, recs bottom). No internal scroll. */
+  /* CSS GRID with two rows of fixed proportions — viz gets the top 42%,
+     live recs gets the bottom 58%. Each section has overflow: hidden so
+     its content CAN NOT escape its row and affect the other section. */
+  display: grid !important;
+  grid-template-rows: minmax(0, 42fr) minmax(0, 58fr) !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
   overflow: hidden !important;
 }
 body.v2-layout .hero-toggle-btn { display: none !important; }
@@ -3057,18 +3057,30 @@ body.v2-layout .chat { max-width: 100% !important; }
 /* The VIZ section grows + scrolls inside itself.
    The LIVE-RECS section (heroBottom) is pinned to the bottom, never scrolls. */
 .v2-viz-wrap {
-  /* Content-sized so the section is exactly tall enough for whatever viz
-     is showing (fuel cards / budget rail / size panel). No artificial
-     min-height — the WHOLE DOCK scrolls if total exceeds the viewport. */
-  flex: 0 0 auto;
+  /* Lives in grid row 1 — completely isolated from live-recs below.
+     If content exceeds the row's height, it scrolls INSIDE this section. */
+  grid-row: 1;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 .v2-viz-wrap #v2VizBody {
-  /* No internal scroll — the dock handles scrolling now */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  /* room for a slim scrollbar without shifting content */
+  padding-right: 6px;
+  margin-right: -6px;
+}
+.v2-viz-wrap #v2VizBody::-webkit-scrollbar { width: 6px; }
+.v2-viz-wrap #v2VizBody::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border-radius: 3px;
 }
 .v2-viz-wrap #v2VizBody::-webkit-scrollbar { width: 6px; }
 .v2-viz-wrap #v2VizBody::-webkit-scrollbar-thumb {
@@ -3076,23 +3088,36 @@ body.v2-layout .chat { max-width: 100% !important; }
   border-radius: 3px;
 }
 body.v2-layout .hero-bottom {
-  /* Live recs is PINNED to the bottom of the dock via margin-top: auto.
-     Position is FIXED — section doesn't shift when cards load. The bottom
-     edge of the cards aligns with the bottom of the dock = aligned with
-     the chat input box on the left. */
-  flex: 0 0 auto !important;
-  margin-top: auto !important;
+  /* Lives in grid row 2 — completely isolated from viz above. Its size
+     is determined by the grid template, NOT by content. The viz section
+     above can NEVER push it around. Header pins at top, cards push to
+     the bottom of the section so they sit flush against the dock bottom. */
+  grid-row: 2;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  margin-top: 0 !important;
 }
 body.v2-layout .hero-bottom > * { flex-shrink: 0; }
-/* Cards flow naturally right after the header (no margin-top: auto since
-   the section is now content-sized — no empty space to fill). */
 body.v2-layout .hero-bottom .v2-dock-section-head,
 body.v2-layout .hero-bottom .v2-inv-head { flex-shrink: 0; }
+/* Cards push to the BOTTOM of the section so they always sit flush against
+   the dock's bottom edge (= aligned with chat input bottom). If they exceed
+   the section's height, they scroll inside (overflow-y: auto). */
 body.v2-layout .hero-bottom #heroRecsBody,
 body.v2-layout .hero-bottom .v2-inv-grid {
-  flex-shrink: 0;
+  margin-top: auto;
+  min-height: 0;
+  overflow-y: auto;
+  flex-shrink: 1;
+}
+body.v2-layout .hero-bottom #heroRecsBody::-webkit-scrollbar,
+body.v2-layout .hero-bottom .v2-inv-grid::-webkit-scrollbar { width: 6px; }
+body.v2-layout .hero-bottom #heroRecsBody::-webkit-scrollbar-thumb,
+body.v2-layout .hero-bottom .v2-inv-grid::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border-radius: 3px;
 }
 body.v2-layout .hero-bottom::-webkit-scrollbar,
 body.v2-layout .hero-bottom #heroRecsBody::-webkit-scrollbar,
