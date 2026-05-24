@@ -4735,9 +4735,12 @@ function getGreetingForMode(mode) {
       ],
     };
   }
-  // shopping (default)
+  // shopping (default) — friendly welcome before the first question
   return {
-    text: "So — **what's got you thinking about a new car?**",
+    text:
+      "Hi! Choosing a new car can feel overwhelming — I'm here to make it simple.\n\n" +
+      "Tell me a bit about your situation and I'll narrow things down with you, step by step.\n\n" +
+      "**To start, what's got you thinking about a new car?**",
     chips: [
       "My current car needs replacing",
       "Curious about going electric",
@@ -8406,19 +8409,14 @@ function showToast(msg) {
     if (!strip) return;
     const rows = collectToldRows();
     if (!rows || rows.length === 0) {
-      // Compact empty state: eyebrow + one-line intro on the SAME row
-      strip.className = 'v2-told-strip is-empty';
-      strip.innerHTML = `
-        <div class="v2-told-strip-head">
-          <span class="v2-told-strip-eyebrow">What you've told me</span>
-          <p class="v2-told-strip-intro">
-            Your answers appear here as we chat — <b>budget</b>, <b>passengers</b>,
-            <b>powertrain</b>, <b>size</b>, brand.
-          </p>
-        </div>`;
+      // No answers captured yet — hide the strip entirely. It appears the
+      // moment the AI catches the first keyword from the user.
+      strip.style.display = 'none';
+      strip.innerHTML = '';
       return;
     }
     // Filled state: eyebrow on its own row, chips below
+    strip.style.display = '';
     strip.className = 'v2-told-strip';
     const chips = rows.map(r => {
       return `
