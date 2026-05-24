@@ -2801,16 +2801,16 @@ body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero {
   /* Bottom padding matches the chat composer's bottom padding (24px) so
      the bottom of the inventory cards aligns with the bottom of the chat
      input box on the left. */
-  padding: 36px 44px 24px !important;
+  padding: 24px 36px 16px !important;
   border-left: 1px solid rgba(255,255,255,0.08) !important;
   border-right: 0 !important;
-  /* CSS GRID with two rows of fixed proportions — viz gets the top 42%,
-     live recs gets the bottom 58%. Each section has overflow: hidden so
-     its content CAN NOT escape its row and affect the other section. */
+  /* CSS GRID with two rows of fixed proportions — viz top 38%, live-recs
+     bottom 62% (cards need more room than fuel/budget viz). Each section
+     has overflow: hidden so its content can't escape and shift the other. */
   display: grid !important;
-  grid-template-rows: minmax(0, 42fr) minmax(0, 58fr) !important;
+  grid-template-rows: minmax(0, 38fr) minmax(0, 62fr) !important;
   grid-template-columns: 1fr !important;
-  gap: 14px !important;
+  gap: 10px !important;
   overflow: hidden !important;
 }
 body.v2-layout .hero-toggle-btn { display: none !important; }
@@ -2981,18 +2981,18 @@ body.v2-layout .chat { max-width: 100% !important; }
 }
 .v2-dock-section-head {
   display: flex; flex-direction: column;
-  gap: 4px;
-  margin-bottom: 10px;       /* was 18px — tighter to the cards below */
+  gap: 2px;
+  margin-bottom: 8px;        /* tightened to save vertical space */
   flex-shrink: 0;
 }
 .v2-dock-section-eyebrow {
-  font-size: 14px; font-weight: 500;
+  font-size: 13px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
 }
 .v2-dock-section-title {
   font-family: "Moller", sans-serif;
-  font-size: 32px; font-weight: 400;
+  font-size: 26px; font-weight: 400;
   letter-spacing: -0.01em;
   color: var(--cream-100);
   margin: 0;
@@ -3005,10 +3005,12 @@ body.v2-layout .chat { max-width: 100% !important; }
   display: flex; align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 10px;        /* was 18px — match the live-recs header */
-  padding-bottom: 8px;        /* was 14px */
+  margin-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
+.v2-inv-eyebrow { font-size: 13px; }
+.v2-inv-title   { font-size: 26px; }
 .v2-inv-back {
   appearance: none; border: 0;
   background: rgba(225, 100, 75, 0.18);
@@ -3252,39 +3254,40 @@ body.v2-layout #heroRecsBody > * { height: 100%; }
   flex-direction: column;
   box-shadow: 0 4px 14px rgba(0,0,0,0.14);
 }
-/* Bigger cards (image 290) to fill the dock vertical space — eliminates
-   the awkward empty middle gap between viz and live recs. */
+/* Card sized to fit the 62% bottom grid row (~470px including header)
+   without clipping the View buttons. Image 240 + body ~180 = 420 + header
+   ~50 = 470. */
 .v2-card-img {
   width: 100%;
-  height: 290px;
+  height: 240px;
   object-fit: cover;
   background: rgba(0,25,70,0.06);
   display: block;
 }
 .v2-card-body {
-  padding: 18px 20px 20px;
+  padding: 14px 16px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
 }
 .v2-card-name {
-  font-size: 18px; font-weight: 500;
+  font-size: 17px; font-weight: 500;
   color: var(--ink); line-height: 1.2;
 }
 .v2-card-price {
-  font-size: 22px; font-weight: 500;
+  font-size: 20px; font-weight: 500;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 .v2-card-sub {
-  font-size: 14.5px;
+  font-size: 14px;
   color: var(--muted);
   line-height: 1.4;
 }
 .v2-card-reason {
-  font-size: 14.5px; line-height: 1.4;
-  padding: 11px 13px;
+  font-size: 14px; line-height: 1.4;
+  padding: 9px 11px;
   background: rgba(225, 100, 75, 0.08);
   border-radius: 4px;
   color: var(--ink);
@@ -3303,15 +3306,15 @@ body.v2-layout #heroRecsBody > * { height: 100%; }
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 6px;
 }
 .v2-card-actions.single { grid-template-columns: 1fr; }
 .v2-card-save,
 .v2-card-cta {
   appearance: none; cursor: pointer;
-  padding: 11px 14px;
+  padding: 10px 12px;
   border-radius: 999px;
-  font: 500 14px/1 "Moller", sans-serif;
+  font: 500 13.5px/1 "Moller", sans-serif;
   transition: background 180ms, border-color 180ms, color 180ms, border-radius 220ms;
 }
 .v2-card-save {
@@ -9069,11 +9072,12 @@ function showToast(msg) {
     v2RenderLiveRecsAsInv();
   };
 
-  // ── Wrap typing-indicator functions to toggle a loading shimmer on the
-  //    viz section while the AI is generating its reply. Subtle visual cue
-  //    that "something is coming" to the right side.
+  // ── Loading shimmer lifecycle ──
+  //   ON  → when AI starts generating (typing-indicator appears)
+  //   OFF → when AI's TYPEWRITER COMPLETES (so the shimmer runs through
+  //         the whole "thinking + speaking" phase). If the new message has
+  //         cards, they slide in immediately after via relocateLatest.
   const _origAppendTyping = window.appendTypingIndicator;
-  const _origRemoveTyping = window.removeTypingIndicator;
   if (typeof _origAppendTyping === 'function') {
     window.appendTypingIndicator = function() {
       const wrap = document.querySelector('.v2-viz-wrap');
@@ -9081,11 +9085,18 @@ function showToast(msg) {
       return _origAppendTyping.apply(this, arguments);
     };
   }
-  if (typeof _origRemoveTyping === 'function') {
-    window.removeTypingIndicator = function() {
-      const wrap = document.querySelector('.v2-viz-wrap');
-      if (wrap) wrap.classList.remove('is-loading');
-      return _origRemoveTyping.apply(this, arguments);
+  // Note: we deliberately DO NOT remove the shimmer in removeTypingIndicator
+  // (that fires BEFORE the typewriter starts). Removal happens when the
+  // typewriter finishes — wrapped below.
+  const _origAppendAIMessage = window.appendAIMessage;
+  if (typeof _origAppendAIMessage === 'function') {
+    window.appendAIMessage = function(text, onDone) {
+      return _origAppendAIMessage.call(this, text, function(msgEl) {
+        // Typewriter just finished → clear shimmer
+        const wrap = document.querySelector('.v2-viz-wrap');
+        if (wrap) wrap.classList.remove('is-loading');
+        if (typeof onDone === 'function') onDone(msgEl);
+      });
     };
   }
 
