@@ -4753,7 +4753,15 @@ function getGreetingForMode(mode) {
 function showOnboarding() {
   onboardingStep = 0;
   const { text, chips } = getGreetingForMode(conversationMode);
-  renderQuickChips(chips, null);
+  // Append the AI greeting bubble (typewriter), then drop the quick-reply
+  // chips into the composer when typing finishes.
+  appendAIMessage(text, (msgEl) => {
+    renderQuickChips(chips, msgEl);
+  });
+  // Push to the assistant message history so the AI keeps context
+  if (typeof messages !== 'undefined' && Array.isArray(messages)) {
+    messages.push({ role: 'assistant', content: text });
+  }
 }
 let _onboardingStarted = false;
 
