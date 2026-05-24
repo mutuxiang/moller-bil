@@ -2801,14 +2801,19 @@ body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero {
   /* Bottom padding matches the chat composer's bottom padding (24px) so
      the bottom of the inventory cards aligns with the bottom of the chat
      input box on the left. */
-  padding: 24px 36px 16px !important;
+  /* Bottom padding = chat composer's bottom padding (24px) so the bottom
+     edge of the live-rec cards lines up EXACTLY with the bottom edge of
+     the chat input box on the left. */
+  padding: 24px 36px 24px !important;
   border-left: 1px solid rgba(255,255,255,0.08) !important;
   border-right: 0 !important;
-  /* CSS GRID with two rows of fixed proportions — viz top 38%, live-recs
-     bottom 62% (cards need more room than fuel/budget viz). Each section
-     has overflow: hidden so its content can't escape and shift the other. */
+  /* CSS GRID — row 2 (live-recs) is AUTO-SIZED to its content (header +
+     cards exactly), so there's no internal gap. Row 1 (viz) takes ALL the
+     remaining space (1fr). Since row 2 sits flush at the dock bottom and
+     is exactly content-tall, the cards' BOTTOM edge = dock content bottom
+     = (viewport bottom - 24px padding) = chat composer bottom. */
   display: grid !important;
-  grid-template-rows: minmax(0, 38fr) minmax(0, 62fr) !important;
+  grid-template-rows: minmax(0, 1fr) auto !important;
   grid-template-columns: 1fr !important;
   gap: 10px !important;
   overflow: hidden !important;
