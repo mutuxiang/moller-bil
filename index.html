@@ -2829,6 +2829,22 @@ body.v2-layout .app.hero-collapsed .col-center {
   margin-left: auto !important;
   margin-right: auto !important;
 }
+/* Collapsed-mode chat content should breathe — wider stream, fuller composer,
+   and the quick-reply chips lay out in ONE ROW (4 across) instead of 2×2. */
+body.v2-layout .app.hero-collapsed .stream { padding: 28px 56px 16px; }
+body.v2-layout .app.hero-collapsed .composer { padding: 16px 56px 24px; }
+body.v2-layout .app.hero-collapsed .quick-chips {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+body.v2-layout .app.hero-collapsed .quick-chips .chip {
+  text-align: center;
+  padding: 13px 18px;
+}
+/* Roomier chat bubbles when the chat takes the whole stage */
+body.v2-layout .app.hero-collapsed .msg .bub { max-width: 760px; font-size: 17.5px; }
+body.v2-layout .app.hero-collapsed .v2-told-strip { margin: 16px 56px 0 !important; }
 
 /* Chat — 2/5 of viewport, on the left. Only post-onboarding (during
    onboarding the chat is slid off-stage per the original .app.is-onboarding
