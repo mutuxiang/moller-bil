@@ -2818,7 +2818,17 @@ body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero {
   gap: 10px !important;
   overflow: hidden !important;
 }
-body.v2-layout .hero-toggle-btn { display: none !important; }
+/* Toggle button is shown in v2 chat mode (hidden during onboarding) — click
+   to collapse the navy dock and center the chat. */
+body.v2-layout .app.is-onboarding .hero-toggle-btn { display: none !important; }
+/* When dock is collapsed in v2, give chat plenty of room — centered, 75% wide */
+body.v2-layout .app.hero-collapsed .col-spacer.left.hero { display: none !important; }
+body.v2-layout .app.hero-collapsed .col-center {
+  flex: 0 0 75vw !important;
+  max-width: 75vw !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
 
 /* Chat — 2/5 of viewport, on the left. Only post-onboarding (during
    onboarding the chat is slid off-stage per the original .app.is-onboarding
@@ -2991,13 +3001,13 @@ body.v2-layout .chat { max-width: 100% !important; }
   flex-shrink: 0;
 }
 .v2-dock-section-eyebrow {
-  font-size: 13px; font-weight: 500;
+  font-size: 16px; font-weight: 500;       /* was 13 */
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
 }
 .v2-dock-section-title {
   font-family: "Moller", sans-serif;
-  font-size: 26px; font-weight: 400;
+  font-size: 36px; font-weight: 400;       /* was 26 */
   letter-spacing: -0.01em;
   color: var(--cream-100);
   margin: 0;
@@ -3014,8 +3024,8 @@ body.v2-layout .chat { max-width: 100% !important; }
   padding-bottom: 6px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-.v2-inv-eyebrow { font-size: 13px; }
-.v2-inv-title   { font-size: 26px; }
+.v2-inv-eyebrow { font-size: 16px; }       /* match the live-recs eyebrow */
+.v2-inv-title   { font-size: 36px; }       /* match the live-recs title */
 .v2-inv-back {
   appearance: none; border: 0;
   background: rgba(225, 100, 75, 0.18);
@@ -3142,10 +3152,10 @@ body.v2-layout .hero-bottom .v2-inv-grid::-webkit-scrollbar-thumb {
 #v2VizBody:empty::after {
   content: 'Visualizations appear here as we discuss budget, size, fuel and more.';
   display: block;
-  font-size: 14px;
-  color: rgba(255,255,255,0.55);
+  font-size: 17px;                          /* was 14 — easier to read */
+  color: rgba(255,255,255,0.65);
   line-height: 1.5;
-  padding: 8px 0 4px;
+  padding: 10px 0 4px;
 }
 /* Slide-up + fade-in when viz content appears — mirrors the chat's
    quick-reply chips animation. Triggers on every new viz that lands here. */
