@@ -2848,8 +2848,15 @@ body.v2-layout .app.hero-collapsed .quick-chips .chip {
   white-space: nowrap;
   padding: 13px 22px;
 }
-/* Roomier chat bubbles when the chat takes the whole stage */
-body.v2-layout .app.hero-collapsed .msg .bub { max-width: 760px; font-size: 17.5px; }
+/* Roomier chat bubbles when the chat takes the whole stage — on wide
+   monitors the 960px default leaves too much empty space in the 90vw
+   column, so let messages span the full stream width and grow bubbles. */
+body.v2-layout .app.hero-collapsed .msg { max-width: none !important; width: 100% !important; }
+body.v2-layout .app.hero-collapsed .msg.ai { max-width: none !important; width: 100% !important; }
+body.v2-layout .app.hero-collapsed .msg .bub {
+  max-width: min(1200px, calc(100vw - 220px)) !important;
+  font-size: 17.5px;
+}
 body.v2-layout .app.hero-collapsed .v2-told-strip { margin: 16px 40px 0 !important; }
 
 /* Chat — 2/5 of viewport, on the left. Only post-onboarding (during
