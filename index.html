@@ -2833,14 +2833,18 @@ body.v2-layout .app.hero-collapsed .col-center {
    and the quick-reply chips lay out in ONE ROW (4 across) instead of 2×2. */
 body.v2-layout .app.hero-collapsed .stream { padding: 28px 56px 16px; }
 body.v2-layout .app.hero-collapsed .composer { padding: 16px 56px 24px; }
+/* Chips lay out by their natural content width and flex-wrap if needed.
+   Each chip's text stays on a SINGLE line (white-space: nowrap) — no more
+   "Curious about going / electric" awkward wrapping inside the chip. */
 body.v2-layout .app.hero-collapsed .quick-chips {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 10px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
 }
 body.v2-layout .app.hero-collapsed .quick-chips .chip {
-  text-align: center;
-  padding: 13px 18px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 13px 22px;
 }
 /* Roomier chat bubbles when the chat takes the whole stage */
 body.v2-layout .app.hero-collapsed .msg .bub { max-width: 760px; font-size: 17.5px; }
