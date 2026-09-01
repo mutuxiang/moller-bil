@@ -3726,6 +3726,13 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_URL   = `/api/gemini?model=${GEMINI_MODEL}`;
 
+// DeepSeek (OpenAI-compatible API) — switched to on 2026-09-01 after Gemini
+// flash proved too unstable for the bilingual conversation flow. The frontend
+// keeps both call paths; set the active backend with `ACTIVE_BACKEND`.
+const DEEPSEEK_MODEL = 'deepseek-chat';
+const DEEPSEEK_URL   = '/api/deepseek';
+const ACTIVE_BACKEND  = 'deepseek';     // 'deepseek' | 'gemini'
+
 // ── i18n (EN / 中文) ────────────────────────────────────────────────────
 // Current UI + chat language. Persisted to localStorage so a reload keeps it.
 let currentLang = (localStorage.getItem('mollerLang') || 'en');
@@ -4208,6 +4215,67 @@ function langDirective() {
   return `
 
 LANGUAGE OVERRIDE — the user is reading in 简体中文 (Simplified Chinese). You MUST write ALL your prose, questions, and SUGGESTIONS chips in Simplified Chinese. Keep car brand and model names in their original Latin form (e.g. "Volvo XC90", "Tesla Model Y"). Keep the required format tokens RECOMMENDATIONS / SHOW_INVENTORY / EV_SURPRISES / TOOLS / SUGGESTIONS exactly as written in English. All prices stay in NOK (kr).`;
+}
+
+// ── DeepSeek (OpenAI-compatible) backend ─────────────────────────────────
+// DeepSeek's chat completions API mirrors OpenAI's shape. The system prompt
+// stays as the first `system` message in the messages array. We force JSON
+// output via `response_format: { type: 'json_object' }` — DeepSeek supports
+// this and it gives us a much cleaner {en,zh} wrapper than the unconstrained
+// text fallback.
+function toDeepSeekBody(allMessages, maxTokens) {
+  return {
+    model: DEEPSEEK_MODEL,
+    messages: allMessages,
+    temperature: 0.7,
+    max_tokens: maxTokens || 2048,
+    response_format: { type: 'json_object' },
+  };
+}
+
+// Extract text from a DeepSeek /chat/completions response and parse it as a
+// dual-language pair. Same shape as geminiText() but reads from
+// `choices[0].message.content` instead of `candidates[0].content.parts`.
+function deepseekText(data) {
+  const choice = data?.choices?.[0];
+  const text = choice?.message?.content || '';
+  if (text) return parseDualLanguage(text);
+  console.warn('[DeepSeek] empty response — finishReason:', choice?.finish_reason, 'raw:', data);
+  return { en: '', zh: '' };
+}
+
+// Send a chat-completion request to the configured backend. Returns the dual
+// {en, zh} pair ready for downstream parsing.
+async function callAssistant(allMessages, maxTokens) {
+  if (ACTIVE_BACKEND === 'deepseek') {
+    const resp = await fetch(DEEPSEEK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(toDeepSeekBody(allMessages, maxTokens)),
+    });
+    if (!resp.ok) {
+      const errBody = await resp.text();
+      let errMsg = `HTTP ${resp.status}`;
+      try { errMsg = JSON.parse(errBody).error?.message || errMsg; } catch(e) {}
+      throw new Error(errMsg);
+    }
+    const data = await resp.json();
+    return deepseekText(data);
+  }
+  // Default: Gemini backend
+  const resp = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(toGeminiBody(allMessages, maxTokens)),
+  });
+  if (!resp.ok) {
+    const errBody = await resp.text();
+    let errMsg = `HTTP ${resp.status}`;
+    try { errMsg = JSON.parse(errBody).error?.message || errMsg; } catch(e) {}
+    throw new Error(errMsg);
+  }
+  const data = await resp.json();
+  return geminiText(data);
 }
 
 // Convert OpenAI-style {role, content} messages into Gemini's {systemInstruction, contents}
@@ -8383,20 +8451,15 @@ async function loadInventory(model, recData) {
 
     // Fallback: ask AI to generate plausible listings
     if (!usingRealData) {
-      const resp = await fetch(GEMINI_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(toGeminiBody([
+      try {
+        const aiDual = await callAssistant([
           { role: 'system', content: INVENTORY_PROMPT + langDirective() },
           { role: 'user',   content: `Show me used inventory for: ${model}` },
-        ], 700)),
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        const aiRaw = geminiText(data);
+        ], 700);
+        const aiRaw = pickAIVersion(aiDual);
         const aiItems = parseInventory(aiRaw);
         if (aiItems && aiItems.length) items = aiItems;
-      }
+      } catch (e) { console.warn('[Inventory] AI fallback failed:', e); }
     }
 
     await toolPromise;
@@ -8723,21 +8786,7 @@ async function sendMessage() {
       ...(inv ? [{ role: 'system', content: inv }] : []),
       ...messages,
     ];
-    const resp = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(toGeminiBody(allMessages, 800)),
-    });
-
-    if (!resp.ok) {
-      const errBody = await resp.text();
-      let errMsg = `HTTP ${resp.status}`;
-      try { errMsg = JSON.parse(errBody).error?.message || errMsg; } catch(e) {}
-      throw new Error(errMsg);
-    }
-
-    const data = await resp.json();
-    const aiDual = geminiText(data);                  // { en, zh }
+    const aiDual = await callAssistant(allMessages, 800);   // routes to ACTIVE_BACKEND
     const aiRaw  = pickAIVersion(aiDual);
     if (!aiRaw) throw new Error('Empty response from API');
     // messages[] entries carry __id so language toggles can find them later.
