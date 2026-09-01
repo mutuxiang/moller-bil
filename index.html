@@ -162,11 +162,54 @@ html, body { height: 100%; font-family: "Moller",system-ui,sans-serif; color: va
    along with the colour change, giving every button a small "sharpening" tell. */
 .btn-reset-all:hover,
 .btn-filter:hover,
-.btn-collection:hover {
+.btn-collection:hover,
+.btn-lang:hover {
   color: var(--ink);
   border-color: var(--ink);
   background: var(--accent-soft);
   border-radius: 8px;
+}
+
+.btn-lang {
+  appearance: none; border: 1.5px solid var(--border-strong); background: rgba(255,255,255,0.85);
+  color: var(--ink); font: 600 13px/1 "Moller",sans-serif;
+  height: 40px; padding: 0 14px 0 12px;
+  border-radius: 999px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  letter-spacing: .04em;
+  box-shadow: 0 1px 0 rgba(0,25,70,.04);
+  position: relative; z-index: 11;        /* above Google Translate pill */
+  transition: color 220ms var(--ease-out),
+              border-color 220ms var(--ease-out),
+              background 220ms var(--ease-out),
+              border-radius 220ms var(--ease-out);
+}
+.btn-lang-icon { flex: 0 0 14px; }
+/* Møller signature hover — corner radius collapses from pill (999px) → 8px
+   along with the colour change, giving every button a small "sharpening" tell. */
+.btn-reset-all:hover,
+.btn-filter:hover,
+.btn-collection:hover,
+.btn-lang:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+  background: var(--accent-soft);
+  border-radius: 8px;
+}
+.app.is-onboarding .topbar { background: transparent; }
+
+/* Onboarding: solid cream chip on the navy hero — stays legible from the
+   very first frame and visually pairs with the Møller logomark. */
+.app.is-onboarding .btn-lang {
+  background: var(--cream-100);
+  border-color: var(--cream-100);
+  color: var(--ink);
+  box-shadow: 0 2px 10px rgba(0,25,70,.25), 0 1px 0 rgba(255,255,255,.4) inset;
+}
+.app.is-onboarding .btn-lang:hover {
+  background: #fff;
+  border-color: #fff;
+  color: var(--ink);
 }
 
 .btn-collection { position: relative; }
@@ -3185,10 +3228,10 @@ body.v2-layout .hero-bottom .v2-inv-grid::-webkit-scrollbar-thumb {
 /* Viz panel — cards relocated from chat go here. HORIZONTAL layout: cards
    sit side by side, max 2 rows. The dock is wide (60vw) so there's room. */
 #v2VizBody { display: flex; flex-direction: column; gap: 14px; }
-#v2VizBody:empty::after {
-  content: 'Visualizations appear here as we discuss budget, size, fuel and more.';
-  display: block;
-  font-size: 17px;                          /* was 14 — easier to read */
+/* Empty-state placeholder lives as a real element so it can translate. */
+#v2VizBody:empty::after { content: none; }
+.v2-viz-empty {
+  font-size: 17px;                          /* matches the old CSS pseudo */
   color: rgba(255,255,255,0.65);
   line-height: 1.5;
   padding: 10px 0 4px;
@@ -3496,7 +3539,14 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
       </svg>
       <span class="btn-collection-count" id="collectionCount">0</span>
     </button>
-    <button class="btn-filter" onclick="toggleDrawer()">Filters</button>
+    <button class="btn-filter" onclick="toggleDrawer()" data-i18n="btn.filters">Filters</button>
+    <button class="btn-lang" id="btnLang" type="button" onclick="toggleLang()" aria-label="Switch language" data-lang="en">
+      <svg class="btn-lang-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="14" height="14">
+        <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M1.5 8h13M8 1.5c2 2.2 2 10.8 0 13M8 1.5c-2 2.2-2 10.8 0 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <span class="btn-lang-label" data-i18n="btn.lang">中文</span>
+    </button>
   </div>
 
   <div class="main">
@@ -3508,15 +3558,15 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
       <!-- Two CTA buttons revealed after the typewriter sequence finishes -->
       <div class="hero-cta" id="heroCta">
         <button class="hero-cta-btn primary" type="button" onclick="onboardingChoose('shopping')">
-          <span class="hero-cta-eyebrow">Find your match</span>
-          <span class="hero-cta-label">I want to find a car</span>
+          <span class="hero-cta-eyebrow" data-i18n="cta.eyebrow.shop">Find your match</span>
+          <span class="hero-cta-label" data-i18n="cta.label.shop">I want to find a car</span>
           <svg class="hero-cta-arrow" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
             <path d="M5 11h12M12 6l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
         <button class="hero-cta-btn ghost" type="button" onclick="onboardingChoose('learning')">
-          <span class="hero-cta-eyebrow">Just curious</span>
-          <span class="hero-cta-label">I just want to learn about cars</span>
+          <span class="hero-cta-eyebrow" data-i18n="cta.eyebrow.learn">Just curious</span>
+          <span class="hero-cta-label" data-i18n="cta.label.learn">I just want to learn about cars</span>
           <svg class="hero-cta-arrow" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
             <path d="M5 11h12M12 6l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -3533,9 +3583,9 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
       <!-- (intro overlay moved to body level — see below) -->
       <div class="hero-bottom">
         <div class="hero-recs-head">
-          <span class="hero-recs-label" id="heroRecsLabel">Popular near you</span>
-          <h2 class="hero-recs-title" id="heroRecsTitle">Live in stock</h2>
-          <span class="hero-recs-sub" id="heroRecsSub">Popular in the Oslo area</span>
+          <span class="hero-recs-label" id="heroRecsLabel" data-i18n="hero.popularNear">Popular near you</span>
+          <h2 class="hero-recs-title" id="heroRecsTitle" data-i18n="hero.liveInStock">Live in stock</h2>
+          <span class="hero-recs-sub" id="heroRecsSub" data-i18n="hero.popularOslo">Popular in the Oslo area</span>
         </div>
         <div id="heroRecsBody"></div>
       </div>
@@ -3553,8 +3603,8 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
 
       <div class="chat-mode-bar">
         <div class="mode-toggle" id="modeToggle" role="tablist">
-          <button data-mode="shopping" class="on" onclick="setConversationMode('shopping')">Find a car</button>
-          <button data-mode="learning" class="locked" onclick="showLearningLocked()">Just learning</button>
+          <button data-mode="shopping" class="on" onclick="setConversationMode('shopping')" data-i18n="mode.shopping">Find a car</button>
+          <button data-mode="learning" class="locked" onclick="showLearningLocked()" data-i18n="mode.learning">Just learning</button>
         </div>
       </div>
 
@@ -3562,16 +3612,16 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
 
       <div class="composer">
         <div class="quick-reply-wrap empty" id="suggestionsWrap">
-          <span class="quick-reply-label">Quick reply</span>
+          <span class="quick-reply-label" data-i18n="quickReply">Quick reply</span>
           <div class="quick-chips" id="suggestionsBar"></div>
         </div>
         <div class="cbox">
           <div class="tokens-row" id="tokensRow"></div>
           <textarea class="input-field" id="inputField" rows="1"
-            placeholder="Tell the assistant what you need…"
+            placeholder="Tell the assistant what you need…" data-i18n-ph="input.placeholder"
             onkeydown="handleKey(event)" oninput="updateSend(); autoGrow(this)"></textarea>
           <div class="cfoot">
-            <button class="btn-send" id="btnSend" disabled onclick="sendMessage()">Send</button>
+            <button class="btn-send" id="btnSend" disabled onclick="sendMessage()" data-i18n="btn.send">Send</button>
           </div>
         </div>
       </div>
@@ -3585,7 +3635,7 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
         <button class="acc-head" type="button" onclick="openAccSection('recs')">
           <span class="acc-head-text">
             <b>Recommended for you</b>
-            <span class="side-recs-reason" id="liveRecsReason">Popular in the Oslo area</span>
+            <span class="side-recs-reason" id="liveRecsReason" data-i18n="live.popularOslo">Popular in the Oslo area</span>
           </span>
           <svg class="acc-chev" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path d="M3 5.5l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -3599,8 +3649,8 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
       <section class="acc" id="accTold" data-section="told">
         <button class="acc-head" type="button" onclick="openAccSection('told')">
           <span class="acc-head-text">
-            <b>What you've told me</b>
-            <span class="side-recs-reason">Your live profile</span>
+            <b data-i18n="told.eyebrow">What you've told me</b>
+            <span class="side-recs-reason" data-i18n="told.title">Your live profile</span>
           </span>
           <span class="acc-badge" id="toldBadge" aria-hidden="true">0</span>
           <svg class="acc-chev" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -3621,7 +3671,7 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
 <aside class="collection-drawer" id="collectionDrawer">
   <div class="collection-head">
     <div>
-      <b class="collection-title">Your saved cars</b>
+      <b class="collection-title" data-i18n="collection.savedTitle">Your saved cars</b>
       <div class="collection-sub" id="collectionSub">No cars saved yet</div>
     </div>
     <button class="collection-close" onclick="closeCollection()" aria-label="Close">
@@ -3637,8 +3687,8 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
         <path d="M8 5.5h16v22l-8-5.5-8 5.5v-22z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
       </svg>
     </div>
-    <div class="collection-empty-title">No cars saved yet</div>
-    <div class="collection-empty-text">Pin cars from recommendations to save them here for easy comparison.</div>
+    <div class="collection-empty-title" data-i18n="collection.subEmpty">No cars saved yet</div>
+    <div class="collection-empty-text" data-i18n="collection.empty">Pin cars from recommendations to save them here for easy comparison.</div>
   </div>
 </aside>
 
@@ -3648,11 +3698,11 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
 <!-- First-time spotlight intro for the "Your live profile" panel -->
 <div class="hero-spotlight-scrim" id="heroSpotlightScrim" aria-hidden="true"></div>
 <div class="hero-told-intro" id="heroToldIntro" role="dialog" aria-modal="true" aria-hidden="true">
-  <span class="hero-told-intro-eyebrow">New section appeared</span>
-  <h2 class="hero-told-intro-title">Your live profile</h2>
+  <span class="hero-told-intro-eyebrow" data-i18n="told.intro.eyebrow">New section appeared</span>
+  <h2 class="hero-told-intro-title" data-i18n="told.intro.title">Your live profile</h2>
   <p class="hero-told-intro-text" id="heroToldIntroText"></p>
   <button class="hero-told-intro-btn" id="heroToldIntroBtn" type="button" disabled
-          onclick="heroToldIntroDismiss()">Got it</button>
+          onclick="heroToldIntroDismiss()" data-i18n="told.intro.btn">Got it</button>
 </div>
 
 <script>
@@ -3663,6 +3713,488 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
 // internal thinking; with thinkingBudget=0 the model behaves like a standard chat model.
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const GEMINI_URL   = `/api/gemini?model=${GEMINI_MODEL}`;
+
+// ── i18n (EN / 中文) ────────────────────────────────────────────────────
+// Current UI + chat language. Persisted to localStorage so a reload keeps it.
+let currentLang = (localStorage.getItem('mollerLang') || 'en');
+if (currentLang !== 'zh') currentLang = 'en';
+
+// Translation dictionary. `en` is the source of truth; missing `zh` keys fall
+// back to the English string so the UI never shows blanks.
+const I18N = {
+  en: {
+    'btn.savedCars':     'Saved cars',
+    'btn.filters':       'Filters',
+    'btn.lang':          '中文',
+    'mode.shopping':     'Find a car',
+    'mode.learning':     'Just learning',
+    'cta.eyebrow.shop':  'Find your match',
+    'cta.label.shop':    'I want to find a car',
+    'cta.eyebrow.learn': 'Just curious',
+    'cta.label.learn':   'I just want to learn about cars',
+    'quickReply':        'Quick reply',
+    'input.placeholder': 'Type your message…',
+    'btn.send':          'Send',
+    'hero.popularNear':  'Popular near you',
+    'hero.line1':         'Buying a car can feel overwhelming.<br>For people who don’t know cars, I’m here to <u>help</u>.',
+    'hero.line2':         'Every car I show you is <u>real</u>.<br>Our vehicle info comes from a real in-stock database.',
+    'hero.line3':         'Møller Bil does more than sell cars.<br>We can help with <u>financing, warranty, insurance, and service</u> too.',
+    'hero.liveInStock':  'Live in stock',
+    'hero.popularOslo':  'Popular in the Oslo area',
+    'hero.livePicks':    'Live picks while we chat',
+    'hero.finding':      'Finding picks in stock…',
+    'hero.pulling':      'Pulling live data from Møller Bil',
+    'hero.waitTitle':    'Waiting for your first answers',
+    'hero.waitSub':      'Tell me what you need and picks appear here.',
+    'hero.empty':        'Recommendations will appear here once we have a feel for what you’re after.',
+    'live.popularOslo':  'Popular in the Oslo area',
+    'live.topOne':       'Top {0} picks near you',
+    'live.topTwo':       'Top {0} {1} picks',
+    'live.curated':      'Curated for you',
+    'live.view':         'View',
+    'live.inStock':      'in stock',
+    'price.from':        'From',
+    'rec.viewInventory': 'View inventory',
+    'rec.notInStock':    'Not in stock',
+    'rec.noStock':       'No {model} in stock right now — ask me for another model',
+    'inv.header':        'IN STOCK · {model}',
+    'inv.intro':         'Here are the {model}s currently in stock:',
+    'inv.carPrice':      'Car price',
+    'inv.vat':           'Incl. VAT & registration',
+    'inv.location':      'Location',
+    'inv.perYear':       'Per year',
+    'inv.tcoNote':       'Insurance, service, tires & repairs',
+    'inv.whyThisOne':    'Why this one',
+    'inv.save':          'Save',
+    'inv.saved':         'Saved',
+    'inv.viewDetails':   'View details',
+    'inv.comingSoon':    'Detail page for {id} — coming soon',
+    'inv.notFound':      "Sorry, I couldn't find inventory for {model} right now.",
+    'collection.empty':  'Pin cars from recommendations to save them here for easy comparison.',
+    'collection.saved':  'Saved — open “Your Collection” at the top right to view it',
+    'collection.title':  'Your Collection',
+    'collection.savedTitle': 'Your saved cars',
+    'collection.subEmpty':   'No cars saved yet',
+    'collection.savedCount': '{n} car{s} saved',
+    'collection.matched':    'Matched',
+    'collection.viewDetails': 'View details',
+    'collection.detailSoon': 'Detail page — coming soon',
+    'v2.inventory':      'Inventory',
+    'v2.back':           'Back to recommendations',
+    'v2.finding':        'Finding cars in stock…',
+    'v2.loadFail':       "Couldn't load inventory right now.",
+    'v2.noStock':        'No {model} in stock right now.',
+    'toast.loadFail':    'Could not load inventory: {msg}',
+    'chip.howMileage':   'How does mileage affect me?',
+    'chip.finance':      'Can I finance or lease?',
+    'chip.maintenance':  "What's included in maintenance?",
+    'chip.testDrive':    'Book a test drive',
+    'chip.tryAgain':     'Try again',
+    'chip.startOver':    'Start over',
+    'chip.diffOther':    'Show me different models',
+    'rec.topPicks':      'Here are my top picks for you:',
+
+    // ── AI greeting & initial quick-reply chips (per conversation mode) ──
+    'greeting.shop.text': "Hi! Choosing a new car can feel overwhelming — I'm here to make it simple.\n\nTell me a bit about your situation and I'll narrow things down with you, step by step.\n\n**To start, what's got you thinking about a new car?**",
+    'greeting.shop.chip1': 'My current car needs replacing',
+    'greeting.shop.chip2': 'Curious about going electric',
+    'greeting.shop.chip3': 'Growing family, need more space',
+    'greeting.shop.chip4': 'Just exploring my options',
+    'greeting.learn.text': "Hi! Welcome to learning mode. I'm here as your car-buying guide for Norway — no pressure, no selling.\n\n• I draw on **Møller Bil's live inventory** plus general knowledge about used cars in Norway.\n• Nothing you ask is stored or shared.\n\nAsk me anything — pricing, fuel types, financing, what to inspect on a used car. **What would you like to start with?**",
+    'greeting.learn.chip1': 'How much should I budget?',
+    'greeting.learn.chip2': 'Electric vs hybrid — pros and cons?',
+    'greeting.learn.chip3': 'Tips for buying used in Norway',
+    'greeting.learn.chip4': 'How does car financing work?',
+
+    // ── Onboarding tour overlay (5 spotlight steps + chrome) ──
+    'tour.badge':         'Quick tour',
+    'tour.skip':          'Skip tour',
+    'tour.next':          'Next',
+    'tour.start':         'Get started',
+    'tour.step1.title':   'Just chat',
+    'tour.step1.body':    "No car knowledge needed. Tell me about <b>your life</b>, <b>your needs</b>, <b>your budget</b> — I'll capture what matters as we go.",
+    'tour.step2.title':   'Two modes',
+    'tour.step2.body':    '<b>Find a car</b> — full discovery, builds your profile.<br><b>Just learning</b> — tutor mode, coming soon.',
+    'tour.step3.title':   'Recommended for you',
+    'tour.step3.body':    "Live picks from <b>Møller Bil's real inventory</b>, refreshed as we chat. You'll see popular Oslo-area cars right away, then they narrow to match your needs. Tap any card to jump into its stock.",
+    'tour.step4.title':   "What you've told me",
+    'tour.step4.body':    "Your live profile lives in this drawer. As we chat, each answer I capture (<b>budget</b>, <b>fuel</b>, <b>seats</b>…) shows up on its own line — a small badge here flags new updates.",
+    'tour.step5.title':   'Real inventory in chat',
+    'tour.step5.body':    "Once we cover a few essentials, I'll surface 2–3 matched models in the conversation — with <b>real photos, prices, and location</b> from in-stock cars.",
+
+    // ── Hero told panel + intro modal + tip ──
+    'told.eyebrow':       "What you've told me",
+    'told.title':         'Your live profile',
+    'told.intro.eyebrow': 'New section appeared',
+    'told.intro.title':   'Your live profile',
+    'told.intro.btn':     'Got it',
+    'told.action.change': 'Change',
+    'told.action.cancel': 'Cancel',
+    'told.action.showInChat': 'Show in chat',
+    'told.done':          'Done',
+    'told.empty':         'Your answers appear here as we chat — <b>budget</b>, <b>passengers</b>, <b>powertrain</b>, <b>size</b>, brand.',
+    'told.tip.eyebrow':   'Quick tip',
+    'told.tip.body':      'I’ll capture each answer here as we go. Tap <b>Change</b> to update one, or <b>Show in chat</b> to revisit where it came up.',
+    'told.tip.btn':       'Got it',
+
+    // ── V2 dock sections + dynamic surfaces ──
+    'v2.viz.eyebrow':         'Live visualization',
+    'v2.viz.title':           "What we're discussing",
+    'v2.recs.eyebrow':        'Live recommendations',
+    'v2.recs.title.default':  'In stock right now',
+    'v2.recs.title.matched':  'Matched for your needs',
+    'v2.vizEmpty':            'Visualizations appear here as we discuss budget, size, fuel and more.',
+    'v2.stateFinding':        'Finding picks in stock…',
+    'v2.stateRefine':         'Tell me more so I can refine these picks.',
+    'v2.updatedOnRight':      '{kind} updated on the right →',
+    'v2.vizUpdatedFallback':  'Visualization',
+    'v2.seeAllInStock':       'See all in stock',
+    'v2.popularNearEdge':     'Popular near you',
+    // Viz section title when a card lands:
+    'v2.vizTitle.budget':     'Your budget options',
+    'v2.vizTitle.fuel':       'Powertrain trade-offs',
+    'v2.vizTitle.size':       'Cars next to a person',
+    'v2.vizTitle.recs':       'Your top picks',
+    // Per-card reason chips (driven by user-confirmed filters)
+    'v2.reason.fuel':         'Matches your {fuel} pick',
+    'v2.reason.seats':        'Fits {seats} seats',
+    'v2.reason.seats7':       'Fits 7+ seats',
+    'v2.reason.size':         '{size} body',
+    'v2.reason.budget':       'Within your budget',
+
+    // ── Misc copy still floating around ──
+    'learning.locked':        '"Just learning" mode is still in development — coming soon.',
+    'send.error':             'Sorry, something went wrong. Please try again.',
+
+    // ── Filter drawer labels & placeholders (options/BRANDS stay English as keys) ──
+    'filter.usage':           "How you'll use it",
+    'filter.passengers':      'Passengers',
+    'filter.powertrain':      'Powertrain',
+    'filter.size':            'Vehicle size',
+    'filter.notDiscussed':    'Not discussed yet',
+    'filter.seatsNone':       'Seat count not set',
+    'filter.fuelNone':        'Fuel type still open',
+    'filter.sizeNone':        'Body style undecided',
+    'filter.budget':          'Budget',
+    'filter.brand':           'Brand preference',
+    'filter.brandNone':       'No brand preference yet',
+
+    // ── Misc UI strings that previously were inline English ──
+    'tip.shoppingMode':       'Shopping mode',
+    'tip.profileLive.title':  'Your profile, live',
+    'tip.profileLive.body':   'This panel shows what I’ve learned about you so far. Confirmed answers move to the top, and items still to discuss stay below. You don’t need to fill everything — I can recommend cars with just a few key areas confirmed.',
+    'tip.profileBadge':       'Profile tip',
+    'tip.refine.title':       'Two ways to refine',
+    'tip.refine.changeBody':  '— open the section to manually adjust what I captured.',
+    'tip.refine.showInChatBody': '— jump back to the moment we settled on it.',
+    'tip.refine.changeTitle': 'Change {label}',
+    'tip.gotIt':              'Got it',
+
+    'attr.age':               'Age',
+    'attr.mileage':           'Mileage',
+    'attr.fuel':              'Fuel',
+    'attr.evRange':           'EV range',
+    'fuel.runningCost':       'Running cost / 1000 km',
+    'budget.tierBuyers':      'of buyers chose this tier',
+    'panel.sizeTitle':        'Sized next to a 175 cm person',
+    'panel.mapTitle':         'Norway · single-charge coverage from Oslo',
+    'map.yourHub':            'Your hub',
+    'v2.quickUpdate':         'Quick update',
+  },
+  zh: {
+    'btn.savedCars':     '已收藏',
+    'btn.filters':       '筛选',
+    'btn.lang':          'EN',
+    'mode.shopping':     '找辆车',
+    'mode.learning':     '只是了解',
+    'cta.eyebrow.shop':  '找到你的匹配',
+    'cta.label.shop':    '我想找一辆车',
+    'cta.eyebrow.learn': '只是好奇',
+    'cta.label.learn':   '我只是想了解汽车',
+    'quickReply':        '快捷回复',
+    'input.placeholder': '输入你的消息…',
+    'btn.send':          '发送',
+    'hero.popularNear':  '你附近的热门车',
+    'hero.line1':         '买一辆新车确实容易让人头大 —— 如果你对车不熟，我在这儿帮你<u>理清楚</u>。',
+    'hero.line2':         '我展示的每一辆车都是<u>真实在售</u>的。<br>车辆信息来自 Møller Bil 的实时库存。',
+    'hero.line3':         'Møller Bil 不只是卖车。<br>从<u>分期、保险、上牌到保养</u>，我们都能帮你搞定。',
+    'hero.liveInStock':  '实时在售',
+    'hero.popularOslo':  '奥斯陆地区热门',
+    'hero.livePicks':    '聊天中的实时推荐',
+    'hero.finding':      '正在查找在售车辆…',
+    'hero.pulling':      '正在从 Møller Bil 获取实时数据',
+    'hero.waitTitle':    '等待你的第一次回答',
+    'hero.waitSub':      '告诉我你的需求，推荐就会显示在这里。',
+    'hero.empty':        '了解你的需求后，推荐会显示在这里。',
+    'live.popularOslo':  '奥斯陆地区热门',
+    'live.topOne':       '你附近的精选 {0}',
+    'live.topTwo':       '你附近的 {0} {1} 精选',
+    'live.curated':      '为你精选',
+    'live.view':         '查看',
+    'live.inStock':      '在售',
+    'price.from':        '起',
+    'rec.viewInventory': '查看库存',
+    'rec.notInStock':    '无库存',
+    'rec.noStock':       '目前没有在售的 {model} —— 换个别的车型问我吧',
+    'inv.header':        '在售 · {model}',
+    'inv.intro':         '以下是目前在售的 {model}：',
+    'inv.carPrice':      '车价',
+    'inv.vat':           '含增值税与登记费',
+    'inv.location':      '地点',
+    'inv.perYear':       '每年',
+    'inv.tcoNote':       '保险、保养、轮胎与维修',
+    'inv.whyThisOne':    '推荐理由',
+    'inv.save':          '收藏',
+    'inv.saved':         '已收藏',
+    'inv.viewDetails':   '查看详情',
+    'inv.comingSoon':    '{id} 的详情页 —— 即将推出',
+    'inv.notFound':      '抱歉，暂时找不到 {model} 的库存。',
+    'collection.empty':  '从推荐中收藏车辆，方便在这里对比。',
+    'collection.saved':  '已收藏 —— 点击右上角“你的收藏”查看',
+    'collection.title':  '你的收藏',
+    'collection.savedTitle': '已收藏的车辆',
+    'collection.subEmpty':   '尚未收藏任何车辆',
+    'collection.savedCount': '{n} 辆车已收藏',
+    'collection.matched':    '已匹配',
+    'collection.viewDetails': '查看详情',
+    'collection.detailSoon': '详情页 —— 即将推出',
+    'v2.inventory':      '库存',
+    'v2.back':           '返回推荐',
+    'v2.finding':        '正在查找在售车辆…',
+    'v2.loadFail':       '暂时无法加载库存。',
+    'v2.noStock':        '目前没有在售的 {model}。',
+    'toast.loadFail':    '无法加载库存：{msg}',
+    'chip.howMileage':   '里程对我有什么影响？',
+    'chip.finance':      '可以贷款或租赁吗？',
+    'chip.maintenance':  '保养包含什么？',
+    'chip.testDrive':    '预约试驾',
+    'chip.tryAgain':     '重试',
+    'chip.startOver':    '重新开始',
+    'chip.diffOther':    '看一些别的车型',
+    'rec.topPicks':      '为你挑了以下几款：',
+
+    // ── 开场欢迎与首轮快捷回复 ──
+    'greeting.shop.text': '你好！选一辆新车确实容易让人头大 —— 我来帮你化繁为简。\n\n把你的情况告诉我，我会一步步帮你缩小范围。\n\n**先说说，是什么让你开始考虑换一辆车？**',
+    'greeting.shop.chip1': '家里的车已经到年限了',
+    'greeting.shop.chip2': '想了解电动车',
+    'greeting.shop.chip3': '家里添丁，需要更大空间',
+    'greeting.shop.chip4': '只是在了解有哪些选择',
+    'greeting.learn.text': '你好！欢迎进入“只是了解”模式。我是你的挪威购车向导 —— 没有推销压力。\n\n• 我会结合 **Møller Bil 的实时库存** 与挪威二手车的通用知识。\n• 你问的所有内容都不会被存储或分享。\n\n有什么想了解的尽管问 —— 价格、能源类型、贷款、买二手车该看什么。**想从哪里开始？**',
+    'greeting.learn.chip1': '预算大概该准备多少？',
+    'greeting.learn.chip2': '纯电、混动各有什么优缺点？',
+    'greeting.learn.chip3': '在挪威买二手车的几个要点',
+    'greeting.learn.chip4': '汽车贷款是怎么运作的？',
+
+    // ── 新手导览浮层 ──
+    'tour.badge':         '快速导览',
+    'tour.skip':          '跳过导览',
+    'tour.next':          '下一步',
+    'tour.start':         '开始使用',
+    'tour.step1.title':   '只管聊天',
+    'tour.step1.body':    '不需要懂车。告诉我<b>你的生活</b>、<b>你的需求</b>、<b>你的预算</b> —— 聊的过程中我会自动记下关键信息。',
+    'tour.step2.title':   '两种模式',
+    'tour.step2.body':    '<b>找辆车</b> —— 完整的需求梳理，会形成你的偏好画像。<br><b>只是了解</b> —— 百科模式，即将上线。',
+    'tour.step3.title':   '为你推荐的车型',
+    'tour.step3.body':    '从 <b>Møller Bil 实时库存</b> 选出的推荐，会随着对话更新。一开始展示奥斯陆地区的热门车，慢慢收窄到符合你需求的车型。点任意一张卡可以查看它的在售情况。',
+    'tour.step4.title':   '你告诉我的信息',
+    'tour.step4.body':    '你的偏好画像在这里。聊的过程中，每条被我记下的答案（<b>预算</b>、<b>能源</b>、<b>座位数</b>…) 都会单独列出来 —— 更新时这里会有一个小标识提醒。',
+    'tour.step5.title':   '对话里直接看库存',
+    'tour.step5.body':    '当你回答过几个关键问题后，我会在对话里展示 2–3 个匹配车型 —— 配图、价格、地点都来自真实在售车辆。',
+
+    // ── 左/右两侧 “你的偏好” 面板 + 模态框 + 小提示 ──
+    'told.eyebrow':       '你告诉我的信息',
+    'told.title':         '你的偏好画像',
+    'told.intro.eyebrow': '新增了一个板块',
+    'told.intro.title':   '你的偏好画像',
+    'told.intro.btn':     '知道了',
+    'told.action.change': '修改',
+    'told.action.cancel': '取消',
+    'told.action.showInChat': '在对话中查看',
+    'told.done':          '完成',
+    'told.empty':         '聊的过程中回答会出现在这里 —— <b>预算</b>、<b>乘客数</b>、<b>能源</b>、<b>尺寸</b>、品牌。',
+    'told.tip.eyebrow':   '小贴士',
+    'told.tip.body':      '聊的过程中，每条答案都会记在这里。点 <b>修改</b> 可以更新，点 <b>在对话中查看</b> 可以回到当时聊的位置。',
+    'told.tip.btn':       '知道了',
+
+    // ── V2 右侧面板与动态文本 ──
+    'v2.viz.eyebrow':         '实时可视化',
+    'v2.viz.title':           '我们正在讨论的内容',
+    'v2.recs.eyebrow':        '实时推荐',
+    'v2.recs.title.default':  '当前在售',
+    'v2.recs.title.matched':  '为你匹配',
+    'v2.vizEmpty':            '随着我们讨论预算、车型、能源等，可视化内容会显示在这里。',
+    'v2.stateFinding':        '正在查找在售车辆…',
+    'v2.stateRefine':         '告诉我更多细节，我会为你收窄推荐范围。',
+    'v2.updatedOnRight':      '{kind} 已更新到右侧 →',
+    'v2.vizUpdatedFallback':  '可视化',
+    'v2.seeAllInStock':       '查看全部在售',
+    'v2.popularNearEdge':     '你附近的热门车',
+    'v2.vizTitle.budget':     '你的预算方案',
+    'v2.vizTitle.fuel':       '动力路线对比',
+    'v2.vizTitle.size':       '车身尺寸对比',
+    'v2.vizTitle.recs':       '为你精选的车型',
+    'v2.reason.fuel':         '符合你选择的 {fuel}',
+    'v2.reason.seats':        '可坐 {seats} 人',
+    'v2.reason.seats7':       '可坐 7 人及以上',
+    'v2.reason.size':         '{size} 车型',
+    'v2.reason.budget':       '符合你的预算',
+
+    'learning.locked':        '“只是了解”模式还在开发中 —— 即将推出。',
+    'send.error':             '抱歉，出了点问题，请重试一次。',
+
+    'filter.usage':           '用车场景',
+    'filter.passengers':      '乘坐人数',
+    'filter.powertrain':      '能源类型',
+    'filter.size':            '车身尺寸',
+    'filter.notDiscussed':    '尚未讨论',
+    'filter.seatsNone':       '还未设定座位数',
+    'filter.fuelNone':        '还未确定能源类型',
+    'filter.sizeNone':        '还未选定车型',
+    'filter.budget':          '预算',
+    'filter.brand':           '品牌偏好',
+    'filter.brandNone':       '尚未设置品牌偏好',
+
+    'tip.shoppingMode':       '找车模式',
+    'tip.profileLive.title':  '实时更新的偏好画像',
+    'tip.profileLive.body':   '这块面板展示我已经了解到的信息。已经确认的会排在前面，还没聊到的会留在下面。你不需要把所有项都填满 —— 我只要确认几个关键项就能推荐合适的车辆。',
+    'tip.profileBadge':       '偏好提示',
+    'tip.refine.title':       '两种修改方式',
+    'tip.refine.changeBody':  '—— 展开对应板块，手动调整我已经记下的内容。',
+    'tip.refine.showInChatBody': '—— 回到当时聊到这一项的那段对话。',
+    'tip.refine.changeTitle': '修改{label}',
+    'tip.gotIt':              '知道了',
+
+    'attr.age':               '车龄',
+    'attr.mileage':           '里程',
+    'attr.fuel':              '能源',
+    'attr.evRange':           '纯电续航',
+    'fuel.runningCost':       '每千公里运行成本',
+    'budget.tierBuyers':      '的买家选择了这一档',
+    'panel.sizeTitle':        '车身尺寸对比（参照 175 cm 身高）',
+    'panel.mapTitle':         '挪威 · 从奥斯陆出发的单次充电覆盖范围',
+    'map.yourHub':            '你的起点',
+    'v2.quickUpdate':         '快速修改',
+  },
+};
+
+// Translate a key, with optional {0},{1},… or {name} placeholders.
+function t(key, vars) {
+  let s = (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key;
+  if (vars) {
+    for (const k in vars) {
+      s = s.split('{' + k + '}').join(vars[k]);
+    }
+  }
+  return s;
+}
+
+// Apply translations to any element carrying data-i18n / data-i18n-ph.
+function applyI18n() {
+  document.documentElement.lang = (currentLang === 'zh') ? 'zh-CN' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const key = el.getAttribute('data-i18n-ph');
+    el.setAttribute('placeholder', t(key));
+  });
+  const langBtn = document.getElementById('btnLang');
+  if (langBtn) langBtn.textContent = t('btn.lang');
+}
+
+// Switch language, persist, re-translate chrome, and refresh dynamic surfaces.
+function setLang(lang) {
+  currentLang = (lang === 'zh') ? 'zh' : 'en';
+  localStorage.setItem('mollerLang', currentLang);
+  applyI18n();
+  // Tour steps + v2 dock strings are built dynamically — refresh them so a
+  // mid-session switch picks the new language.
+  if (typeof refreshOnboardingSteps === 'function') refreshOnboardingSteps();
+  if (typeof refreshFilters === 'function') refreshFilters();
+  if (typeof refreshHeroMessages === 'function') refreshHeroMessages();
+  // Re-render the live-recommendation rails so they pick up the new language.
+  if (typeof buildLiveRecs === 'function') buildLiveRecs();
+  if (typeof renderCollection === 'function') renderCollection();
+  if (typeof buildSidebar === 'function') buildSidebar();
+  if (typeof v2RenderLiveRecsAsInv === 'function') v2RenderLiveRecsAsInv();
+  if (typeof v2RenderToldStrip === 'function') v2RenderToldStrip();
+  if (typeof renderHeroToldPanel === 'function') renderHeroToldPanel();
+  // V2 viz body empty placeholder (only if currently empty)
+  const vizBody = document.getElementById('v2VizBody');
+  if (vizBody) {
+    const placeholder = vizBody.querySelector('.v2-viz-empty');
+    if (placeholder) placeholder.textContent = t('v2.vizEmpty');
+    else if (vizBody.children.length === 0) {
+      const ph = document.createElement('div');
+      ph.className = 'v2-viz-empty';
+      ph.textContent = t('v2.vizEmpty');
+      vizBody.appendChild(ph);
+    }
+  }
+  // Re-render every visible AI message in the chat stream from its stored
+  // dual-language text (works for the JSON-wrapped API responses; mirrors
+  // to the same text for legacy plain-text ones).
+  document.querySelectorAll('#stream .msg.ai').forEach(el => {
+    if (typeof rerenderAIMessage === 'function') rerenderAIMessage(el);
+  });
+  // Opening greeting's quick-reply chips live on the message bubble. Rebuild
+  // them with the new locale if the opening greeting is still on screen.
+  // The opening greeting text comes from the dictionary (greeting.shop.text /
+  // greeting.learn.text) — `normalizeAIDual` would otherwise mirror the same
+  // string into both langs, so toggling wouldn't actually swap anything. We
+  // re-fetch the fresh greeting text from the dictionary on every language
+  // switch and stamp it into `_aiText` so subsequent toggles still work.
+  const greetingEl = document.querySelector('#stream .msg.ai.is-opening-greeting');
+  if (greetingEl) {
+    const { text: freshText, chips } = (typeof getGreetingForMode === 'function')
+      ? getGreetingForMode(conversationMode)
+      : { text: '', chips: [] };
+    if (freshText) {
+      greetingEl._aiText = { en: freshText, zh: freshText };
+      const bub = greetingEl.querySelector('.bub');
+      if (bub) bub.innerHTML = formatText(sanitizeAssistantText(freshText));
+    }
+    greetingEl.querySelectorAll('.quick-reply-wrap').forEach(n => n.remove());
+    renderQuickChips(chips, greetingEl);
+    // Keep the history in sync so the next AI request sees the new locale's greeting
+    if (Array.isArray(messages) && messages.length) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg && lastMsg.role === 'assistant') {
+        lastMsg.content = freshText;
+      }
+    }
+  }
+  // For any other AI message on screen, also reflect the new locale in the
+  // `messages` array so future API calls don't carry stale-language history.
+  document.querySelectorAll('#stream .msg.ai').forEach((el) => {
+    if (el.classList.contains('is-opening-greeting')) return;   // already handled
+    if (!el._aiText) return;
+    if (!Array.isArray(messages)) return;
+    const idx = el._msgIdx;
+    if (typeof idx === 'number' && messages[idx]) {
+      messages[idx].content = pickAIVersion(el._aiText);
+    }
+  });
+  // If the tour overlay is currently showing, re-render the visible step so
+  // its title/body reflect the new locale.
+  if (document.querySelector('.ob-overlay') && typeof renderOnboardingStep === 'function') {
+    renderOnboardingStep();
+  }
+}
+
+function toggleLang() {
+  setLang(currentLang === 'zh' ? 'en' : 'zh');
+}
+
+// Build the LANGUAGE OVERRIDE directive injected into the AI system prompt so
+// the chat replies in the language the user selected in the UI.
+function langDirective() {
+  if (currentLang !== 'zh') return '';
+  return `
+
+LANGUAGE OVERRIDE — the user is reading in 简体中文 (Simplified Chinese). You MUST write ALL your prose, questions, and SUGGESTIONS chips in Simplified Chinese. Keep car brand and model names in their original Latin form (e.g. "Volvo XC90", "Tesla Model Y"). Keep the required format tokens RECOMMENDATIONS / SHOW_INVENTORY / EV_SURPRISES / TOOLS / SUGGESTIONS exactly as written in English. All prices stay in NOK (kr).`;
+}
 
 // Convert OpenAI-style {role, content} messages into Gemini's {systemInstruction, contents}
 function toGeminiBody(allMessages, maxTokens) {
@@ -3692,17 +4224,43 @@ function toGeminiBody(allMessages, maxTokens) {
 }
 
 // Extract text from a Gemini /generateContent response.
-// Surfaces structured failure info (safety blocks, MAX_TOKENS, etc.) instead of
-// silently returning empty string — makes the "Empty response from API" error
-// debuggable when it does happen.
+// Returns a dual-language object { en, zh } so the interface can flip the
+// language toggle without losing the assistant's prose. Falls back to a
+// mirrored single-language pair if the response isn't valid JSON.
 function geminiText(data) {
   const cand = data?.candidates?.[0];
   const text = cand?.content?.parts?.map(p => p.text || '').join('') || '';
-  if (text) return text;
+  if (text) return parseDualLanguage(text);
   // No text — figure out why and put it in the console for diagnostics
   const reason = cand?.finishReason || data?.promptFeedback?.blockReason || 'unknown';
   console.warn('[Gemini] empty response — finishReason:', reason, 'raw:', data);
-  return '';
+  return { en: '', zh: '' };
+}
+
+// Best-effort dual-language JSON parse. Accepts three shapes:
+//   1. Bare JSON object      {"en": "...", "zh": "..."}
+//   2. JSON wrapped in ```json ... ``` markdown fences
+//   3. Anything else → mirrored {en, zh} so the existing parsers still work
+function parseDualLanguage(text) {
+  if (!text || typeof text !== 'string') return { en: '', zh: '' };
+  const trimmed = text.trim();
+  // Shape 1: bare JSON starting with {
+  let candidate = trimmed.startsWith('{') ? trimmed : null;
+  // Shape 2: JSON inside ```json ... ```
+  if (!candidate) {
+    const m = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (m) candidate = m[1].trim();
+  }
+  if (candidate && candidate.startsWith('{')) {
+    try {
+      const obj = JSON.parse(candidate);
+      if (obj && typeof obj === 'object' && typeof obj.en === 'string' && typeof obj.zh === 'string') {
+        return { en: obj.en, zh: obj.zh };
+      }
+    } catch (e) { /* fall through */ }
+  }
+  // Fallback: mirror the single-language text into both versions
+  return { en: trimmed, zh: trimmed };
 }
 
 const SYSTEM_PROMPT = `You are a friendly car advisor at Møller Bil. Help users find the right car through natural conversation.
@@ -3716,7 +4274,9 @@ Rules:
 - ONE question per reply. NEVER ask two questions in the same reply, even labeled "1." and "2." or chained with "and". If you've covered topic A and want to move to topic B, save B for the next turn.
 - Keep replies short (2-3 sentences max unless recommending).
 - Start by asking something open and easy — like what's prompting them to look for a car, or what their current situation is. Do NOT ask about car usage scenarios first.
-- Always respond in English.
+- Respond in the language set by the app UI. If a LANGUAGE OVERRIDE directive appears later in this prompt, follow it exactly.
+- OUTPUT FORMAT — DUAL LANGUAGE JSON. Every reply MUST be a single JSON object with two string fields, "en" (English) and "zh" (Simplified Chinese). Both versions follow the SAME structure (same RECOMMENDATIONS / SHOW_INVENTORY / EV_SURPRISES / TOOLS / SUGGESTIONS markers, same list lengths, same quoted model names). Only the natural-language prose differs — translate it for "zh". Brand / model names stay in Latin script (e.g. "Volvo XC90"). Prices stay in NOK (kr). If you cannot produce valid JSON for any reason, fall back to a plain English reply and the interface will mirror it for Chinese.
+  Example shape: {"en": "... RECOMMENDATIONS:[...]\nSUGGESTIONS:[...]", "zh": "... RECOMMENDATIONS:[...]\nSUGGESTIONS:[...]"}
 - All prices and budgets are in Norwegian kroner (kr). Format like "350 000 kr" or "~450 000 kr". NEVER use $ or €.
 - HIGH-PRIORITY OVERRIDE: If the user's message contains "Not sure yet", "I am not sure yet", "[NOT-SURE-YET", "unsure", or similar — DO NOT advance the conversation. Stay on the EXACT current topic. Briefly explain the options (1–2 sentences each), then re-ask the SAME question. The last sentence of your reply MUST be a question about the same topic. NEVER pivot to budget, seats, brand, must-haves, etc. when the user is asking for clarification on the current question. This rule overrides the normal B+C+D+F+G flow.
 - USER-DRIVEN TOPIC SWITCH: If the user's latest message clearly raises a NEW topic, a question of their own, or talks about something other than what you just asked (e.g. you asked about fuel and they reply about size, range, brand, or anything else) — DROP your previous question entirely. Do NOT repeat it, do NOT append "but back to my earlier question…". Acknowledge what they just said in 1–2 sentences, answer or react to it, then ask the next logical question driven by THEIR message. The conversation must always follow the user's energy, never force them back to a question they chose to skip.
@@ -3907,7 +4467,7 @@ function applyConversationMode() {
 }
 
 function showLearningLocked() {
-  showToast('"Just learning" mode is still in development — coming soon.');
+  showToast(t('learning.locked'));
 }
 
 // User-initiated mode switch (via the topbar segmented control)
@@ -3968,14 +4528,14 @@ function showSidebarIntro() {
   if (left < 20) left = 20;
   card.style.cssText = `top:${Math.max(20, rect.top + 60)}px; left:${left}px; width:${cardW}px;`;
   card.innerHTML = `
-    <div class="ob-step-label">Shopping mode</div>
-    <div class="ob-title">Your profile, live</div>
+    <div class="ob-step-label">${escapeHtml(t('tip.shoppingMode'))}</div>
+    <div class="ob-title">${escapeHtml(t('tip.profileLive.title'))}</div>
     <div class="ob-body">
-      This panel shows what I've learned about you so far. Confirmed answers move to the top, and items still to discuss stay below. You don't need to fill everything — I can recommend cars with just a few key areas confirmed.
+      ${t('tip.profileLive.body')}
     </div>
     <div class="ob-actions">
       <span></span>
-      <button class="ob-next" onclick="closeSidebarIntro()">Got it</button>
+      <button class="ob-next" onclick="closeSidebarIntro()">${escapeHtml(t('tip.gotIt'))}</button>
     </div>
   `;
   document.body.appendChild(card);
@@ -4079,6 +4639,72 @@ If the user is now asking for "different models", "other options", "show me more
   return msg;
 }
 
+// Filters the live inventory by the user's confirmed conversation options
+// (fuel / seats / size / brand) and the current budget slider. Mirrors the
+// logic in getLiveRecommendations() so the "View inventory" cards reflect what
+// the user has actually asked for — not just every car of a model.
+function applyConversationFilters(pool) {
+  if (typeof getConfirmedOptionsForGroup !== 'function') return pool;
+
+  const fuels  = getConfirmedOptionsForGroup('fuel');
+  const seats  = getConfirmedOptionsForGroup('seats');
+  const sizes  = getConfirmedOptionsForGroup('size');
+  const brands = getConfirmedOptionsForGroup('brand');
+
+  const fuelMap = {
+    'Electric':  ['electricity', 'electric'],
+    'Hybrid':    ['hybrid'],
+    'Petrol':    ['gasolin', 'petrol'],
+    'Diesel':    ['diesel'],
+  };
+  const sizeMap = {
+    'SUV':      ['sportutilityvehicle', 'suv'],
+    'Van':      ['van'],
+    'Compact':  ['combicoupe', 'hatchback', 'compact'],
+    'Family':   ['stationwagon', 'sedan', 'family'],
+    'Mid-size': ['sedan', 'midsize'],
+    'City':     ['hatchback', 'city', 'minicar'],
+  };
+
+  let out = pool;
+  if (fuels.length) {
+    out = out.filter(c => {
+      const f = String(c.fuel || '').toLowerCase();
+      return fuels.some(uf => (fuelMap[uf] || [uf.toLowerCase()]).some(k => f.includes(k)));
+    });
+  }
+  if (seats.length) {
+    out = out.filter(c => seats.some(s => {
+      const n = parseInt(c.seats || 0, 10);
+      if (s === '7+') return n >= 7;
+      return String(n) === s;
+    }));
+  }
+  if (sizes.length) {
+    out = out.filter(c => {
+      const b = String(c.carBody || '').toLowerCase();
+      return sizes.some(s => (sizeMap[s] || [s.toLowerCase()]).some(k => b.includes(k)));
+    });
+  }
+  if (brands.length) {
+    out = out.filter(c => brands.some(b => String(c.brand || '').toLowerCase() === b.toLowerCase()));
+  }
+
+  // Budget — only apply when the slider has been narrowed off its defaults
+  const sMin = document.getElementById('budgetMin');
+  const sMax = document.getElementById('budgetMax');
+  if (sMin && sMax) {
+    const lo = parseInt(sMin.value, 10), hi = parseInt(sMax.value, 10);
+    if (!(lo === 50000 && hi === 1500000)) {
+      out = out.filter(c => typeof c.price === 'number' && c.price >= lo && c.price <= hi);
+    }
+  }
+
+  // If the filters wiped out the whole model, fall back to the unfiltered
+  // model results so we never show an empty grid for an in-stock model.
+  return out.length ? out : pool;
+}
+
 function matchInventory(modelStr) {
   if (!allInventory.length) return [];
   const query = modelStr.toLowerCase().trim();
@@ -4095,7 +4721,11 @@ function matchInventory(modelStr) {
     return brandOk && modelOk;
   });
 
-  // Sort by PRICE ascending so the cheapest in-stock car is always shown.
+  // Reflect the user's conversation constraints (fuel / seats / size / budget)
+  // so the cards shown here change as the chat narrows the request.
+  matches = applyConversationFilters(matches);
+
+  // Sort by PRICE ascending so the cheapest in-stock car is always shown first.
   // This guarantees the rec card's "From X kr" matches the first inventory card.
   // Tie-break on mileage so identical prices favour newer-looking cars.
   matches.sort((a, b) => {
@@ -4104,7 +4734,8 @@ function matchInventory(modelStr) {
     if (pa !== pb) return pa - pb;
     return (a.mileage || 999999) - (b.mileage || 999999);
   });
-  return matches.slice(0, 3);
+  // No hard cap: show every in-stock car that matches the model + filters.
+  return matches;
 }
 
 function generateEdge(rawItems, idx) {
@@ -4120,7 +4751,7 @@ function generateEdge(rawItems, idx) {
     const nextLowest = Math.min(...others.map(o => o.price || Infinity));
     const diff = nextLowest - car.price;
     if (diff > 10000) return `Best value — ${formatNOK(diff)} less than the others`;
-    return 'Most affordable of the three';
+    return 'Most affordable in stock';
   }
   if (car.mileage === Math.min(...miles)) {
     return `Lowest mileage — only ${formatKm(car.mileage)}`;
@@ -4272,9 +4903,8 @@ function getLiveRecommendations() {
   if (brands.length) parts.push(brands[0]);
 
   let reason;
-  if (parts.length === 0)      reason = 'Popular in the Oslo area';
-  else if (parts.length === 1) reason = `Top ${parts[0]} picks near you`;
-  else                          reason = `Top ${parts.slice(0,2).join(' ')} picks`;
+  if (parts.length === 0)      reason = t('live.popularOslo');
+  else                          reason = t('live.curated');
 
   return { reason, cars: top };
 }
@@ -4330,9 +4960,9 @@ function buildLiveRecs() {
 
   // Loading state — inventory still being fetched
   if (!inventoryLoaded) {
-    if (reasonEl) reasonEl.textContent = 'Finding picks in stock…';
-    if (heroTitle) heroTitle.textContent = 'Finding picks in stock…';
-    if (heroSub) heroSub.textContent = 'Pulling live data from Møller Bil';
+    if (reasonEl) reasonEl.textContent = t('hero.finding');
+    if (heroTitle) heroTitle.textContent = t('hero.finding');
+    if (heroSub) heroSub.textContent = t('hero.pulling');
     if (body) {
       body.innerHTML = '';
       for (let i = 0; i < 3; i++) {
@@ -4356,22 +4986,22 @@ function buildLiveRecs() {
 
   // Empty state — inventory loaded but nothing matched (or API failed)
   if (!cars.length) {
-    if (reasonEl) reasonEl.textContent = 'Waiting for your first answers';
-    if (heroTitle) heroTitle.textContent = 'Waiting for your first answers';
-    if (heroSub) heroSub.textContent = 'Tell me what you need and picks appear here.';
-    if (body) body.innerHTML = `<div class="live-rec-empty">Recommendations will appear here once we have a feel for what you're after.</div>`;
+    if (reasonEl) reasonEl.textContent = t('hero.waitTitle');
+    if (heroTitle) heroTitle.textContent = t('hero.waitTitle');
+    if (heroSub) heroSub.textContent = t('hero.waitSub');
+    if (body) body.innerHTML = `<div class="live-rec-empty">${escapeHtml(t('hero.empty'))}</div>`;
     if (hero) hero.innerHTML = '';
     return;
   }
 
   if (reasonEl) reasonEl.textContent = reason;
-  const personalized = !/^Popular in the Oslo area$/i.test(reason);
+  const personalized = reason !== t('live.popularOslo');
   // Tailor the hero label / title / sub based on whether we've personalized
   if (heroLabel) {
-    heroLabel.textContent = personalized ? 'Live picks while we chat' : 'Popular near you';
+    heroLabel.textContent = personalized ? t('hero.livePicks') : t('hero.popularNear');
   }
   if (heroTitle) {
-    heroTitle.textContent = personalized ? reason : 'Popular in the Oslo area';
+    heroTitle.textContent = personalized ? reason : t('hero.popularOslo');
   }
   if (heroSub) heroSub.textContent = '';
   if (body) body.innerHTML = '';
@@ -4391,15 +5021,15 @@ function buildLiveRecs() {
         ? `<img class="live-rec-img" src="${escapeHtml(car.image)}" alt="" loading="lazy">`
         : `<div class="live-rec-img"></div>`;
       const priceLabel = car.minPrice
-        ? `From ${formatNOK(car.minPrice)} · ${car.count} in stock`
-        : `${car.count} in stock`;
+        ? `${t('price.from')} ${formatNOK(car.minPrice)} · ${car.count} ${t('live.inStock')}`
+        : `${car.count} ${t('live.inStock')}`;
       btn.innerHTML = `
         ${imgHtml}
         <div class="live-rec-info">
           <div class="live-rec-name">${escapeHtml(car.name)}</div>
           <div class="live-rec-meta">${escapeHtml(priceLabel)}</div>
         </div>
-        <span class="live-rec-cta">View</span>
+        <span class="live-rec-cta">${escapeHtml(t('live.view'))}</span>
       `;
       body.appendChild(btn);
     }
@@ -4417,15 +5047,15 @@ function buildLiveRecs() {
         ? `<img class="hero-rec-card-img" src="${escapeHtml(car.image)}" alt="" loading="lazy">`
         : `<div class="hero-rec-card-img"></div>`;
       const priceLabel = car.minPrice
-        ? `From ${formatNOK(car.minPrice)}`
-        : `${car.count} in stock`;
+        ? `${t('price.from')} ${formatNOK(car.minPrice)}`
+        : `${car.count} ${t('live.inStock')}`;
       btn.innerHTML = `
         ${imgHtml}
         <div class="hero-rec-card-info">
           <div class="hero-rec-card-name">${escapeHtml(car.name)}</div>
           <div class="hero-rec-card-meta">${escapeHtml(priceLabel)}</div>
         </div>
-        <span class="hero-rec-card-cta">View</span>
+        <span class="hero-rec-card-cta">${escapeHtml(t('live.view'))}</span>
       `;
       hero.appendChild(btn);
     }
@@ -4456,20 +5086,29 @@ function apiCarToItem(car) {
 }
 
 // ── filter taxonomy ──────────────────────────────────────────────────────
-const FILTERS = [
-  { key: 'usage',  title: 'How you\'ll use it',
-    placeholder: 'Not discussed yet',
-    options: ['Commuting','City driving','Mountain trips','Family use','Road trips','Leisure'] },
-  { key: 'seats',  title: 'Passengers',
-    placeholder: 'Seat count not set',
-    options: ['2','4','5','6','7+'] },
-  { key: 'fuel',   title: 'Powertrain',
-    placeholder: 'Fuel type still open',
-    options: ['Electric','Hybrid','Petrol','Diesel'] },
-  { key: 'size',   title: 'Vehicle size',
-    placeholder: 'Body style undecided',
-    options: ['City','Compact','Mid-size','Family','SUV','Van'] },
-];
+// Built fresh from the i18n dictionary so labels follow the UI language.
+// IMPORTANT: the `options` arrays + BRANDS stay in English — they're the
+// canonical values the AI signals back AND the keys used to filter inventory.
+// Translating them would silently break both pipelines.
+// (setLang() calls refreshFilters() to keep filter UI in sync after a switch.)
+function makeFilters() {
+  return [
+    { key: 'usage',  title: t('filter.usage'),
+      placeholder: t('filter.notDiscussed'),
+      options: ['Commuting','City driving','Mountain trips','Family use','Road trips','Leisure'] },
+    { key: 'seats',  title: t('filter.passengers'),
+      placeholder: t('filter.seatsNone'),
+      options: ['2','4','5','6','7+'] },
+    { key: 'fuel',   title: t('filter.powertrain'),
+      placeholder: t('filter.fuelNone'),
+      options: ['Electric','Hybrid','Petrol','Diesel'] },
+    { key: 'size',   title: t('filter.size'),
+      placeholder: t('filter.sizeNone'),
+      options: ['City','Compact','Mid-size','Family','SUV','Van'] },
+  ];
+}
+let FILTERS = makeFilters();
+function refreshFilters() { FILTERS = makeFilters(); }
 const BRANDS = ['Audi','BMW','Mercedes','Volkswagen','Toyota','Volvo','Peugeot','Renault','Ford','Kia','Hyundai','Tesla'];
 
 function tokenLabel(key, opt) {
@@ -4478,6 +5117,7 @@ function tokenLabel(key, opt) {
 
 // ── init ─────────────────────────────────────────────────────────────────
 function init() {
+  applyI18n();
   buildSidebar();
   renderCollection();
   // Boot into onboarding mode: full-screen hero, chat slides in after the
@@ -4495,6 +5135,24 @@ function init() {
 // rotation keeps going subtly behind the buttons until the user picks a mode.
 let _onboardingLoopStopped = false;
 let _heroTypewriterStarted = false;
+// Hero messages live at module scope so `setLang` can swap them mid-rotation
+// without needing to reach inside `startOnboardingIntro`.
+function makeHeroMessages() {
+  return [
+    t('hero.line1'),
+    t('hero.line2'),
+    t('hero.line3'),
+  ];
+}
+let _heroMessages = makeHeroMessages();
+// Assigned inside startOnboardingIntro — a no-arg function that stops the
+// current loop and replays from the first message. refreshHeroMessages() calls
+// it so a language switch re-types the hero in the new language immediately.
+let _restartHeroLoop = null;
+function refreshHeroMessages() {
+  _heroMessages = makeHeroMessages();
+  if (typeof _restartHeroLoop === 'function') _restartHeroLoop();
+}
 // Topbar uses the single blue `logo.svg` in every state — no per-mode swap.
 // (Kept as a no-op so existing call sites don't need to be untangled.)
 function setTopbarOnboardingState(_isOnboarding) {
@@ -4510,12 +5168,6 @@ function startOnboardingIntro(options = {}) {
   const headline = document.getElementById('heroHeadline');
   if (!headline) return;
   if (_heroTypewriterStarted && !_onboardingLoopStopped) return;
-
-  const MESSAGES = [
-    "Buying a car can feel overwhelming.<br>For people who don't know cars, I'm here to <u>help</u>.",
-    "Every car I show you is <u>real</u>.<br>Our vehicle info comes from a real in-stock database.",
-    "Møller Bil does more than sell cars.<br>We can help with <u>financing, warranty, insurance, and service</u> too.",
-  ];
 
   headline.innerHTML = '';
   headline.classList.add('is-typing');
@@ -4534,7 +5186,7 @@ function startOnboardingIntro(options = {}) {
   // generous timeout so the page never deadlocks.
   const safetyTimer = setTimeout(() => {
     if (!app.classList.contains('is-ready')) {
-      headline.innerHTML = MESSAGES[1];
+      headline.innerHTML = _heroMessages[1];
       revealOnboardingActions();
     }
   }, 14000);
@@ -4542,11 +5194,11 @@ function startOnboardingIntro(options = {}) {
   // Run one message: type forward → linger → reverse-type → tiny pause → next
   function playOne(idx, isFirstPass) {
     if (_onboardingLoopStopped) { clearTimeout(safetyTimer); return; }
-    typeHtml(headline, MESSAGES[idx], 22, () => {
+    typeHtml(headline, _heroMessages[idx], 22, () => {
       if (_onboardingLoopStopped) { clearTimeout(safetyTimer); return; }
       // After the LAST message types out on the first pass, reveal the CTAs.
       // The user can click immediately; the rotation keeps going behind.
-      if (isFirstPass && idx === MESSAGES.length - 1) {
+      if (isFirstPass && idx === _heroMessages.length - 1) {
         revealOnboardingActions();
         clearTimeout(safetyTimer);
       }
@@ -4556,14 +5208,28 @@ function startOnboardingIntro(options = {}) {
           if (_onboardingLoopStopped) return;
           setTimeout(() => {
             if (_onboardingLoopStopped) return;
-            const nextIdx = (idx + 1) % MESSAGES.length;
+            const nextIdx = (idx + 1) % _heroMessages.length;
             const stillFirst = isFirstPass && nextIdx !== 0;
             playOne(nextIdx, stillFirst);
           }, 380);
         });
-      }, (isFirstPass && idx === MESSAGES.length - 1) ? 4200 : 3200);  /* longer linger so each line breathes */
+      }, (isFirstPass && idx === _heroMessages.length - 1) ? 4200 : 3200);  /* longer linger so each line breathes */
     });
   }
+
+  // Expose a restart hook so `refreshHeroMessages` can re-type the hero in a
+  // new language without a full page reload.
+  _restartHeroLoop = () => {
+    clearTimeout(safetyTimer);
+    _onboardingLoopStopped = true;
+    // Wait one frame so the currently-scheduled typewriter step aborts, then
+    // replay from the first message in the freshly-swapped language.
+    setTimeout(() => {
+      _onboardingLoopStopped = false;
+      playOne(0, true);
+    }, 60);
+  };
+
   playOne(0, true);
 }
 
@@ -4729,69 +5395,71 @@ function onboardingChoose(mode) {
 }
 
 // ── onboarding ─────────────────────────────────────────────────────────────
-const ONBOARDING_STEPS = [
-  {
-    target: '.chat',
-    title: 'Just chat',
-    body: "No car knowledge needed. Tell me about <b>your life</b>, <b>your needs</b>, <b>your budget</b> — I'll capture what matters as we go.",
-    pos: 'right',
-  },
-  {
-    target: '#modeToggle',
-    title: 'Two modes',
-    body: "<b>Find a car</b> — full discovery, builds your profile.<br><b>Just learning</b> — tutor mode, coming soon.",
-    pos: 'bottom',
-  },
-  {
-    target: '#accRecs .acc-head',
-    title: 'Recommended for you',
-    body: "Live picks from <b>Møller Bil's real inventory</b>, refreshed as we chat. You'll see popular Oslo-area cars right away, then they narrow to match your needs. Tap any card to jump into its stock.",
-    pos: 'left',
-  },
-  {
-    target: '#accTold .acc-head',
-    title: "What you've told me",
-    body: "Your live profile lives in this drawer. As we chat, each answer I capture (<b>budget</b>, <b>fuel</b>, <b>seats</b>…) shows up on its own line — a small badge here flags new updates.",
-    pos: 'left',
-  },
-  {
-    target: '.stream',
-    title: 'Real inventory in chat',
-    body: "Once we cover a few essentials, I'll surface 2–3 matched models in the conversation — with <b>real photos, prices, and location</b> from in-stock cars.",
-    pos: 'right',
-  },
-];
+// Tour steps are derived from the i18n dictionary so they render in the
+// user's selected language. The 5 step indices are stable; only the title
+// and body change between locales.
+function makeOnboardingSteps() {
+  return [
+    {
+      target: '.chat',
+      title:  t('tour.step1.title'),
+      body:   t('tour.step1.body'),
+      pos:    'right',
+    },
+    {
+      target: '#modeToggle',
+      title:  t('tour.step2.title'),
+      body:   t('tour.step2.body'),
+      pos:    'bottom',
+    },
+    {
+      target: '#accRecs .acc-head',
+      title:  t('tour.step3.title'),
+      body:   t('tour.step3.body'),
+      pos:    'left',
+    },
+    {
+      target: '#accTold .acc-head',
+      title:  t('tour.step4.title'),
+      body:   t('tour.step4.body'),
+      pos:    'left',
+    },
+    {
+      target: '.stream',
+      title:  t('tour.step5.title'),
+      body:   t('tour.step5.body'),
+      pos:    'right',
+    },
+  ];
+}
+let ONBOARDING_STEPS = makeOnboardingSteps();
+function refreshOnboardingSteps() { ONBOARDING_STEPS = makeOnboardingSteps(); }
 
 let onboardingStep = 0;
 
-// Returns the greeting + initial chips for a given conversation mode
+// Returns the greeting + initial chips for a given conversation mode.
+// All prose + chips come from the I18N dictionary so the welcome fires in the
+// language the user picked in the toggle.
 function getGreetingForMode(mode) {
   if (mode === 'learning') {
     return {
-      text:
-        "Hi! Welcome to learning mode. I'm here as your car-buying guide for Norway — no pressure, no selling.\n\n" +
-        "• I draw on **Møller Bil's live inventory** plus general knowledge about used cars in Norway.\n" +
-        "• Nothing you ask is stored or shared.\n\n" +
-        "Ask me anything — pricing, fuel types, financing, what to inspect on a used car. **What would you like to start with?**",
+      text: t('greeting.learn.text'),
       chips: [
-        "How much should I budget?",
-        "Electric vs hybrid — pros and cons?",
-        "Tips for buying used in Norway",
-        "How does car financing work?"
+        t('greeting.learn.chip1'),
+        t('greeting.learn.chip2'),
+        t('greeting.learn.chip3'),
+        t('greeting.learn.chip4'),
       ],
     };
   }
   // shopping (default) — friendly welcome before the first question
   return {
-    text:
-      "Hi! Choosing a new car can feel overwhelming — I'm here to make it simple.\n\n" +
-      "Tell me a bit about your situation and I'll narrow things down with you, step by step.\n\n" +
-      "**To start, what's got you thinking about a new car?**",
+    text: t('greeting.shop.text'),
     chips: [
-      "My current car needs replacing",
-      "Curious about going electric",
-      "Growing family, need more space",
-      "Just exploring my options"
+      t('greeting.shop.chip1'),
+      t('greeting.shop.chip2'),
+      t('greeting.shop.chip3'),
+      t('greeting.shop.chip4'),
     ],
   };
 }
@@ -4801,12 +5469,21 @@ function showOnboarding() {
   const { text, chips } = getGreetingForMode(conversationMode);
   // Append the AI greeting bubble (typewriter), then drop the quick-reply
   // chips into the composer when typing finishes.
-  appendAIMessage(text, (msgEl) => {
-    renderQuickChips(chips, msgEl);
+  const msgEl = appendAIMessage(text, (el) => {
+    renderQuickChips(chips, el);
   });
+  // Tag the opening greeting so language switches can re-render it in place.
+  if (msgEl) msgEl.classList.add('is-opening-greeting');
+  // The opening greeting text comes from a static dictionary, not the LLM,
+  // so the dual-language storage is `{en: <text>, zh: <text>}` only as a
+  // placeholder. setLang() replaces it with the freshly-translated version
+  // whenever the user toggles languages.
+  if (msgEl) msgEl._aiText = { en: text, zh: text };
   // Push to the assistant message history so the AI keeps context
   if (typeof messages !== 'undefined' && Array.isArray(messages)) {
-    messages.push({ role: 'assistant', content: text });
+    const m = { role: 'assistant', content: text, __id: msgEl ? msgEl.id : null };
+    messages.push(m);
+    if (msgEl) msgEl._msgIdx = messages.length - 1;
   }
 }
 let _onboardingStarted = false;
@@ -4883,7 +5560,7 @@ function renderOnboardingStep() {
 
   card.innerHTML = `
     <div class="ob-header">
-      <span class="ob-tour-badge">Quick tour</span>
+      <span class="ob-tour-badge" data-i18n="tour.badge">Quick tour</span>
       <div class="ob-dots">
         ${Array.from({length:total}, (_,i) => `<div class="ob-dot${i===onboardingStep?' active':''}"></div>`).join('')}
       </div>
@@ -4891,8 +5568,9 @@ function renderOnboardingStep() {
     <div class="ob-title">${step.title}</div>
     <div class="ob-body">${step.body}</div>
     <div class="ob-actions">
-      <button class="ob-skip" onclick="finishOnboarding()">Skip tour</button>
-      <button class="ob-next" onclick="${isLast ? 'finishOnboarding()' : 'nextOnboardingStep()'}">${isLast ? 'Get started' : 'Next'}</button>
+      <button class="ob-skip" onclick="finishOnboarding()" data-i18n="tour.skip">Skip tour</button>
+      <button class="ob-next" onclick="${isLast ? 'finishOnboarding()' : 'nextOnboardingStep()'}"
+              data-i18n="${isLast ? 'tour.start' : 'tour.next'}">${isLast ? 'Get started' : 'Next'}</button>
     </div>
   `;
 
@@ -5038,16 +5716,16 @@ function showFilterTour(target) {
 
   card.innerHTML = `
     <div class="ob-header">
-      <span class="ob-tour-badge">Profile tip</span>
+      <span class="ob-tour-badge">${escapeHtml(t('tip.profileBadge'))}</span>
     </div>
-    <div class="ob-title">Two ways to refine</div>
+    <div class="ob-title">${escapeHtml(t('tip.refine.title'))}</div>
     <div class="ob-body">
-      <div style="margin-bottom:10px;"><b style="color:var(--ink);font-weight:500;">Change</b> — open the section to manually adjust what I captured.</div>
-      <div><b style="color:var(--ink);font-weight:500;">Show in chat</b> — jump back to the moment we settled on it.</div>
+      <div style="margin-bottom:10px;"><b style="color:var(--ink);font-weight:500;">${escapeHtml(t('told.action.change'))}</b> ${escapeHtml(t('tip.refine.changeBody'))}</div>
+      <div><b style="color:var(--ink);font-weight:500;">${escapeHtml(t('told.action.showInChat'))}</b> ${escapeHtml(t('tip.refine.showInChatBody'))}</div>
     </div>
     <div class="ob-actions">
       <span></span>
-      <button class="ob-next" onclick="closeFilterTour()">Got it</button>
+      <button class="ob-next" onclick="closeFilterTour()">${escapeHtml(t('tip.gotIt'))}</button>
     </div>
   `;
   document.body.appendChild(card);
@@ -5293,7 +5971,7 @@ function buildSidebar() {
   {
     const brandSummary = getConfirmedSummary('brand');
     const isConfirmed  = !!brandSummary;
-    const placeholder  = 'No brand preference yet';
+    const placeholder  = t('filter.brandNone');
 
     const brandGroup = document.createElement('div');
     brandGroup.className = 'filter-group';
@@ -5301,7 +5979,7 @@ function buildSidebar() {
     brandGroup.dataset.placeholder = placeholder;
     brandGroup.dataset.state = isConfirmed ? 'confirmed' : 'pending';
     brandGroup.innerHTML = `
-      ${sectionHeadHtml('brand', 'Brand preference', isConfirmed)}
+      ${sectionHeadHtml('brand', t('filter.brand'), isConfirmed)}
       <div class="filter-value${isConfirmed ? '' : ' placeholder'}">${
         isConfirmed ? escapeHtml(brandSummary) : escapeHtml(placeholder)
       }</div>
@@ -5429,7 +6107,7 @@ function updateHeroToldPanel() {
     });
   }
   const brandS = getConfirmedSummary('brand');
-  if (brandS) rows.push({ key: 'brand', label: 'Brand preference', value: brandS, options: (typeof BRANDS !== 'undefined' ? BRANDS : []) });
+  if (brandS) rows.push({ key: 'brand', label: t('filter.brand'), value: brandS, options: (typeof BRANDS !== 'undefined' ? BRANDS : []) });
   const budgetS = getBudgetSummary();
   if (budgetS) rows.push({ key: 'budget', label: 'Budget', value: budgetS, options: null });
 
@@ -5445,10 +6123,10 @@ function updateHeroToldPanel() {
     stopHeroTypewriter();
     hero.classList.add('is-told');
     toldEl.innerHTML = `
-      <span class="hero-told-eyebrow">What you've told me</span>
-      <h2 class="hero-told-title">Your live profile</h2>
+      <span class="hero-told-eyebrow">${escapeHtml(t('told.eyebrow'))}</span>
+      <h2 class="hero-told-title">${escapeHtml(t('told.title'))}</h2>
       <div class="hero-told-empty">
-        Your answers appear here as we chat — <b>budget</b>, <b>passengers</b>, <b>powertrain</b>, <b>size</b>, brand.
+        ${escapeHtml(t('told.empty'))}
       </div>
     `;
     heroToldEditing = null;
@@ -5466,8 +6144,8 @@ function updateHeroToldPanel() {
   stopHeroTypewriter();
   hero.classList.add('is-told');
   toldEl.innerHTML = `
-    <span class="hero-told-eyebrow">What you've told me</span>
-    <h2 class="hero-told-title">Your live profile</h2>
+    <span class="hero-told-eyebrow">${escapeHtml(t('told.eyebrow'))}</span>
+    <h2 class="hero-told-title">${escapeHtml(t('told.title'))}</h2>
     <div class="hero-told-list">
       ${rows.map((r, idx) => {
         const hasMsg = !!findLatestMessageForTopic(r.key);
@@ -5489,7 +6167,7 @@ function updateHeroToldPanel() {
             }).join('');
             editorHtml = `
               <div class="hero-told-edit-chips">${chips}</div>
-              <button class="hero-told-edit-done" type="button" onclick="heroToldEditDone()">Done</button>
+              <button class="hero-told-edit-done" type="button" onclick="heroToldEditDone()">${escapeHtml(t('told.done'))}</button>
             `;
           } else {
             const chips = r.options.map(opt => {
@@ -5500,12 +6178,14 @@ function updateHeroToldPanel() {
             }).join('');
             editorHtml = `
               <div class="hero-told-edit-chips">${chips}</div>
-              <button class="hero-told-edit-done" type="button" onclick="heroToldEditDone()">Done</button>
+              <button class="hero-told-edit-done" type="button" onclick="heroToldEditDone()">${escapeHtml(t('told.done'))}</button>
             `;
           }
         }
         const isNew = newKeys.has(r.key);
         const showTip = firstEverArrival && idx === 0;
+        const actionLabel = editing ? t('told.action.cancel') : t('told.action.change');
+        const jumpLabel   = t('told.action.showInChat');
         return `
         <div class="hero-told-item${editing ? ' editing' : ''}${isNew ? ' is-new' : ''}">
           <div class="hero-told-item-top">
@@ -5515,20 +6195,20 @@ function updateHeroToldPanel() {
             </div>
             <div class="hero-told-item-actions">
               <button class="hero-told-action" type="button"
-                onclick="heroToldChange('${r.key}')">${editing ? 'Cancel' : 'Change'}</button>
+                onclick="heroToldChange('${r.key}')">${escapeHtml(actionLabel)}</button>
               <button class="hero-told-action muted" type="button"
                 ${hasMsg ? '' : 'disabled'}
-                onclick="heroToldJump('${r.key}')">Show in chat</button>
+                onclick="heroToldJump('${r.key}')">${escapeHtml(jumpLabel)}</button>
             </div>
           </div>
           <div class="hero-told-edit">${editorHtml}</div>
           ${showTip ? `
             <div class="hero-told-tip" id="heroToldTip">
-              <div class="hero-told-tip-eyebrow">Quick tip</div>
+              <div class="hero-told-tip-eyebrow">${escapeHtml(t('told.tip.eyebrow'))}</div>
               <div class="hero-told-tip-text">
-                I'll capture each answer here as we go. Tap <b>Change</b> to update one, or <b>Show in chat</b> to revisit where it came up.
+                ${t('told.tip.body')}
               </div>
-              <button class="hero-told-tip-close" type="button" onclick="heroToldTipClose()">Got it</button>
+              <button class="hero-told-tip-close" type="button" onclick="heroToldTipClose()">${escapeHtml(t('told.tip.btn'))}</button>
             </div>
           ` : ''}
         </div>`;
@@ -5858,8 +6538,8 @@ function buildLookingForMessage() {
 
 // Lookup the user-facing label for a filter group
 function getGroupLabel(key) {
-  if (key === 'budget') return 'Budget';
-  if (key === 'brand')  return 'Brand preference';
+  if (key === 'budget') return t('filter.budget');
+  if (key === 'brand')  return t('filter.brand');
   const f = (typeof FILTERS !== 'undefined') ? FILTERS.find(f => f.key === key) : null;
   return f ? f.title : key;
 }
@@ -6308,14 +6988,29 @@ function autoGrow(el) {
 }
 
 // ── chat UI helpers ───────────────────────────────────────────────────────
-function appendAIMessage(text, onDone) {
+// `text` accepts either a plain string (one language) or { en, zh } when the
+// API returned both versions. The dual-language form lets the user flip the
+// language toggle without losing the assistant's prose — applyI18n just swaps
+// the bubble's visible text between the two stored versions.
+//
+// Pass `opts.i18nKey` when the text was rendered from a dictionary entry —
+// setLang() will re-fetch that key and refresh the bubble in place. Useful
+// for static strings like `send.error` that aren't worth round-tripping the
+// LLM to translate on every language switch.
+function appendAIMessage(text, onDone, opts) {
   const stream = document.getElementById('stream');
 
   const msgDiv = document.createElement('div');
   msgDiv.id = nextMsgId();
   msgDiv.className = 'msg ai';
-  // tag the message with its conversation topic so sidebar jump buttons can find it
-  const topic = detectMessageTopic(text);
+  const i18nKey = (opts && typeof opts.i18nKey === 'string') ? opts.i18nKey : null;
+  if (i18nKey) msgDiv._i18nKey = i18nKey;
+  if (opts && opts.i18nVars) msgDiv._i18nVars = opts.i18nVars;
+  // dual-language storage — keep both versions on the DOM so setLang can flip
+  const dual = normalizeAIDual(text);
+  msgDiv._aiText = dual;                        // mutable on language switch
+  const initialText = i18nKey ? t(i18nKey) : pickAIVersion(dual);
+  const topic = detectMessageTopic(initialText);
   if (topic) msgDiv.dataset.topic = topic;
   msgDiv.innerHTML = `
     <div class="av ai">AI</div>
@@ -6328,7 +7023,7 @@ function appendAIMessage(text, onDone) {
   refreshJumpButtons(); // always re-evaluate, so cleared chats deactivate stale buttons
 
   const bub = msgDiv.querySelector('.bub');
-  const displayText = sanitizeAssistantText(text);
+  const displayText = sanitizeAssistantText(initialText);
   const full = formatText(displayText);
 
   // ── Typewriter animation ──────────────────────────────────────────────
@@ -6368,6 +7063,57 @@ function appendAIMessage(text, onDone) {
   msgDiv._finishTyping = () => { cancelled = true; bub.innerHTML = full; if (typeof onDone === 'function') onDone(msgDiv); };
   step();
   return msgDiv;
+}
+
+// Normalize an AI text argument into the dual-language shape {en, zh}.
+// Strings with no {en,zh} pair are mirrored into both so language switches
+// still find something to display (and so the existing parsers keep working
+// on a single canonical version when the other is missing).
+function normalizeAIDual(text) {
+  if (text && typeof text === 'object' && (text.en !== undefined || text.zh !== undefined)) {
+    return {
+      en: typeof text.en === 'string' ? text.en : '',
+      zh: typeof text.zh === 'string' ? text.zh : (typeof text.en === 'string' ? text.en : ''),
+    };
+  }
+  const s = (typeof text === 'string') ? text : String(text || '');
+  return { en: s, zh: s };
+}
+
+function pickAIVersion(dual) {
+  if (currentLang === 'zh' && dual.zh) return dual.zh;
+  return dual.en || dual.zh || '';
+}
+
+// Re-render the bubble HTML for an AI message from its stored dual text.
+// Used when the user toggles language: every visible AI message gets its
+// prose swapped between the stored en/zh versions in place (no re-fetch).
+// If the message was rendered from a dictionary key (`_i18nKey`), re-fetch
+// the current locale's text and stamp both slots so toggling keeps working.
+// `i18nVars` are interpolated into the dictionary template (e.g. {model}).
+function rerenderAIMessage(msgEl) {
+  if (!msgEl) return;
+  let text;
+  if (msgEl._i18nKey) {
+    const vars = msgEl._i18nVars || {};
+    text = t(msgEl._i18nKey, vars);
+    msgEl._aiText = { en: text, zh: text };
+  } else if (msgEl._aiText) {
+    text = pickAIVersion(msgEl._aiText);
+  } else {
+    return;
+  }
+  const displayText = sanitizeAssistantText(text);
+  const full = formatText(displayText);
+  const bub = msgEl.querySelector('.bub');
+  if (bub) {
+    bub.innerHTML = full;
+    if (typeof msgEl._finishTyping === 'function') msgEl._finishTyping = null;
+  }
+  // Update the dataset topic so jump buttons stay in sync with the visible prose
+  const newTopic = detectMessageTopic(text);
+  if (newTopic) msgEl.dataset.topic = newTopic;
+  else delete msgEl.dataset.topic;
 }
 
 function appendUserMessage(text, tokens) {
@@ -6432,7 +7178,7 @@ function renderQuickChips(suggestions, msgEl) {
   bar.innerHTML = '';
   bar.classList.remove('quick-chips-diff');
   if (label) {
-    label.textContent = 'Quick reply';
+    label.textContent = t('quickReply');
     label.classList.remove('is-loading', 'is-update');
   }
   if (!suggestions || suggestions.length === 0) {
@@ -6583,7 +7329,7 @@ function restoreQuickReplies() {
 
   bar.classList.remove('quick-chips-diff');
   if (label) {
-    label.textContent = 'Quick reply';
+    label.textContent = t('quickReply');
     label.classList.remove('is-update');
   }
   // Re-render the cached suggestions exactly the same way renderQuickChips would
@@ -6728,7 +7474,7 @@ function renderFuelCards(msgEl) {
       </div>
       <div class="fuel-glyph">${fuelGlyphSvg(f.glyph, !!f.accent)}</div>
       <div class="fuel-cost">
-        <span class="fuel-row-label">Running cost / 1000 km</span>
+        <span class="fuel-row-label">${escapeHtml(t('fuel.runningCost'))}</span>
         <div class="fuel-bar"><div class="fuel-bar-fill" style="width:${pct}%"></div></div>
         <span class="fuel-cost-num">${f.cost.toLocaleString('nb-NO')} kr</span>
       </div>
@@ -6923,15 +7669,15 @@ function renderBudgetCards(msgEl) {
           ${accent ? `<span class="budget-rec-pill">Most chosen</span>` : ''}
         </div>
         <div class="budget-stats">
-          <div class="budget-attr"><span class="budget-attr-label">Age</span><span class="budget-attr-val">${escapeHtml(t.age)}</span></div>
-          <div class="budget-attr"><span class="budget-attr-label">Mileage</span><span class="budget-attr-val">${escapeHtml(t.mileage)}</span></div>
-          <div class="budget-attr"><span class="budget-attr-label">Fuel</span><span class="budget-attr-val">${escapeHtml(t.fuel)}</span></div>
-          <div class="budget-attr"><span class="budget-attr-label">EV range</span><span class="budget-attr-val">${escapeHtml(t.evRange)}</span></div>
+          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.age'))}</span><span class="budget-attr-val">${escapeHtml(t_.age)}</span></div>
+          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.mileage'))}</span><span class="budget-attr-val">${escapeHtml(t_.mileage)}</span></div>
+          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.fuel'))}</span><span class="budget-attr-val">${escapeHtml(t_.fuel)}</span></div>
+          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.evRange'))}</span><span class="budget-attr-val">${escapeHtml(t_.evRange)}</span></div>
         </div>
         <hr class="budget-hr">
         <div class="budget-pick">
           <span class="budget-pick-num">${escapeHtml(t.pick)}</span>
-          <span class="budget-pick-label">of buyers chose this tier</span>
+          <span class="budget-pick-label">${escapeHtml(t('budget.tierBuyers'))}</span>
         </div>
       </div>
     `;
@@ -7111,7 +7857,7 @@ function renderSizeCards(msgEl) {
   const person = buildSizeCenterPersonSvg();
   panel.innerHTML = `
     <div class="size-panel-head">
-      <span class="size-panel-title">Sized next to a 175 cm person</span>
+      <span class="size-panel-title">${escapeHtml(t('panel.sizeTitle'))}</span>
       <span class="size-panel-sub">Scroll left or right — the person stays put as your reference. Tap a body to pick it.</span>
     </div>
     <div class="size-scene">
@@ -7227,14 +7973,14 @@ function renderNorwayMap(msgEl) {
   panel.className = 'map-panel';
   panel.innerHTML = `
     <div class="map-panel-head">
-      <span class="map-panel-title">Norway · single-charge coverage from Oslo</span>
+      <span class="map-panel-title">${escapeHtml(t('panel.mapTitle'))}</span>
       <span class="map-panel-sub">Three rings = how far an EV reaches without stopping to charge. The salmon pin is your hub.</span>
     </div>
     <div class="map-grid">
       <div class="map-stage">${buildNorwayMapSvg()}</div>
       <div class="map-side">
         <div>
-          <span class="map-hub-label">Your hub</span>
+          <span class="map-hub-label">${escapeHtml(t('map.yourHub'))}</span>
           <div class="map-hub-name">Oslo &middot; Skøyen</div>
         </div>
         <div class="map-rings">
@@ -7368,7 +8114,7 @@ function renderRecs(recs, msgEl) {
         realSpecs = r.specs.map(s => {
           const labelLower = (s.label || '').toLowerCase();
           if (labelLower.includes('price') || labelLower.includes('starting') || labelLower.includes('from')) {
-            return { label: 'From', value: `${formatNOK(minPrice)} · ${matches.length} in stock` };
+            return { label: t('price.from'), value: `${formatNOK(minPrice)} · ${matches.length} ${t('live.inStock')}` };
           }
           return s;
         });
@@ -7406,12 +8152,12 @@ function renderRecs(recs, msgEl) {
       // Inventory still fetching — show the striped placeholder
       imageHtml = `<div class="rec-ph">[ ${escapeHtml(model)} ]</div>`;
     } else {
-      imageHtml = `<div class="rec-ph rec-ph-empty">No ${escapeHtml(model)} in stock right now — ask me for another model</div>`;
+      imageHtml = `<div class="rec-ph rec-ph-empty">${escapeHtml(t('rec.noStock', { model }))}</div>`;
     }
 
     const ctaHtml = (inventoryLoaded && !hasInventory)
-      ? `<button class="rec-inv" disabled>Not in stock</button>`
-      : `<button class="rec-inv">View inventory</button>`;
+      ? `<button class="rec-inv" disabled>${escapeHtml(t('rec.notInStock'))}</button>`
+      : `<button class="rec-inv">${escapeHtml(t('rec.viewInventory'))}</button>`;
 
     card.innerHTML = `
       ${imageHtml}
@@ -7437,7 +8183,7 @@ function renderRecs(recs, msgEl) {
         invBtn.textContent = 'Loading…';
         loadInventory(model, r).finally(() => {
           invBtn.disabled = false;
-          invBtn.textContent = 'View inventory';
+          invBtn.textContent = t('rec.viewInventory');
         });
       });
     }
@@ -7507,7 +8253,7 @@ async function loadInventory(model, recData) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(toGeminiBody([
-          { role: 'system', content: INVENTORY_PROMPT },
+          { role: 'system', content: INVENTORY_PROMPT + langDirective() },
           { role: 'user',   content: `Show me used inventory for: ${model}` },
         ], 700)),
       });
@@ -7526,23 +8272,21 @@ async function loadInventory(model, recData) {
     removeTypingIndicator();
 
     if (!items.length) {
-      appendAIMessage(`Sorry, I couldn't find inventory for ${model} right now.`);
+      appendAIMessage(t('inv.notFound', { model }), null, { i18nKey: 'inv.notFound', i18nVars: { model } });
       return;
     }
 
-    const intro = usingRealData
-      ? `Here are the ${model}s currently in stock:`
-      : `Here are the ${model}s currently in our inventory:`;
+    const intro = t('inv.intro', { model });
 
     const msgEl = appendAIMessage(intro, (el) => {
       renderInventory(items, model, el, usingRealData);
       renderQuickChips([
-        'How does mileage affect me?',
-        'Can I finance or lease?',
-        "What's included in maintenance?",
-        'Book a test drive',
+        t('chip.howMileage'),
+        t('chip.finance'),
+        t('chip.maintenance'),
+        t('chip.testDrive'),
       ], el);
-    });
+    }, { i18nKey: 'inv.intro', i18nVars: { model } });
     msgEl.classList.add('has-inv');
     if (stripEl) {
       const c = msgEl.querySelector('.msg-content');
@@ -7550,7 +8294,7 @@ async function loadInventory(model, recData) {
     }
   } catch (err) {
     removeTypingIndicator();
-    showToast('Could not load inventory: ' + err.message);
+    showToast(t('toast.loadFail', { msg: err.message }));
   }
 }
 
@@ -7577,7 +8321,7 @@ function renderInventory(items, model, msgEl, realData = false) {
 
   const header = document.createElement('div');
   header.className = 'inv-header';
-  header.textContent = `IN STOCK · ${model.toUpperCase()}`;
+  header.textContent = t('inv.header', { model: model.toUpperCase() });
   block.appendChild(header);
 
   const grid = document.createElement('div');
@@ -7600,7 +8344,7 @@ function renderInventory(items, model, msgEl, realData = false) {
     // Stack fuel and range on separate lines so they never wrap mid-phrase
     const stat2Html = realData
       ? `<div class="inv-stat">
-           <span class="inv-stat-label">Location</span>
+           <span class="inv-stat-label">${escapeHtml(t('inv.location'))}</span>
            <span class="inv-stat-value">${escapeHtml(it.location || 'Møller Bil')}</span>
            <span class="inv-stat-note">
              ${it.fuel  ? `<span>${enrichTerms(escapeHtml(it.fuel))}</span>`   : ''}
@@ -7608,9 +8352,9 @@ function renderInventory(items, model, msgEl, realData = false) {
            </span>
          </div>`
       : `<div class="inv-stat">
-           <span class="inv-stat-label">Per year</span>
+           <span class="inv-stat-label">${escapeHtml(t('inv.perYear'))}</span>
            <span class="inv-stat-value">${escapeHtml(it.tcoYearly || '')}</span>
-           <span class="inv-stat-note"><span>Insurance, service, tires &amp; repairs</span></span>
+           <span class="inv-stat-note"><span>${escapeHtml(t('inv.tcoNote'))}</span></span>
          </div>`;
 
     card.innerHTML = `
@@ -7622,16 +8366,16 @@ function renderInventory(items, model, msgEl, realData = false) {
         </div>
         <div class="inv-stats">
           <div class="inv-stat is-price">
-            <span class="inv-stat-label">Car price</span>
+            <span class="inv-stat-label">${escapeHtml(t('inv.carPrice'))}</span>
             <span class="inv-stat-value">${escapeHtml(it.price)}</span>
-            <span class="inv-stat-note"><span>Incl. VAT &amp; registration</span></span>
+            <span class="inv-stat-note"><span>${escapeHtml(t('inv.vat'))}</span></span>
           </div>
           ${stat2Html}
         </div>
-        ${it.edge ? `<div class="inv-edge"><div class="inv-edge-text"><span class="inv-edge-label">Why this one</span>${escapeHtml(it.edge)}</div></div>` : ''}
+        ${it.edge ? `<div class="inv-edge"><div class="inv-edge-text"><span class="inv-edge-label">${escapeHtml(t('inv.whyThisOne'))}</span>${escapeHtml(it.edge)}</div></div>` : ''}
         <div class="inv-actions">
-          <button class="inv-save">Save</button>
-          <button class="inv-cta">View details</button>
+          <button class="inv-save">${escapeHtml(t('inv.save'))}</button>
+          <button class="inv-cta">${escapeHtml(t('inv.viewDetails'))}</button>
         </div>
       </div>
     `;
@@ -7640,12 +8384,12 @@ function renderInventory(items, model, msgEl, realData = false) {
     if (pinnedCars.some(c => c.model === id)) {
       card.classList.add('pinned');
       saveBtn.classList.add('on');
-      saveBtn.textContent = 'Saved';
+      saveBtn.textContent = t('inv.saved');
     }
     saveBtn.addEventListener('click', () => {
       const wasPinned = card.classList.toggle('pinned');
       saveBtn.classList.toggle('on', wasPinned);
-      saveBtn.textContent = wasPinned ? 'Saved' : 'Save';
+      saveBtn.textContent = wasPinned ? t('inv.saved') : t('inv.save');
       if (wasPinned) {
         pinCar({ model: id, year: it.year, badge: it.price, image: it.image });
       } else {
@@ -7659,7 +8403,7 @@ function renderInventory(items, model, msgEl, realData = false) {
       if (rawId) {
         window.open(`https://www.bruktbil.no/bil/${rawId}`, '_blank');
       } else {
-        showToast(`Detail page for ${id} — coming soon`);
+        showToast(t('inv.comingSoon', { id }));
       }
     });
 
@@ -7678,7 +8422,7 @@ function pinCar(rec) {
   pinnedCars.push({ model, year: cleanField(rec.year), badge: cleanField(rec.badge), image: rec.image || null });
   renderCollection();
   flashCollectionButton();
-  showToast(`Saved — open “Your Collection” at the top right to view it`);
+  showToast(t('collection.saved'));
 }
 
 function flashCollectionButton() {
@@ -7720,7 +8464,7 @@ function renderCollection() {
   const n = pinnedCars.length;
   countEl.textContent = n;
   btn.classList.toggle('has-items', n > 0);
-  sub.textContent = n === 0 ? 'No cars saved yet' : `${n} car${n > 1 ? 's' : ''} saved`;
+  sub.textContent = n === 0 ? t('collection.subEmpty') : t('collection.savedCount', { n, s: n > 1 ? 's' : '' });
 
   if (n === 0) {
     body.innerHTML = '';
@@ -7732,7 +8476,7 @@ function renderCollection() {
   pinnedCars.forEach(c => {
     const card = document.createElement('div');
     card.className = 'coll-card';
-    const matchLabel = c.badge || 'Matched';
+    const matchLabel = c.badge || t('collection.matched');
     const thumbHtml = c.image
       ? `<img class="coll-card-img" src="${escapeHtml(c.image)}" alt="" loading="lazy">`
       : `<div class="coll-card-ph"></div>`;
@@ -7741,7 +8485,7 @@ function renderCollection() {
       <div class="coll-card-info">
         <div class="coll-card-name">${escapeHtml(c.model)}</div>
         <div class="coll-card-match">${escapeHtml(matchLabel)}</div>
-        <button class="coll-card-details" onclick="showToast('Detail page — coming soon')">View details</button>
+        <button class="coll-card-details" onclick="showToast(t('collection.detailSoon'))">${escapeHtml(t('collection.viewDetails'))}</button>
       </div>
       <button class="coll-card-remove" aria-label="Remove">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -7841,7 +8585,7 @@ async function sendMessage() {
   try {
     const inv = getAvailableModelsHint();
     const allMessages = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: SYSTEM_PROMPT + langDirective() },
       ...(inv ? [{ role: 'system', content: inv }] : []),
       ...messages,
     ];
@@ -7859,9 +8603,13 @@ async function sendMessage() {
     }
 
     const data = await resp.json();
-    const aiRaw = geminiText(data);
+    const aiDual = geminiText(data);                  // { en, zh }
+    const aiRaw  = pickAIVersion(aiDual);
     if (!aiRaw) throw new Error('Empty response from API');
-    messages.push({ role: 'assistant', content: aiRaw });
+    // messages[] entries carry __id so language toggles can find them later.
+    // On first push, __id is null — we'll fill it in after appendAIMessage runs.
+    const pushedEntry = { role: 'assistant', content: aiDual, __id: null };
+    messages.push(pushedEntry);
 
     const toolSteps = parseToolSteps(aiRaw);
     const aiText   = stripToolsBlock(aiRaw);
@@ -7895,16 +8643,26 @@ async function sendMessage() {
     const recs = parseRecs(aiText);
     if (recs && recs.length > 0) {
       const intro = aiText.split('RECOMMENDATIONS:')[0].trim();
-      const introText = intro || 'Here are my top picks for you:';
-      const msgEl = appendAIMessage(introText, (el) => {
+      const introText = intro || t('rec.topPicks');
+      const msgEl = appendAIMessage(aiDual, (el) => {
+        // Use the current language's pick of the dual text as the visible intro
+        const elText = pickAIVersion(el._aiText || aiDual);
+        const introInLang = elText.split('RECOMMENDATIONS:')[0].trim() || t('rec.topPicks');
+        el._aiText = { en: '', zh: '' };
+        // Re-stamp with only the intro portion (parser already ran on full)
+        const zhIntro = aiDual.zh.split('RECOMMENDATIONS:')[0].trim() || t('rec.topPicks');
+        el._aiText = { en: introInLang, zh: zhIntro };
+        const bub = el.querySelector('.bub');
+        if (bub) bub.innerHTML = formatText(sanitizeAssistantText(introInLang));
         renderRecs(recs, el);
         renderQuickChips([
-          'How does mileage affect me?',
-          'Can I finance or lease?',
-          "What's included in maintenance?",
-          'Show me different models'
+          t('chip.howMileage'),
+          t('chip.finance'),
+          t('chip.maintenance'),
+          t('chip.diffOther'),
         ], el);
       });
+      if (msgEl) pushedEntry.__id = msgEl.id;
       msgEl.classList.add('has-recs');
       attachStripTo(msgEl);
     } else {
@@ -7921,7 +8679,11 @@ async function sendMessage() {
       if (aiTopic === 'size')   cleanText = stripTrailingList(rawClean);
       if (aiTopic === 'budget') cleanText = condenseForCardTopic(rawClean);
       if (aiTopic === 'fuel')   cleanText = condenseForCardTopic(rawClean);
-      const msgEl = appendAIMessage(cleanText, (el) => {
+      // Build a dual object that ALSO includes the cleaned intro (since we
+      // trimmed it for the current language). Mirror the trimmed text so both
+      // language paths show the cleaned intro.
+      const cleanDual = mirrorDualText(aiDual, cleanText);
+      const msgEl = appendAIMessage(cleanDual, (el) => {
         if (surprises && surprises.length > 0) renderEVSurprises(surprises, el);
         if (aiTopic === 'fuel')   renderFuelCards(el);
         if (aiTopic === 'budget') renderBudgetCards(el);
@@ -7930,20 +8692,32 @@ async function sendMessage() {
         // if (aiTopic === 'range')  renderNorwayMap(el);
         renderQuickChips(suggestions, el);
       });
+      if (msgEl) pushedEntry.__id = msgEl.id;
       attachStripTo(msgEl);
     }
 
   } catch (err) {
     removeTypingIndicator();
     showToast('Error: ' + err.message);
-    appendAIMessage('Sorry, something went wrong. Please try again.', (el) => {
-      renderQuickChips(['Try again', 'Start over'], el);
-    });
-    messages.pop();
+    appendAIMessage(t('send.error'), (el) => {
+      renderQuickChips([t('chip.tryAgain'), t('chip.startOver')], el);
+    }, { i18nKey: 'send.error' });
+    if (Array.isArray(messages) && messages.length && messages[messages.length - 1].role === 'assistant') {
+      messages.pop();
+    }
   } finally {
     isStreaming = false;
     updateSend();
   }
+}
+
+// Build a dual {en, zh} where each side mirrors the same trimmed text. Used
+// after per-language parsing/condensing when we want both versions to show
+// the same cleaned prose.
+function mirrorDualText(aiDual, singleText) {
+  const en = (aiDual && typeof aiDual.en === 'string') ? aiDual.en : singleText;
+  const zh = (aiDual && typeof aiDual.zh === 'string') ? aiDual.zh : singleText;
+  return { en, zh: singleText || zh };
 }
 
 // When a rich card panel is going to render below (budget tiers, fuel cards),
@@ -8359,18 +9133,28 @@ function showToast(msg) {
       vizSection.className = 'v2-dock-section v2-viz-wrap';
       vizSection.innerHTML = `
         <div class="v2-dock-section-head">
-          <span class="v2-dock-section-eyebrow">Live visualization</span>
-          <h2 class="v2-dock-section-title">What we're discussing</h2>
+          <span class="v2-dock-section-eyebrow" data-i18n="v2.viz.eyebrow">Live visualization</span>
+          <h2 class="v2-dock-section-title" data-i18n="v2.viz.title">What we're discussing</h2>
         </div>
         <div id="v2VizBody"></div>
       `;
       hero.insertBefore(vizSection, heroBottom);
 
+      // Empty-state placeholder — translate via JS so language switches work.
+      const vizBody = vizSection.querySelector('#v2VizBody');
+      if (vizBody && vizBody.children.length === 0) {
+        const ph = document.createElement('div');
+        ph.className = 'v2-viz-empty';
+        ph.setAttribute('data-i18n', 'v2.vizEmpty');
+        ph.textContent = I18N[currentLang]?.v2?.vizEmpty || I18N.en.v2.vizEmpty;
+        vizBody.appendChild(ph);
+      }
+
       const recsHead = document.createElement('div');
       recsHead.className = 'v2-dock-section-head';
       recsHead.innerHTML = `
-        <span class="v2-dock-section-eyebrow">Live recommendations</span>
-        <h2 class="v2-dock-section-title">In stock right now</h2>
+        <span class="v2-dock-section-eyebrow" data-i18n="v2.recs.eyebrow">Live recommendations</span>
+        <h2 class="v2-dock-section-title" data-i18n="v2.recs.title.default">In stock right now</h2>
       `;
       heroBottom.insertBefore(recsHead, heroBottom.firstChild);
     }
@@ -8410,10 +9194,23 @@ function showToast(msg) {
     if (!sourceMsgEl.querySelector('.v2-moved-tag')) {
       const tag = document.createElement('div');
       tag.className = 'v2-moved-tag';
-      tag.textContent = `${kindLabel || 'Visualization'} updated on the right →`;
+      tag.textContent = t('v2.updatedOnRight', { kind: v2KindToLocal(kindLabel) || t('v2.vizUpdatedFallback') });
       const content = sourceMsgEl.querySelector('.msg-content') || sourceMsgEl;
       content.appendChild(tag);
     }
+  }
+
+  // Translate the internal viz kind label (used by relocateLatest + viz title)
+  function v2KindToLocal(kindLabel) {
+    if (!kindLabel) return '';
+    if (kindLabel === 'Budget tiers')       return t('v2.vizTitle.budget');
+    if (kindLabel === 'Fuel comparison')    return t('v2.vizTitle.fuel');
+    if (kindLabel === 'Size comparison')    return t('v2.vizTitle.size');
+    if (kindLabel === 'Recommended models') return t('v2.vizTitle.recs');
+    // Already-localized pass-through (used by the viz title map below)
+    const titles = ['v2.vizTitle.budget','v2.vizTitle.fuel','v2.vizTitle.size','v2.vizTitle.recs'];
+    for (const k of titles) if (kindLabel === I18N[currentLang]?.[k]) return kindLabel;
+    return kindLabel;
   }
 
   ['renderBudgetCards', 'renderFuelCards', 'renderSizeCards', 'renderRecs'].forEach(name => {
@@ -8452,7 +9249,7 @@ function showToast(msg) {
       });
     }
     const brandS = getConfirmedSummary('brand');
-    if (brandS) rows.push({ key: 'brand', label: 'Brand preference', value: brandS, options: (typeof BRANDS !== 'undefined' ? BRANDS : []) });
+    if (brandS) rows.push({ key: 'brand', label: t('filter.brand'), value: brandS, options: (typeof BRANDS !== 'undefined' ? BRANDS : []) });
     const budgetS = getBudgetSummary();
     if (budgetS) rows.push({ key: 'budget', label: 'Budget', value: budgetS, options: null });
     return rows;
@@ -8478,12 +9275,12 @@ function showToast(msg) {
           <span class="v2-told-chip-label">${escapeHtml(r.label)}</span>
           <span class="v2-told-chip-value">${escapeHtml(r.value)}</span>
           <button class="v2-told-chip-change" type="button"
-                  onclick="v2OpenEdit(event, '${r.key}')">Change</button>
+                  onclick="v2OpenEdit(event, '${r.key}')">${escapeHtml(t('told.action.change'))}</button>
         </div>`;
     }).join('');
     strip.innerHTML = `
       <div class="v2-told-strip-head">
-        <span class="v2-told-strip-eyebrow">What you've told me</span>
+        <span class="v2-told-strip-eyebrow" data-i18n="told.eyebrow">What you've told me</span>
       </div>
       <div class="v2-told-strip-chips">${chips}</div>`;
   }
@@ -8602,7 +9399,7 @@ function showToast(msg) {
     }
     pop.innerHTML = `
       <div class="v2-edit-popover-head">
-        <span class="v2-edit-popover-title">Change ${escapeHtml(label).toLowerCase()}</span>
+        <span class="v2-edit-popover-title">${escapeHtml(t('tip.refine.changeTitle', { label: escapeHtml(label).toLowerCase() }))}</span>
         <button class="v2-edit-popover-show" type="button"
                 ${hasMsg ? '' : 'disabled'}
                 onclick="v2ClosePopoverAndJump('${key}')">Show in chat</button>
@@ -8610,7 +9407,7 @@ function showToast(msg) {
       <div class="v2-edit-popover-chips">${chipsHtml}</div>
       <div class="v2-edit-popover-actions">
         <button class="v2-edit-popover-done" type="button"
-                onclick="v2ClosePopover(this.closest('.v2-edit-popover'))">Done</button>
+                onclick="v2ClosePopover(this.closest('.v2-edit-popover'))">${escapeHtml(t('told.done'))}</button>
       </div>
     `;
   }
@@ -8715,7 +9512,7 @@ function showToast(msg) {
 
     // Compact "PASSENGERS [6] → [5]" row design
     banners.innerHTML = `
-      <span class="v2-pending-banners-label">Quick update</span>
+      <span class="v2-pending-banners-label">${escapeHtml(t('v2.quickUpdate'))}</span>
       ${edits.map(e => `
         <div class="v2-pending-row" data-key="${escapeHtml(e.key)}">
           <span class="v2-pending-row-label">${escapeHtml(e.label)}</span>
@@ -8898,7 +9695,7 @@ function showToast(msg) {
     if (!heroRecsBody) return;
     if (!inventoryLoaded) {
       heroRecsBody.className = '';
-      heroRecsBody.innerHTML = `<div class="v2-rec-state-msg">Finding picks in stock…</div>`;
+      heroRecsBody.innerHTML = `<div class="v2-rec-state-msg">${escapeHtml(t('v2.stateFinding'))}</div>`;
       return;
     }
     const { cars } = (typeof getLiveRecommendations === 'function')
@@ -8906,7 +9703,7 @@ function showToast(msg) {
       : { cars: [] };
     if (!cars.length) {
       heroRecsBody.className = '';
-      heroRecsBody.innerHTML = `<div class="v2-rec-state-msg">Tell me more so I can refine these picks.</div>`;
+      heroRecsBody.innerHTML = `<div class="v2-rec-state-msg">${escapeHtml(t('v2.stateRefine'))}</div>`;
       return;
     }
     heroRecsBody.className = 'v2-inv-grid';
@@ -8917,8 +9714,8 @@ function showToast(msg) {
     const titleEl = document.querySelector('body.v2-layout .hero-bottom .v2-dock-section-title');
     if (titleEl) {
       titleEl.textContent = hasFilters
-        ? `Matched for your needs`
-        : `Popular in the Oslo area`;
+        ? t('v2.recs.title.matched')
+        : t('v2.recs.title.default');
     }
     cars.forEach(rec => {
       const matches = (typeof matchInventory === 'function') ? matchInventory(rec.name) : [];
@@ -8928,10 +9725,10 @@ function showToast(msg) {
       // Edge text — filter-based reason only. Stock count is NOT a reason
       // ("224 in stock" doesn't tell the user why this car suits them).
       // Falls back to generic copy when no filters are set.
-      it.edge = hasFilters ? baseReasons[0] : 'Popular near you';
+      it.edge = hasFilters ? baseReasons[0] : t('v2.popularNearEdge');
       const card = v2BuildInvCard(it, rec.name, {
         onViewDetails: () => v2OpenInventoryInDock(rec.name),
-        ctaLabel: 'See all in stock',
+        ctaLabel: t('v2.seeAllInStock'),
         hideSave: true,    // live recs are model-level — no Save button
       });
       heroRecsBody.appendChild(card);
@@ -8948,15 +9745,17 @@ function showToast(msg) {
     const seats = get('seats');
     const sizes = get('size');
     const brands = get('brand');
-    if (fuels.length) parts.push(`Matches your ${fuels[0].toLowerCase()} pick`);
-    if (seats.length) parts.push(seats[0] === '7+' ? 'Fits 7+ seats' : `Fits ${seats[0]} seats`);
-    if (sizes.length) parts.push(`${sizes[0]} body`);
+    if (fuels.length) parts.push(t('v2.reason.fuel', { fuel: fuels[0].toLowerCase() }));
+    if (seats.length) parts.push(seats[0] === '7+'
+      ? t('v2.reason.seats7')
+      : t('v2.reason.seats', { seats: seats[0] }));
+    if (sizes.length) parts.push(t('v2.reason.size', { size: sizes[0] }));
     if (brands.length) parts.push(brands[0]);
     const sMin = document.getElementById('budgetMin');
     const sMax = document.getElementById('budgetMax');
     if (sMin && sMax) {
       const lo = parseInt(sMin.value, 10), hi = parseInt(sMax.value, 10);
-      if (!(lo === 50000 && hi === 1500000)) parts.push('Within your budget');
+      if (!(lo === 50000 && hi === 1500000)) parts.push(t('v2.reason.budget'));
     }
     return parts;
   }
@@ -8979,7 +9778,7 @@ function showToast(msg) {
       ? `<img class="v2-card-img" src="${escapeHtml(it.image)}" alt="${escapeHtml(modelName)}" loading="lazy">`
       : `<div class="v2-card-img"></div>`;
 
-    const ctaLabel = opts.ctaLabel || 'View details';
+    const ctaLabel = opts.ctaLabel || t('inv.viewDetails');
     const showSave = !opts.hideSave;
 
     card.innerHTML = `
@@ -8988,9 +9787,9 @@ function showToast(msg) {
         <div class="v2-card-name">${escapeHtml(it.year || '')} ${escapeHtml(modelName)}</div>
         <div class="v2-card-price">${escapeHtml(it.price || '')}</div>
         ${subText ? `<div class="v2-card-sub">${escapeHtml(subText)}</div>` : ''}
-        ${it.edge ? `<div class="v2-card-reason"><span class="v2-card-reason-label">Why this one</span> ${escapeHtml(it.edge)}</div>` : ''}
+        ${it.edge ? `<div class="v2-card-reason"><span class="v2-card-reason-label">${escapeHtml(t('inv.whyThisOne'))}</span> ${escapeHtml(it.edge)}</div>` : ''}
         <div class="v2-card-actions${showSave ? '' : ' single'}">
-          ${showSave ? `<button class="v2-card-save" type="button">Save</button>` : ''}
+          ${showSave ? `<button class="v2-card-save" type="button">${escapeHtml(t('inv.save'))}</button>` : ''}
           <button class="v2-card-cta" type="button">${escapeHtml(ctaLabel)}</button>
         </div>
       </div>
@@ -9002,13 +9801,13 @@ function showToast(msg) {
       if (typeof pinnedCars !== 'undefined' && pinnedCars.some(c => c.model === id)) {
         card.classList.add('pinned');
         saveBtn.classList.add('on');
-        saveBtn.textContent = 'Saved';
+        saveBtn.textContent = t('inv.saved');
       }
       saveBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const wasPinned = card.classList.toggle('pinned');
         saveBtn.classList.toggle('on', wasPinned);
-        saveBtn.textContent = wasPinned ? 'Saved' : 'Save';
+        saveBtn.textContent = wasPinned ? t('inv.saved') : t('inv.save');
         if (wasPinned && typeof pinCar === 'function') {
           pinCar({ model: id, year: it.year, badge: it.price, image: it.image });
         } else if (typeof unpinCar === 'function') {
@@ -9025,7 +9824,7 @@ function showToast(msg) {
       } else {
         const rawId = it._raw?.id;
         if (rawId) window.open(`https://www.bruktbil.no/bil/${rawId}`, '_blank');
-        else if (typeof showToast === 'function') showToast(`Detail page for ${id} — coming soon`);
+        else if (typeof showToast === 'function') showToast(t('inv.comingSoon', { id }));
       }
     });
 
@@ -9047,17 +9846,17 @@ function showToast(msg) {
     heroBottom.innerHTML = `
       <div class="v2-inv-head">
         <div class="v2-inv-head-text">
-          <span class="v2-inv-eyebrow">Inventory</span>
+          <span class="v2-inv-eyebrow">${escapeHtml(t('v2.inventory'))}</span>
           <h3 class="v2-inv-title">${escapeHtml(modelName)}</h3>
         </div>
         <button class="v2-inv-back" type="button" onclick="v2CloseInventoryInDock()">
           <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" width="14" height="14">
             <path d="M12 7H2M6 3L2 7l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Back to recommendations
+          ${escapeHtml(t('v2.back'))}
         </button>
       </div>
-      <div class="v2-inv-loading">Finding cars in stock…</div>
+      <div class="v2-inv-loading">${escapeHtml(t('v2.finding'))}</div>
     `;
 
     try {
@@ -9083,7 +9882,7 @@ function showToast(msg) {
       v2RenderInventoryInRecs(modelName, items);
     } catch (err) {
       const loading = heroBottom.querySelector('.v2-inv-loading');
-      if (loading) loading.textContent = "Couldn't load inventory right now.";
+      if (loading) loading.textContent = t('v2.loadFail');
     }
   };
 
@@ -9094,7 +9893,7 @@ function showToast(msg) {
     if (loading) loading.remove();
     const empty = document.createElement('div');
     empty.className = 'v2-inv-empty';
-    empty.textContent = `No ${modelName}s in stock right now.`;
+    empty.textContent = t('v2.noStock', { model: modelName });
     heroBottom.appendChild(empty);
   }
 
@@ -9163,12 +9962,13 @@ function showToast(msg) {
     const titleEl = document.querySelector('.v2-viz-wrap .v2-dock-section-title');
     if (!titleEl) return;
     const map = {
-      'Budget tiers':       'Your budget options',
-      'Fuel comparison':    'Powertrain trade-offs',
-      'Size comparison':    'Cars next to a person',
-      'Recommended models': 'Your top picks',
+      'Budget tiers':       'v2.vizTitle.budget',
+      'Fuel comparison':    'v2.vizTitle.fuel',
+      'Size comparison':    'v2.vizTitle.size',
+      'Recommended models': 'v2.vizTitle.recs',
     };
-    titleEl.textContent = map[kindLabel] || "What we're discussing";
+    const key = map[kindLabel];
+    titleEl.textContent = key ? t(key) : t('v2.viz.title');
   };
 })();
 
