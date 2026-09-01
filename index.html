@@ -7447,6 +7447,32 @@ function stripToolsBlock(text) {
   return text.replace(/^TOOLS:\s*\[.*?\]\s*/m, '').trim();
 }
 
+// Strip every structured marker block (TOOLS / SUGGESTIONS / RECOMMENDATIONS /
+// EV_SURPRISES / SHOW_INVENTORY) from the text, leaving just the natural prose
+// the user should read in the bubble. Used to clean BOTH language slots when the
+// model wraps its reply in the dual-language JSON — the markers in each slot
+// must be removed independently because each is parsed against its own prose.
+function cleanAssistantText(rawText) {
+  let working = String(rawText || '');
+  // Drop a leading TOOLS:[...] line if present.
+  working = working.replace(/^TOOLS:\s*\[.*?\]\s*/m, '').trim();
+  // Drop an EV_SURPRISES block (everything up to SUGGESTIONS or end-of-string).
+  working = working.replace(/EV_SURPRISES:[\s\S]*?(?=SUGGESTIONS:|$)/i, '').trim();
+  // Drop a SUGGESTIONS:[...] block (single-line or multi-line).
+  working = working.replace(/SUGGESTIONS:\s*\[[\s\S]*?\]\s*$/im, '').trim();
+  // Drop a trailing SHOW_INVENTORY: [Model] line.
+  working = working.replace(/\n?\s*SHOW_INVENTORY:\s*[^\n\r]+\s*$/im, '').trim();
+  // Drop a trailing RECOMMENDATIONS: block (json list ending).
+  working = working.replace(/\n?\s*RECOMMENDATIONS:\s*\[[\s\S]*?\]\s*$/im, '').trim();
+  // Strip any leftover "Item 1: …" / "- Item 2 …" rows that some models emit.
+  working = working
+    .split('\n')
+    .filter(line => !/^\s*(?:[-*]\s*)?Item\s*\d+\s*[:.)-]/i.test(line))
+    .join('\n')
+    .trim();
+  return working;
+}
+
 async function runToolStrip(steps) {
   const strip = document.getElementById('toolStrip');
   if (!strip || !steps.length) return;
@@ -8704,14 +8730,15 @@ async function sendMessage() {
     if (recs && recs.length > 0) {
       const intro = aiText.split('RECOMMENDATIONS:')[0].trim();
       const introText = intro || t('rec.topPicks');
-      const msgEl = appendAIMessage(aiDual, (el) => {
+      // Build a dual whose en/zh slots are each pre-cleaned (TOOLS / SUGGESTIONS
+      // markers stripped) so the bubble displays only prose and language
+      // toggles swap to the correct version without re-leaking the markers.
+      const enIntro = cleanAssistantText(aiDual.en || aiRaw).split('RECOMMENDATIONS:')[0].trim() || t('rec.topPicks');
+      const zhIntro = cleanAssistantText(aiDual.zh || aiRaw).split('RECOMMENDATIONS:')[0].trim() || t('rec.topPicks');
+      const cleanDual = { en: enIntro, zh: zhIntro };
+      const msgEl = appendAIMessage(cleanDual, (el) => {
         // Use the current language's pick of the dual text as the visible intro
-        const elText = pickAIVersion(el._aiText || aiDual);
-        const introInLang = elText.split('RECOMMENDATIONS:')[0].trim() || t('rec.topPicks');
-        el._aiText = { en: '', zh: '' };
-        // Re-stamp with only the intro portion (parser already ran on full)
-        const zhIntro = aiDual.zh.split('RECOMMENDATIONS:')[0].trim() || t('rec.topPicks');
-        el._aiText = { en: introInLang, zh: zhIntro };
+        const introInLang = pickAIVersion(el._aiText || cleanDual);
         const bub = el.querySelector('.bub');
         if (bub) bub.innerHTML = formatText(sanitizeAssistantText(introInLang));
         renderRecs(recs, el);
@@ -8739,10 +8766,14 @@ async function sendMessage() {
       if (aiTopic === 'size')   cleanText = stripTrailingList(rawClean);
       if (aiTopic === 'budget') cleanText = condenseForCardTopic(rawClean);
       if (aiTopic === 'fuel')   cleanText = condenseForCardTopic(rawClean);
-      // Build a dual object that ALSO includes the cleaned intro (since we
-      // trimmed it for the current language). Mirror the trimmed text so both
-      // language paths show the cleaned intro.
-      const cleanDual = mirrorDualText(aiDual, cleanText);
+      // Clean BOTH language slots the same way (strip TOOLS / SUGGESTIONS
+      // markers, apply topic condensing) so the bubble shows clean prose
+      // regardless of which language the user toggled to.
+      const enRaw = aiDual.en || aiRaw;
+      const zhRaw = aiDual.zh || aiRaw;
+      const enClean = applyTopicCondense(cleanAssistantText(enRaw), aiTopic);
+      const zhClean = applyTopicCondense(cleanAssistantText(zhRaw), aiTopic);
+      const cleanDual = { en: enClean, zh: zhClean };
       const msgEl = appendAIMessage(cleanDual, (el) => {
         if (surprises && surprises.length > 0) renderEVSurprises(surprises, el);
         if (aiTopic === 'fuel')   renderFuelCards(el);
@@ -8772,12 +8803,21 @@ async function sendMessage() {
 }
 
 // Build a dual {en, zh} where each side mirrors the same trimmed text. Used
-// after per-language parsing/condensing when we want both versions to show
-// the same cleaned prose.
-function mirrorDualText(aiDual, singleText) {
-  const en = (aiDual && typeof aiDual.en === 'string') ? aiDual.en : singleText;
-  const zh = (aiDual && typeof aiDual.zh === 'string') ? aiDual.zh : singleText;
-  return { en, zh: singleText || zh };
+// as a last resort when we only have one prose to display in both languages
+// (e.g. when Gemini dropped the JSON wrapper). Both slots get the cleaned
+// text so neither side shows TOOLS / SUGGESTIONS markers to the user.
+function mirrorDualText(_aiDual, singleText) {
+  return { en: singleText, zh: singleText };
+}
+
+// Apply the same topic-specific condensing that the current-language parser
+// applied, but to the OTHER language's cleaned prose so a language toggle
+// shows an equally-trimmed reply.
+function applyTopicCondense(text, aiTopic) {
+  if (aiTopic === 'size')   return stripTrailingList(text);
+  if (aiTopic === 'budget') return condenseForCardTopic(text);
+  if (aiTopic === 'fuel')   return condenseForCardTopic(text);
+  return text;
 }
 
 // When a rich card panel is going to render below (budget tiers, fuel cards),
