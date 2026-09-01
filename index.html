@@ -3082,21 +3082,27 @@ body.v2-layout .chat { max-width: 100% !important; }
 .v2-dock-section-head {
   display: flex; flex-direction: column;
   gap: 2px;
-  margin-bottom: 8px;        /* tightened to save vertical space */
+  margin-bottom: 16px;       /* more breathing room above cards */
+  padding-top: 4px;
   flex-shrink: 0;
 }
 .v2-dock-section-eyebrow {
-  font-size: 16px; font-weight: 500;       /* was 13 */
+  font-size: 16px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase;
   color: var(--salmon);
 }
 .v2-dock-section-title {
   font-family: "Moller", sans-serif;
-  font-size: 36px; font-weight: 400;       /* was 26 */
+  font-size: 36px; font-weight: 400;
   letter-spacing: -0.01em;
   color: var(--cream-100);
   margin: 0;
   line-height: 1.1;
+}
+.v2-dock-section-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.65);
+  margin-top: 4px;
 }
 
 /* Inventory header — title (eyebrow + model) on LEFT, "Back to recommendations"
@@ -3848,6 +3854,7 @@ const I18N = {
     'v2.viz.title':           "What we're discussing",
     'v2.recs.eyebrow':        'Live recommendations',
     'v2.recs.title.default':  'In stock right now',
+    'v2.recs.sub':            'Popular picks near you',
     'v2.recs.title.matched':  'Matched for your needs',
     'v2.vizEmpty':            'Visualizations appear here as we discuss budget, size, fuel and more.',
     'v2.stateFinding':        'Finding picks in stock…',
@@ -4027,6 +4034,7 @@ const I18N = {
     'v2.viz.title':           '我们正在讨论的内容',
     'v2.recs.eyebrow':        '实时推荐',
     'v2.recs.title.default':  '当前在售',
+    'v2.recs.sub':            '你附近的热门车',
     'v2.recs.title.matched':  '为你匹配',
     'v2.vizEmpty':            '随着我们讨论预算、车型、能源等，可视化内容会显示在这里。',
     'v2.stateFinding':        '正在查找在售车辆…',
@@ -9295,6 +9303,7 @@ function showToast(msg) {
       recsHead.innerHTML = `
         <span class="v2-dock-section-eyebrow" data-i18n="v2.recs.eyebrow">Live recommendations</span>
         <h2 class="v2-dock-section-title" data-i18n="v2.recs.title.default">In stock right now</h2>
+        <span class="v2-dock-section-sub" data-i18n="v2.recs.sub">Popular picks near you</span>
       `;
       heroBottom.insertBefore(recsHead, heroBottom.firstChild);
     }
