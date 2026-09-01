@@ -4229,7 +4229,13 @@ function toDeepSeekBody(allMessages, maxTokens) {
     messages: allMessages,
     temperature: 0.7,
     max_tokens: maxTokens || 2048,
-    response_format: { type: 'json_object' },
+    // NOTE: intentionally NO `response_format: json_object`. Forcing strict
+    // JSON made DeepSeek emit a "clean" {en,zh} object that DROPPED the
+    // SUGGESTIONS / TOOLS markers entirely, so parseSuggestions() always
+    // fell back to the generic English defaultSuggestions() — that's why the
+    // quick-reply chips stopped matching the conversation. Letting the model
+    // follow the SYSTEM_PROMPT's plain-text-with-markers format lets the
+    // SUGGESTIONS come through and keeps chips context-relevant.
   };
 }
 
@@ -9032,10 +9038,17 @@ function isPersonalPreferencesQuestion(textLower) {
 function normalizeSuggestionsForQuestion(aiText, suggestions) {
   const full = (aiText || '');
   const fullLower = full.toLowerCase();
-  const questions = full.match(/[^.!?]*\?/g) || [];
+  const questions = full.match(/[^.!?？]*[?？]/g) || [];
   const text = (questions[questions.length - 1] || full).toLowerCase();
   const joined = (suggestions || []).join(' ').toLowerCase();
   const fallback = () => defaultSuggestions(aiText);
+
+  // If the AI asked its question in Chinese, the English keyword checks below
+  // can't validate anything (they'd always "mismatch" and discard perfectly
+  // good Chinese chips). Trust the AI's SUGGESTIONS directly in that case.
+  if (/[\u4e00-\u9fff]/.test(text) && Array.isArray(suggestions) && suggestions.length > 0) {
+    return suggestions;
+  }
 
   // PERSONAL PREFERENCES wrap-up — must come FIRST, because the question
   // often mentions "ownership costs", "insurance", "seats", etc. which would
@@ -9071,35 +9084,61 @@ function normalizeSuggestionsForQuestion(aiText, suggestions) {
 function defaultSuggestions(aiText) {
   const full = (aiText || '');
   const fullLower = full.toLowerCase();
-  const questions = full.match(/[^.!?]*\?/g) || [];
+  // Match BOTH English `?` and Chinese `？` so a Chinese AI reply still finds
+  // its last question (otherwise the topic regexes below never fire).
+  const questions = full.match(/[^.!?？]*[?？]/g) || [];
   const lastQuestion = (questions[questions.length - 1] || full).toLowerCase();
+  const zh = (typeof currentLang !== 'undefined') && currentLang === 'zh';
 
   // Personal preferences wrap-up — check FIRST (otherwise the "ownership costs"
   // keyword would route us into the budget branch below). Check full text + last
   // question to be robust regardless of how the AI phrases it.
-  if (isPersonalPreferencesQuestion(fullLower) || isPersonalPreferencesQuestion(lastQuestion)) {
-    return ['Avoid bright colors', 'Trade in my current car', 'Worried about insurance', 'No specific preferences'];
+  if (isPersonalPreferencesQuestion(fullLower) || isPersonalPreferencesQuestion(lastQuestion)
+      || /个人偏好|置换|保险|颜色/i.test(lastQuestion)) {
+    return zh
+      ? ['避免亮色车漆', '置换现有车辆', '担心保险费用', '没有特别偏好']
+      : ['Avoid bright colors', 'Trade in my current car', 'Worried about insurance', 'No specific preferences'];
   }
 
-  if (/electric|hybrid|petrol|diesel|fuel|ev\b/i.test(lastQuestion)) {
-    return ['Electric (EV)', 'Hybrid', 'Petrol or diesel', 'Not sure yet'];
+  // fuel / powertrain
+  if (/electric|hybrid|petrol|diesel|fuel|ev\b|电动|混动|油车|纯电|能源|燃料/i.test(lastQuestion)) {
+    return zh
+      ? ['纯电动 (EV)', '混动', '汽油或柴油', '还没确定']
+      : ['Electric (EV)', 'Hybrid', 'Petrol or diesel', 'Not sure yet'];
   }
-  if (/must.?have|feature|tow hitch|towing package|sunroof|heated|roof rack|roof rail|awd|leather|panoram/i.test(lastQuestion)) {
-    return ['Tow hitch', 'Roof rails', 'Heated seats', 'No specific must-haves'];
+  // must-have features
+  if (/must.?have|feature|tow hitch|towing package|sunroof|heated|roof rack|roof rail|awd|leather|panoram|必须|配置|拖车钩|天窗|加热|车顶|四驱|皮座/i.test(lastQuestion)) {
+    return zh
+      ? ['拖车钩', '车顶行李架', '座椅加热', '没有必须的配置']
+      : ['Tow hitch', 'Roof rails', 'Heated seats', 'No specific must-haves'];
   }
-  if (/\bbrand\b|brand in mind|particular brand|brands you|manufacturer/i.test(lastQuestion)) {
-    return ['Open to anything', 'Toyota or Volvo', 'German brands', 'Tesla or Polestar'];
+  // brand
+  if (/\bbrand\b|brand in mind|particular brand|brands you|manufacturer|品牌|厂商|车厂/i.test(lastQuestion)) {
+    return zh
+      ? ['什么品牌都行', '丰田或沃尔沃', '德系品牌', '特斯拉或极星']
+      : ['Open to anything', 'Toyota or Volvo', 'German brands', 'Tesla or Polestar'];
   }
-  if (/passenger|seat|family|kids|children|how many people/i.test(lastQuestion)) {
-    return ['Just me', '2-4 people', '5-7 people', 'Need 7+ seats'];
+  // seats / passengers
+  if (/passenger|seat|family|kids|children|how many people|座位|几个人|乘坐|家人|孩子/i.test(lastQuestion)) {
+    return zh
+      ? ['就我一个人', '2-4 人', '5-7 人', '需要 7 座以上']
+      : ['Just me', '2-4 people', '5-7 people', 'Need 7+ seats'];
   }
-  if (/budget|price|cost|spend|how much|\bkr\b/i.test(lastQuestion)) {
-    return ['Around 300 000 kr', 'Around 500 000 kr', 'Around 700 000 kr', 'Flexible on budget'];
+  // budget
+  if (/budget|price|cost|spend|how much|\bkr\b|预算|价格|多少钱|花费/i.test(lastQuestion)) {
+    return zh
+      ? ['30 万 kr 左右', '50 万 kr 左右', '70 万 kr 左右', '预算可以谈']
+      : ['Around 300 000 kr', 'Around 500 000 kr', 'Around 700 000 kr', 'Flexible on budget'];
   }
-  if (/recommend|show|suggest|find/i.test(lastQuestion)) {
-    return ['Show me options', 'Need more info first', 'Different direction', 'Continue'];
+  // recommend / show
+  if (/recommend|show|suggest|find|推荐|看看|给我|直接看/i.test(lastQuestion)) {
+    return zh
+      ? ['直接看推荐', '先了解更多', '换个方向', '继续']
+      : ['Show me options', 'Need more info first', 'Different direction', 'Continue'];
   }
-  return ['Tell me more', 'Continue', 'Skip this', 'Start over'];
+  return zh
+    ? ['再多说一点', '继续', '跳过这个', '重新开始']
+    : ['Tell me more', 'Continue', 'Skip this', 'Start over'];
 }
 
 // ── utils ─────────────────────────────────────────────────────────────────
@@ -9374,6 +9413,13 @@ function showToast(msg) {
         <div id="v2VizBody"></div>
       `;
       hero.insertBefore(vizSection, heroBottom);
+      // Apply i18n immediately so the viz header renders in the user's
+      // language on first paint (same reason as the recs head below —
+      // applyI18n() only runs at init or on language toggle, so without this
+      // the header stays in the English fallback until the user toggles).
+      vizSection.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.getAttribute('data-i18n'));
+      });
 
       // Empty-state placeholder — translate via JS so language switches work.
       // NOTE: the dictionary uses FLAT keys ('v2.vizEmpty'), so the old
@@ -9391,9 +9437,11 @@ function showToast(msg) {
 
       const recsHead = document.createElement('div');
       recsHead.className = 'v2-dock-section-head';
+      // Two-line header per design: orange eyebrow + small white subtitle.
+      // (The big "In stock right now" title was removed — user wants just
+      // "Live recommendations" + "Popular in the Oslo area".)
       recsHead.innerHTML = `
         <span class="v2-dock-section-eyebrow" data-i18n="v2.recs.eyebrow">Live recommendations</span>
-        <h2 class="v2-dock-section-title" data-i18n="v2.recs.title.default">In stock right now</h2>
         <span class="v2-dock-section-sub" data-i18n="v2.recs.sub">Popular in the Oslo area</span>
       `;
       heroBottom.insertBefore(recsHead, heroBottom.firstChild);
