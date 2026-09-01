@@ -4223,6 +4223,9 @@ function toGeminiBody(allMessages, maxTokens) {
       // Disable internal thinking — eliminates flakiness and saves tokens.
       // Only `gemini-2.5-flash` and `flash-lite` support thinkingBudget: 0.
       thinkingConfig: { thinkingBudget: 0 },
+      // Force strict JSON output so the {en,zh} wrapper is always parseable
+      // and we don't fall through to mirroring on rare malformed replies.
+      responseMimeType: 'application/json',
     },
   };
   if (systemParts) body.systemInstruction = { parts: [{ text: systemParts }] };
@@ -5186,6 +5189,18 @@ function init() {
   applyI18n();
   buildSidebar();
   renderCollection();
+  // Clear any leftover bubbles from a previous session — covers the typing
+  // indicator (#typingMsg) that may have been orphaned if a previous request
+  // crashed mid-flight, plus any empty `.msg.ai` div whose typewriter never
+  // produced content (e.g. language-switch race conditions).
+  const stream = document.getElementById('stream');
+  if (stream) {
+    stream.querySelectorAll('#typingMsg').forEach(el => el.remove());
+    stream.querySelectorAll('.msg.ai').forEach(el => {
+      const bub = el.querySelector('.bub');
+      if (!bub || !bub.textContent.trim()) el.remove();
+    });
+  }
   // Boot into onboarding mode: full-screen hero, chat slides in after the
   // user picks a CTA. The AI greeting fires from `onboardingChoose()`.
   startOnboardingIntro();
@@ -7242,8 +7257,10 @@ function appendTypingIndicator() {
 }
 
 function removeTypingIndicator() {
-  const el = document.getElementById('typingMsg');
-  if (el) el.remove();
+  // Use querySelectorAll (not getElementById) so multiple orphaned typing
+  // indicators can be cleared in one pass — happens when a request crashes
+  // mid-flight and the user immediately sends another message.
+  document.querySelectorAll('#typingMsg').forEach(el => el.remove());
 }
 
 // ── quick chips ───────────────────────────────────────────────────────────
