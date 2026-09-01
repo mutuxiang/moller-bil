@@ -4238,29 +4238,88 @@ function geminiText(data) {
 }
 
 // Best-effort dual-language JSON parse. Accepts three shapes:
-//   1. Bare JSON object      {"en": "...", "zh": "..."}
+//   1. Bare JSON object starting the response       {"en":"...","zh":"..."}
 //   2. JSON wrapped in ```json ... ``` markdown fences
-//   3. Anything else → mirrored {en, zh} so the existing parsers still work
+//   3. JSON object embedded ANYWHERE in the text — common when the AI puts
+//      TOOLS/SUGGESTIONS markers OUTSIDE the JSON. We extract the JSON,
+//      re-attach any pre/post markers to both language versions so the
+//      downstream regex parsers (parseToolSteps / parseSuggestions / etc.)
+//      still find them.
+//   4. Anything else → mirrored {en, zh} so the existing parsers still work.
 function parseDualLanguage(text) {
   if (!text || typeof text !== 'string') return { en: '', zh: '' };
   const trimmed = text.trim();
-  // Shape 1: bare JSON starting with {
+
+  // Shape A: bare JSON at the start of the response.
   let candidate = trimmed.startsWith('{') ? trimmed : null;
-  // Shape 2: JSON inside ```json ... ```
+
+  // Shape B: JSON inside ```json ... ``` fences.
   if (!candidate) {
-    const m = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (m) candidate = m[1].trim();
+    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenced && fenced[1].trim().startsWith('{')) candidate = fenced[1].trim();
   }
-  if (candidate && candidate.startsWith('{')) {
+
+  // Shape C: find the FIRST balanced JSON object anywhere in the text.
+  // Gemini often emits "TOOLS:[...] {"en":"...","zh":"..."} SUGGESTIONS:[...]"
+  // — markers sit OUTSIDE the JSON. We peel the JSON out of the middle and
+  // preserve the surrounding text for the parsers.
+  if (!candidate) {
+    candidate = findFirstBalancedJson(trimmed);
+  }
+
+  if (candidate) {
     try {
       const obj = JSON.parse(candidate);
-      if (obj && typeof obj === 'object' && typeof obj.en === 'string' && typeof obj.zh === 'string') {
-        return { en: obj.en, zh: obj.zh };
+      if (obj && typeof obj === 'object') {
+        const idx = trimmed.indexOf(candidate);
+        const before = (idx >= 0 ? trimmed.slice(0, idx) : '').trim();
+        const after  = (idx >= 0 ? trimmed.slice(idx + candidate.length) : '').trim();
+        const enRaw = (typeof obj.en === 'string') ? obj.en
+                     : (typeof obj.zh === 'string') ? obj.zh : '';
+        const zhRaw = (typeof obj.zh === 'string') ? obj.zh : enRaw;
+        // Re-wrap so the existing regex parsers (which look for TOOLS /
+        // SUGGESTIONS markers in the current-language string) still match
+        // them. Pre/post markers are language-agnostic so we attach them
+        // to both versions.
+        const wrap = (prose) => {
+          const parts = [];
+          if (before) parts.push(before);
+          if (prose)  parts.push(prose);
+          if (after)  parts.push(after);
+          return parts.join('\n');
+        };
+        if (enRaw || zhRaw) {
+          return { en: wrap(enRaw), zh: wrap(zhRaw) };
+        }
       }
     } catch (e) { /* fall through */ }
   }
-  // Fallback: mirror the single-language text into both versions
+  // Fallback: mirror the single-language text into both versions.
   return { en: trimmed, zh: trimmed };
+}
+
+// Walk the string and return the first substring that looks like a balanced
+// JSON object (matching outer braces, with bracket-aware skipping so we
+// don't stop on `}` inside strings).
+function findFirstBalancedJson(text) {
+  const start = text.indexOf('{');
+  if (start === -1) return null;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (escape) { escape = false; continue; }
+    if (ch === '\\' && inString) { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  return null;
 }
 
 const SYSTEM_PROMPT = `You are a friendly car advisor at Møller Bil. Help users find the right car through natural conversation.
@@ -4275,8 +4334,9 @@ Rules:
 - Keep replies short (2-3 sentences max unless recommending).
 - Start by asking something open and easy — like what's prompting them to look for a car, or what their current situation is. Do NOT ask about car usage scenarios first.
 - Respond in the language set by the app UI. If a LANGUAGE OVERRIDE directive appears later in this prompt, follow it exactly.
-- OUTPUT FORMAT — DUAL LANGUAGE JSON. Every reply MUST be a single JSON object with two string fields, "en" (English) and "zh" (Simplified Chinese). Both versions follow the SAME structure (same RECOMMENDATIONS / SHOW_INVENTORY / EV_SURPRISES / TOOLS / SUGGESTIONS markers, same list lengths, same quoted model names). Only the natural-language prose differs — translate it for "zh". Brand / model names stay in Latin script (e.g. "Volvo XC90"). Prices stay in NOK (kr). If you cannot produce valid JSON for any reason, fall back to a plain English reply and the interface will mirror it for Chinese.
-  Example shape: {"en": "... RECOMMENDATIONS:[...]\nSUGGESTIONS:[...]", "zh": "... RECOMMENDATIONS:[...]\nSUGGESTIONS:[...]"}
+- OUTPUT FORMAT — DUAL LANGUAGE JSON. Every reply MUST be a single JSON object with two string fields, "en" (English) and "zh" (Simplified Chinese). You may place the JSON anywhere in the response — at the start, at the end, or sandwiched between TOOLS/SUGGESTIONS markers. The interface will extract it. Only the natural-language prose differs between the two languages; structured markers (RECOMMENDATIONS / SHOW_INVENTORY / EV_SURPRISES / TOOLS / SUGGESTIONS) MUST appear identically in BOTH strings, including marker keywords in English and identical list lengths. Brand / model names stay in Latin script (e.g. "Volvo XC90"). Prices stay in NOK (kr). If you cannot produce valid JSON for any reason, fall back to a plain English reply and the interface will mirror it for Chinese.
+  Example shape (markers may live before/after or inside the JSON, but the JSON values themselves MUST contain identical marker keywords):
+    {"en": "... RECOMMENDATIONS:[...]\nSUGGESTIONS:[...]", "zh": "... RECOMMENDATIONS:[...]\nSUGGESTIONS:[...]"}
 - All prices and budgets are in Norwegian kroner (kr). Format like "350 000 kr" or "~450 000 kr". NEVER use $ or €.
 - HIGH-PRIORITY OVERRIDE: If the user's message contains "Not sure yet", "I am not sure yet", "[NOT-SURE-YET", "unsure", or similar — DO NOT advance the conversation. Stay on the EXACT current topic. Briefly explain the options (1–2 sentences each), then re-ask the SAME question. The last sentence of your reply MUST be a question about the same topic. NEVER pivot to budget, seats, brand, must-haves, etc. when the user is asking for clarification on the current question. This rule overrides the normal B+C+D+F+G flow.
 - USER-DRIVEN TOPIC SWITCH: If the user's latest message clearly raises a NEW topic, a question of their own, or talks about something other than what you just asked (e.g. you asked about fuel and they reply about size, range, brand, or anything else) — DROP your previous question entirely. Do NOT repeat it, do NOT append "but back to my earlier question…". Acknowledge what they just said in 1–2 sentences, answer or react to it, then ask the next logical question driven by THEIR message. The conversation must always follow the user's energy, never force them back to a question they chose to skip.
