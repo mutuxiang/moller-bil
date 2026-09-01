@@ -2356,6 +2356,12 @@ body.mode-learning .col-spacer.right {
   color: var(--cream-100);
   margin-bottom: 24px;
 }
+/* 汉字是方块字，1.06 的行距会让两行挤在一起 —— 中文放大到 1.5。
+   两行内容约 3em，仍落在 .app.is-onboarding 预留的 4.2em 内，布局不会跳动。 */
+html[lang="zh-CN"] .hero-headline {
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
 .hero-headline u {
   text-decoration: underline 3.5px var(--salmon);
   text-underline-offset: 7px;
@@ -5254,7 +5260,7 @@ function startOnboardingIntro(options = {}) {
   // Run one message: type forward → linger → reverse-type → tiny pause → next
   function playOne(idx, isFirstPass) {
     if (_onboardingLoopStopped) { clearTimeout(safetyTimer); return; }
-    typeHtml(headline, _heroMessages[idx], 22, () => {
+    typeHtml(headline, _heroMessages[idx], heroTypeDelay(), () => {
       if (_onboardingLoopStopped) { clearTimeout(safetyTimer); return; }
       // After the LAST message types out on the first pass, reveal the CTAs.
       // The user can click immediately; the rotation keeps going behind.
@@ -5264,7 +5270,7 @@ function startOnboardingIntro(options = {}) {
       }
       setTimeout(() => {
         if (_onboardingLoopStopped) return;
-        reverseTypeHtml(headline, 10, () => {
+        reverseTypeHtml(headline, heroReverseDelay(), () => {
           if (_onboardingLoopStopped) return;
           setTimeout(() => {
             if (_onboardingLoopStopped) return;
@@ -5273,7 +5279,7 @@ function startOnboardingIntro(options = {}) {
             playOne(nextIdx, stillFirst);
           }, 380);
         });
-      }, (isFirstPass && idx === _heroMessages.length - 1) ? 4200 : 3200);  /* longer linger so each line breathes */
+      }, heroLingerMs(isFirstPass && idx === _heroMessages.length - 1));
     });
   }
 
@@ -5291,6 +5297,23 @@ function startOnboardingIntro(options = {}) {
   };
 
   playOne(0, true);
+}
+
+// Typewriter cadence — CJK glyphs carry far more information per character
+// than Latin letters, so the same per-character delay *feels* much faster in
+// Chinese (a whole sentence is ~40 glyphs vs ~100 letters). Slow the cadence
+// down for zh so the hero reads at a comfortable, legible pace.
+function heroTypeDelay() {
+  return (currentLang === 'zh') ? 62 : 22;
+}
+function heroReverseDelay() {
+  return (currentLang === 'zh') ? 26 : 10;
+}
+// How long a finished line lingers before it starts erasing. Chinese readers
+// get a little longer to take the line in.
+function heroLingerMs(isLast) {
+  const base = isLast ? 4200 : 3200;
+  return (currentLang === 'zh') ? base + 900 : base;
 }
 
 // Typewriter — forward. Renders by visible-character count so partial HTML
@@ -7090,7 +7113,7 @@ function appendAIMessage(text, onDone, opts) {
   // We reveal `full` (formatted HTML) character by character, but HTML tags
   // are emitted atomically — never as separate `<`, `s`, `t`, `r`, `o`... chars.
   // We also skip over HTML entities like `&amp;` so they appear as one glyph.
-  const CHAR_DELAY = 18; // ms per visible character (~55 cps — readable but quick)
+  const CHAR_DELAY = (currentLang === 'zh') ? 40 : 18; // CJK glyphs carry more info per char — slower for zh
   let i = 0;
   let cancelled = false;
 
