@@ -3863,6 +3863,17 @@ const I18N = {
     'v2.recs.title.default':  'In stock right now',
     'v2.recs.sub':            'Popular in the Oslo area',
     'v2.recs.title.matched':  'Matched for your needs',
+    'v2.recs.title.brand':    'Top {brand} picks',
+    'v2.recs.title.fuel':     'Top {fuel} picks',
+    'v2.recs.title.seats':    'Cars with {seats} seats',
+    'v2.recs.title.size':     'Top {size} picks',
+    'v2.recs.title.budget':   'Within your budget',
+    // Fuel-type display labels (filter option values are stored as English
+    // keys — map them to readable labels in both languages).
+    'fuel.electric':          'Electric',
+    'fuel.hybrid':            'Hybrid',
+    'fuel.petrol':            'Petrol',
+    'fuel.diesel':            'Diesel',
     'v2.vizEmpty':            'Visualizations appear here as we discuss budget, size, fuel and more.',
     'v2.stateFinding':        'Finding picks in stock…',
     'v2.stateRefine':         'Tell me more so I can refine these picks.',
@@ -4043,6 +4054,15 @@ const I18N = {
     'v2.recs.title.default':  '当前在售',
     'v2.recs.sub':            '奥斯陆地区的热门车',
     'v2.recs.title.matched':  '为你匹配',
+    'v2.recs.title.brand':    '{brand} 热门车型',
+    'v2.recs.title.fuel':     '热门{fuel}车型',
+    'v2.recs.title.seats':    '{seats} 座车型',
+    'v2.recs.title.size':     '热门{size}车型',
+    'v2.recs.title.budget':   '符合你预算的车型',
+    'fuel.electric':          '纯电',
+    'fuel.hybrid':            '混动',
+    'fuel.petrol':            '汽油',
+    'fuel.diesel':            '柴油',
     'v2.vizEmpty':            '随着我们讨论预算、车型、能源等，可视化内容会显示在这里。',
     'v2.stateFinding':        '正在查找在售车辆…',
     'v2.stateRefine':         '告诉我更多细节，我会为你收窄推荐范围。',
@@ -9437,12 +9457,13 @@ function showToast(msg) {
 
       const recsHead = document.createElement('div');
       recsHead.className = 'v2-dock-section-head';
-      // Two-line header per design: orange eyebrow + small white subtitle.
-      // (The big "In stock right now" title was removed — user wants just
-      // "Live recommendations" + "Popular in the Oslo area".)
+      // Header mirrors the viz section's structure: orange eyebrow + big
+      // cream title (same .v2-dock-section-title styling as "What we're
+      // discussing"). The title text is dynamic — v2RenderLiveRecsAsInv()
+      // rewrites it from the conversation state on every re-render.
       recsHead.innerHTML = `
         <span class="v2-dock-section-eyebrow" data-i18n="v2.recs.eyebrow">Live recommendations</span>
-        <span class="v2-dock-section-sub" data-i18n="v2.recs.sub">Popular in the Oslo area</span>
+        <h2 class="v2-dock-section-title" data-i18n="v2.recs.sub">Popular in the Oslo area</h2>
       `;
       heroBottom.insertBefore(recsHead, heroBottom.firstChild);
       // Apply i18n to the freshly-inserted head so a Chinese user sees the
@@ -9986,6 +10007,14 @@ function showToast(msg) {
   function v2RewireRecCardClicks() {}
 
   function v2RenderLiveRecsAsInv() {
+    // Always refresh the headline FIRST — even when inventory is still loading
+    // or there are no matches yet, the section header should still reflect
+    // the conversation state. (Function declarations hoist, so both helpers
+    // below are safe to call from here.)
+    const recsTitleEl = document.querySelector('body.v2-layout .hero-bottom .v2-dock-section-title');
+    if (recsTitleEl) {
+      recsTitleEl.textContent = v2DeriveRecsTitle();
+    }
     const heroRecsBody = document.getElementById('heroRecsBody');
     if (!heroRecsBody) return;
     if (!inventoryLoaded) {
@@ -10005,13 +10034,6 @@ function showToast(msg) {
     heroRecsBody.innerHTML = '';
     const baseReasons = v2DeriveRecReasons();
     const hasFilters = baseReasons.length > 0;
-    // Update the "Live recommendations" section title to reflect context
-    const titleEl = document.querySelector('body.v2-layout .hero-bottom .v2-dock-section-title');
-    if (titleEl) {
-      titleEl.textContent = hasFilters
-        ? t('v2.recs.title.matched')
-        : t('v2.recs.title.default');
-    }
     cars.forEach(rec => {
       const matches = (typeof matchInventory === 'function') ? matchInventory(rec.name) : [];
       if (!matches.length) return;
@@ -10053,6 +10075,43 @@ function showToast(msg) {
       if (!(lo === 50000 && hi === 1500000)) parts.push(t('v2.reason.budget'));
     }
     return parts;
+  }
+
+  // Map a stored fuel filter value ('Electric', 'Hybrid', …) to a readable,
+  // localized label. Falls back to the raw value when it isn't one we know.
+  function localizeFuel(fuel) {
+    const key = String(fuel || '').toLowerCase();
+    if (key === 'electric') return t('fuel.electric');
+    if (key === 'hybrid')   return t('fuel.hybrid');
+    if (key === 'petrol')   return t('fuel.petrol');
+    if (key === 'diesel')   return t('fuel.diesel');
+    return String(fuel || '');
+  }
+
+  // Derive the "Live recommendations" headline from the conversation state.
+  // Priority mirrors v2DeriveRecReasons() so the headline and the per-card
+  // reason tell a consistent story as the user answers more questions.
+  // Falls back to the generic "Popular in the Oslo area" before any filters
+  // are confirmed.
+  function v2DeriveRecsTitle() {
+    const get = (k) => (typeof getConfirmedOptionsForGroup === 'function')
+      ? getConfirmedOptionsForGroup(k)
+      : [];
+    const brands = get('brand');
+    if (brands.length) return t('v2.recs.title.brand', { brand: brands[0] });
+    const fuels = get('fuel');
+    if (fuels.length) return t('v2.recs.title.fuel', { fuel: localizeFuel(fuels[0]) });
+    const seats = get('seats');
+    if (seats.length) return t('v2.recs.title.seats', { seats: seats[0] });
+    const sizes = get('size');
+    if (sizes.length) return t('v2.recs.title.size', { size: sizes[0] });
+    const sMin = document.getElementById('budgetMin');
+    const sMax = document.getElementById('budgetMax');
+    if (sMin && sMax) {
+      const lo = parseInt(sMin.value, 10), hi = parseInt(sMax.value, 10);
+      if (!(lo === 50000 && hi === 1500000)) return t('v2.recs.title.budget');
+    }
+    return t('v2.recs.sub');   // "Popular in the Oslo area"
   }
 
   // Shared COMPACT card builder — same SIZE as the previous v2 rec cards
