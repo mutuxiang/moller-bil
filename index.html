@@ -9362,12 +9362,16 @@ function showToast(msg) {
       hero.insertBefore(vizSection, heroBottom);
 
       // Empty-state placeholder — translate via JS so language switches work.
+      // NOTE: the dictionary uses FLAT keys ('v2.vizEmpty'), so the old
+      // `I18N.en.v2.vizEmpty` threw a TypeError (I18N.en.v2 is undefined)
+      // and silently aborted the rest of v2BuildLayout — which is why the
+      // "Live recommendations" header below was never inserted. Use t().
       const vizBody = vizSection.querySelector('#v2VizBody');
       if (vizBody && vizBody.children.length === 0) {
         const ph = document.createElement('div');
         ph.className = 'v2-viz-empty';
         ph.setAttribute('data-i18n', 'v2.vizEmpty');
-        ph.textContent = I18N[currentLang]?.v2?.vizEmpty || I18N.en.v2.vizEmpty;
+        ph.textContent = t('v2.vizEmpty');
         vizBody.appendChild(ph);
       }
 
