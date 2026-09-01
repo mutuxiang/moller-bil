@@ -3861,7 +3861,7 @@ const I18N = {
     'v2.viz.title':           "What we're discussing",
     'v2.recs.eyebrow':        'Live recommendations',
     'v2.recs.title.default':  'In stock right now',
-    'v2.recs.sub':            'Popular picks near you',
+    'v2.recs.sub':            'Popular in the Oslo area',
     'v2.recs.title.matched':  'Matched for your needs',
     'v2.vizEmpty':            'Visualizations appear here as we discuss budget, size, fuel and more.',
     'v2.stateFinding':        'Finding picks in stock…',
@@ -4041,7 +4041,7 @@ const I18N = {
     'v2.viz.title':           '我们正在讨论的内容',
     'v2.recs.eyebrow':        '实时推荐',
     'v2.recs.title.default':  '当前在售',
-    'v2.recs.sub':            '你附近的热门车',
+    'v2.recs.sub':            '奥斯陆地区的热门车',
     'v2.recs.title.matched':  '为你匹配',
     'v2.vizEmpty':            '随着我们讨论预算、车型、能源等，可视化内容会显示在这里。',
     'v2.stateFinding':        '正在查找在售车辆…',
@@ -4245,13 +4245,34 @@ function deepseekText(data) {
 }
 
 // Send a chat-completion request to the configured backend. Returns the dual
-// {en, zh} pair ready for downstream parsing.
+// {en, zh} pair ready for downstream parsing. Each request has a 25s timeout
+// so a stuck upstream can't leave the chat in a half-streamed state forever.
 async function callAssistant(allMessages, maxTokens) {
-  if (ACTIVE_BACKEND === 'deepseek') {
-    const resp = await fetch(DEEPSEEK_URL, {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 25000);
+  try {
+    if (ACTIVE_BACKEND === 'deepseek') {
+      const resp = await fetch(DEEPSEEK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(toDeepSeekBody(allMessages, maxTokens)),
+        signal: ctrl.signal,
+      });
+      if (!resp.ok) {
+        const errBody = await resp.text();
+        let errMsg = `HTTP ${resp.status}`;
+        try { errMsg = JSON.parse(errBody).error?.message || errMsg; } catch(e) {}
+        throw new Error(errMsg);
+      }
+      const data = await resp.json();
+      return deepseekText(data);
+    }
+    // Default: Gemini backend
+    const resp = await fetch(GEMINI_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(toDeepSeekBody(allMessages, maxTokens)),
+      body: JSON.stringify(toGeminiBody(allMessages, maxTokens)),
+      signal: ctrl.signal,
     });
     if (!resp.ok) {
       const errBody = await resp.text();
@@ -4260,22 +4281,10 @@ async function callAssistant(allMessages, maxTokens) {
       throw new Error(errMsg);
     }
     const data = await resp.json();
-    return deepseekText(data);
+    return geminiText(data);
+  } finally {
+    clearTimeout(timer);
   }
-  // Default: Gemini backend
-  const resp = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(toGeminiBody(allMessages, maxTokens)),
-  });
-  if (!resp.ok) {
-    const errBody = await resp.text();
-    let errMsg = `HTTP ${resp.status}`;
-    try { errMsg = JSON.parse(errBody).error?.message || errMsg; } catch(e) {}
-    throw new Error(errMsg);
-  }
-  const data = await resp.json();
-  return geminiText(data);
 }
 
 // Convert OpenAI-style {role, content} messages into Gemini's {systemInstruction, contents}
@@ -5640,6 +5649,17 @@ function getGreetingForMode(mode) {
 
 function showOnboarding() {
   onboardingStep = 0;
+  // Defensive cleanup — nuke any orphan empty AI bubbles left from a
+  // previous session before we add the new greeting, so the user never
+  // sees an empty placeholder sitting above the real one.
+  const stream = document.getElementById('stream');
+  if (stream) {
+    stream.querySelectorAll('#typingMsg').forEach(el => el.remove());
+    stream.querySelectorAll('.msg.ai').forEach(el => {
+      const bub = el.querySelector('.bub');
+      if (!bub || !bub.textContent.trim()) el.remove();
+    });
+  }
   const { text, chips } = getGreetingForMode(conversationMode);
   // Append the AI greeting bubble (typewriter), then drop the quick-reply
   // chips into the composer when typing finishes.
@@ -7572,6 +7592,10 @@ function cleanAssistantText(rawText) {
   let working = String(rawText || '');
   // Drop a leading TOOLS:[...] line if present.
   working = working.replace(/^TOOLS:\s*\[.*?\]\s*/m, '').trim();
+  // Drop a leading bare ["..."] array — DeepSeek sometimes omits the
+  // "TOOLS:" keyword and emits just the JSON array on its own line.
+  // Match either ["..."], ["..","..","..."], or single-line arrays.
+  working = working.replace(/^\s*\[\s*"[^"]+"(?:\s*,\s*"[^"]+")*\s*\]\s*/m, '');
   // Drop an EV_SURPRISES block (everything up to SUGGESTIONS or end-of-string).
   working = working.replace(/EV_SURPRISES:[\s\S]*?(?=SUGGESTIONS:|$)/i, '').trim();
   // Drop a SUGGESTIONS:[...] block (single-line or multi-line).
@@ -9355,6 +9379,13 @@ function showToast(msg) {
         <span class="v2-dock-section-sub" data-i18n="v2.recs.sub">Popular picks near you</span>
       `;
       heroBottom.insertBefore(recsHead, heroBottom.firstChild);
+      // Apply i18n to the freshly-inserted head so a Chinese user sees the
+      // translated text immediately, not the English fallback. Without this
+      // step applyI18n() only runs at init or on language toggle, so the
+      // head would stay in English until the user clicks the language button.
+      recsHead.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.getAttribute('data-i18n'));
+      });
     }
 
     // First paint
