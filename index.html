@@ -4233,6 +4233,20 @@ function toDeepSeekBody(allMessages, maxTokens) {
   };
 }
 
+// Convert the in-app `messages` array into an API-safe shape. Assistant
+// entries store a dual {en, zh} object for language toggling, but BOTH the
+// Gemini and DeepSeek APIs only accept a plain string in `content` — sending
+// the raw object is what caused "messages[N]: content should be a string"
+// deserialize errors on the second chat turn. Normalize every entry here.
+function toApiMessages(messages) {
+  return (messages || []).map(m => ({
+    role: m.role,
+    content: (m.content && typeof m.content === 'object')
+      ? pickAIVersion(m.content)
+      : String(m.content || ''),
+  }));
+}
+
 // Extract text from a DeepSeek /chat/completions response and parse it as a
 // dual-language pair. Same shape as geminiText() but reads from
 // `choices[0].message.content` instead of `candidates[0].content.parts`.
@@ -8808,7 +8822,7 @@ async function sendMessage() {
     const allMessages = [
       { role: 'system', content: SYSTEM_PROMPT + langDirective() },
       ...(inv ? [{ role: 'system', content: inv }] : []),
-      ...messages,
+      ...toApiMessages(messages),
     ];
     const aiDual = await callAssistant(allMessages, 800);   // routes to ACTIVE_BACKEND
     const aiRaw  = pickAIVersion(aiDual);
