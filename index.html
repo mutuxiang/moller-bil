@@ -3859,6 +3859,9 @@ const I18N = {
     // ── V2 dock sections + dynamic surfaces ──
     'v2.viz.eyebrow':         'Live visualization',
     'v2.viz.title':           "What we're discussing",
+    // Intro state: shown before any topic has been discussed. Once a real
+    // visualization lands, v2UpdateVizTitle swaps in the topic-specific key.
+    'v2.viz.title.intro':     'What you might care about',
     'v2.recs.eyebrow':        'Live recommendations',
     'v2.recs.title.default':  'In stock right now',
     'v2.recs.sub':            'Popular in the Oslo area',
@@ -3874,6 +3877,21 @@ const I18N = {
     'fuel.hybrid':            'Hybrid',
     'fuel.petrol':            'Petrol',
     'fuel.diesel':            'Diesel',
+    'fuel.pluginHybrid':      'Plug-in hybrid',
+    'fuel.ev':                'EV',
+    // Fuel card taxonomy labels + stat row labels. The intro visualization is
+    // painted on first entry, so these need to be translated too.
+    'fuel.tag.traditional':   'Traditional',
+    'fuel.tag.selfCharging':  'Self-charging',
+    'fuel.tag.plugin':        'Plug-in',
+    'fuel.tag.electric':      'Electric',
+    'fuel.range':             'Range',
+    'fuel.refill':            'Refill / charge',
+    'fuel.co2':               'CO₂',
+    'fuel.upTo':              'Up to {v}',
+    'fuel.fill.pump':         '~3 min',
+    'fuel.fill.plugin':       '~4 h home / 3 min petrol',
+    'fuel.fill.ev':           '~20 min fast charge',
     'v2.vizEmpty':            'Visualizations appear here as we discuss budget, size, fuel and more.',
     'v2.stateFinding':        'Finding picks in stock…',
     'v2.stateRefine':         'Tell me more so I can refine these picks.',
@@ -4050,6 +4068,7 @@ const I18N = {
     // ── V2 右侧面板与动态文本 ──
     'v2.viz.eyebrow':         '实时可视化',
     'v2.viz.title':           '我们正在讨论的内容',
+    'v2.viz.title.intro':     '你可能在意的',
     'v2.recs.eyebrow':        '实时推荐',
     'v2.recs.title.default':  '当前在售',
     'v2.recs.sub':            '奥斯陆地区的热门车',
@@ -4063,6 +4082,21 @@ const I18N = {
     'fuel.hybrid':            '混动',
     'fuel.petrol':            '汽油',
     'fuel.diesel':            '柴油',
+    'fuel.pluginHybrid':      '插电混动',
+    'fuel.ev':                '纯电',
+    'fuel.tag.traditional':   '传统动力',
+    'fuel.tag.selfCharging':  '自充电',
+    'fuel.tag.plugin':        '插电',
+    // '电动' rather than '纯电': the EV row already prints 纯电 as its name,
+    // and identical tag+name reads like a rendering bug.
+    'fuel.tag.electric':      '电动',
+    'fuel.range':             '续航',
+    'fuel.refill':            '补能 / 充电',
+    'fuel.co2':               'CO₂',
+    'fuel.upTo':              '最高 {v}',
+    'fuel.fill.pump':         '约 3 分钟',
+    'fuel.fill.plugin':       '家充约 4 小时 / 加油约 3 分钟',
+    'fuel.fill.ev':           '快充约 20 分钟',
     'v2.vizEmpty':            '随着我们讨论预算、车型、能源等，可视化内容会显示在这里。',
     'v2.stateFinding':        '正在查找在售车辆…',
     'v2.stateRefine':         '告诉我更多细节，我会为你收窄推荐范围。',
@@ -4161,9 +4195,12 @@ function setLang(lang) {
   if (typeof v2RenderLiveRecsAsInv === 'function') v2RenderLiveRecsAsInv();
   if (typeof v2RenderToldStrip === 'function') v2RenderToldStrip();
   if (typeof renderHeroToldPanel === 'function') renderHeroToldPanel();
+  // V2 viz dock: refresh its title (intro copy ↔ topic copy) and, while still
+  // in intro state, rebuild the primer cards in the new language.
+  if (typeof v2RefreshVizTitle === 'function') v2RefreshVizTitle();
   // V2 viz body empty placeholder (only if currently empty)
   const vizBody = document.getElementById('v2VizBody');
-  if (vizBody) {
+  if (vizBody && !v2VizIntroActive) {
     const placeholder = vizBody.querySelector('.v2-viz-empty');
     if (placeholder) placeholder.textContent = t('v2.vizEmpty');
     else if (vizBody.children.length === 0) {
@@ -7715,17 +7752,21 @@ function stripEVSurprisesBlock(text) {
 }
 
 // ── Fuel-type comparison cards (renders when the AI is asking about fuel) ──
+// Text fields hold i18n KEYS (not final strings) so the same data can be
+// re-translated on every language switch — the intro visualization paints
+// immediately on entry, so nothing here may be hardcoded English.
 const FUEL_CARDS = [
-  { tag:'Traditional',   name:'Petrol',         cost:1450, range:'Up to 750 km',   fill:'~3 min',                  co2:'150 g/km', glyph:'fossil' },
-  { tag:'Traditional',   name:'Diesel',         cost:1280, range:'Up to 1 100 km', fill:'~3 min',                  co2:'135 g/km', glyph:'fossil' },
-  { tag:'Self-charging', name:'Hybrid',         cost:1120, range:'Up to 900 km',   fill:'~3 min',                  co2:'105 g/km', glyph:'blend' },
-  { tag:'Plug-in',       name:'Plug-in hybrid', cost: 870, range:'Up to 750 km',   fill:'~4 h home / 3 min petrol', co2:'45 g/km',  glyph:'blend',    tinted:true },
-  { tag:'Electric',      name:'EV',             cost: 320, range:'Up to 500 km',   fill:'~20 min fast charge',     co2:'0 g/km',   glyph:'electric', tinted:true, accent:true },
+  { tag:'fuel.tag.traditional',  name:'fuel.petrol',        cost:1450, range:'750 km', fill:'fuel.fill.pump',   co2:'150 g/km', glyph:'fossil' },
+  { tag:'fuel.tag.traditional',  name:'fuel.diesel',        cost:1280, range:'1 100 km', fill:'fuel.fill.pump', co2:'135 g/km', glyph:'fossil' },
+  { tag:'fuel.tag.selfCharging', name:'fuel.hybrid',        cost:1120, range:'900 km', fill:'fuel.fill.pump',   co2:'105 g/km', glyph:'blend' },
+  { tag:'fuel.tag.plugin',       name:'fuel.pluginHybrid',  cost: 870, range:'750 km', fill:'fuel.fill.plugin', co2:'45 g/km',  glyph:'blend',    tinted:true },
+  { tag:'fuel.tag.electric',     name:'fuel.ev',            cost: 320, range:'500 km', fill:'fuel.fill.ev',     co2:'0 g/km',   glyph:'electric', tinted:true, accent:true },
 ];
 
-function renderFuelCards(msgEl) {
-  const content = msgEl.querySelector('.msg-content');
-  if (content.querySelector('.fuel-cards')) return; // don't double-render
+// Build the 5-card fuel comparison grid. Shared by renderFuelCards() (chat
+// bubble) and v2RenderVizIntro() (right-dock intro state) so both paths can
+// never drift apart.
+function buildFuelCardsNode() {
   const wrap = document.createElement('div');
   wrap.className = 'fuel-cards';
   const maxCost = Math.max(...FUEL_CARDS.map(f => f.cost));
@@ -7735,8 +7776,8 @@ function renderFuelCards(msgEl) {
     card.className = 'fuel-card' + (f.accent ? ' accent' : '') + (f.tinted ? ' tinted' : '');
     card.innerHTML = `
       <div class="fuel-card-head">
-        <span class="fuel-tag">${escapeHtml(f.tag)}</span>
-        <span class="fuel-name">${escapeHtml(f.name)}</span>
+        <span class="fuel-tag">${escapeHtml(t(f.tag))}</span>
+        <span class="fuel-name">${escapeHtml(t(f.name))}</span>
       </div>
       <div class="fuel-glyph">${fuelGlyphSvg(f.glyph, !!f.accent)}</div>
       <div class="fuel-cost">
@@ -7745,14 +7786,53 @@ function renderFuelCards(msgEl) {
         <span class="fuel-cost-num">${f.cost.toLocaleString('nb-NO')} kr</span>
       </div>
       <div class="fuel-stats">
-        <div class="fuel-row"><span>Range</span><span>${escapeHtml(f.range)}</span></div>
-        <div class="fuel-row"><span>Refill / charge</span><span>${escapeHtml(f.fill)}</span></div>
-        <div class="fuel-row"><span>CO₂</span><span>${escapeHtml(f.co2)}</span></div>
+        <div class="fuel-row"><span>${escapeHtml(t('fuel.range'))}</span><span>${escapeHtml(t('fuel.upTo', { v: f.range }))}</span></div>
+        <div class="fuel-row"><span>${escapeHtml(t('fuel.refill'))}</span><span>${escapeHtml(t(f.fill))}</span></div>
+        <div class="fuel-row"><span>${escapeHtml(t('fuel.co2'))}</span><span>${escapeHtml(f.co2)}</span></div>
       </div>
     `;
     wrap.appendChild(card);
   });
-  content.appendChild(wrap);
+  return wrap;
+}
+
+// True while the viz dock still shows the intro (topic-agnostic) fuel primer.
+// Flipped to false by v2UpdateVizTitle once a real conversation viz lands.
+let v2VizIntroActive = true;
+
+// Paint the intro fuel visualization into the right dock. No-op once the
+// conversation has produced its own visualization.
+function v2RenderVizIntro() {
+  const dock = document.getElementById('v2VizBody');
+  if (!dock || !v2VizIntroActive) return;
+  dock.innerHTML = '';
+  dock.appendChild(buildFuelCardsNode());
+  const wrap = dock.querySelector('.fuel-cards');
+  if (!wrap) return;
+  // Restart the staggered slide-up animation (appendChild alone won't
+  // re-trigger CSS animations on freshly built nodes).
+  wrap.style.animation = 'none';
+  Array.from(wrap.children).forEach(el => { el.style.animation = 'none'; });
+  void wrap.offsetHeight;
+  wrap.style.animation = '';
+  Array.from(wrap.children).forEach(el => { el.style.animation = ''; });
+}
+
+// Which viz title to render: the intro copy before anything has been
+// discussed, then whichever topic key the latest visualization maps to.
+// Driven entirely from JS (the <h2> carries no data-i18n) so that applyI18n()
+// can't clobber it back to a static default on language switches.
+let v2VizTitleKey = 'v2.viz.title.intro';
+
+function v2ApplyVizTitle() {
+  const el = document.querySelector('.v2-viz-wrap .v2-dock-section-title');
+  if (el) el.textContent = t(v2VizTitleKey);
+}
+
+function renderFuelCards(msgEl) {
+  const content = msgEl.querySelector('.msg-content');
+  if (content.querySelector('.fuel-cards')) return; // don't double-render
+  content.appendChild(buildFuelCardsNode());
   // Break out of the bubble's narrow max-width so cards have room to breathe
   const msg = msgEl.classList ? msgEl : null;
   if (msg) msg.classList.add('has-fuel');
@@ -9428,7 +9508,7 @@ function showToast(msg) {
       vizSection.innerHTML = `
         <div class="v2-dock-section-head">
           <span class="v2-dock-section-eyebrow" data-i18n="v2.viz.eyebrow">Live visualization</span>
-          <h2 class="v2-dock-section-title" data-i18n="v2.viz.title">What we're discussing</h2>
+          <h2 class="v2-dock-section-title">What you might care about</h2>
         </div>
         <div id="v2VizBody"></div>
       `;
@@ -9440,19 +9520,26 @@ function showToast(msg) {
       vizSection.querySelectorAll('[data-i18n]').forEach(el => {
         el.textContent = t(el.getAttribute('data-i18n'));
       });
+      // The title deliberately carries NO data-i18n: it is driven entirely by
+      // v2VizTitleKey (intro copy → topic copy as the conversation moves).
+      // applyI18n() would otherwise reset it back to the static default on
+      // every language toggle. v2ApplyVizTitle() handles both cases.
+      v2ApplyVizTitle();
 
-      // Empty-state placeholder — translate via JS so language switches work.
-      // NOTE: the dictionary uses FLAT keys ('v2.vizEmpty'), so the old
-      // `I18N.en.v2.vizEmpty` threw a TypeError (I18N.en.v2 is undefined)
-      // and silently aborted the rest of v2BuildLayout — which is why the
-      // "Live recommendations" header below was never inserted. Use t().
+      // Entry state: prime the dock with the fuel-type comparison so users see
+      // what this panel is for before any question has been answered. Falls
+      // back to the empty-state note once the conversation owns the dock.
       const vizBody = vizSection.querySelector('#v2VizBody');
       if (vizBody && vizBody.children.length === 0) {
-        const ph = document.createElement('div');
-        ph.className = 'v2-viz-empty';
-        ph.setAttribute('data-i18n', 'v2.vizEmpty');
-        ph.textContent = t('v2.vizEmpty');
-        vizBody.appendChild(ph);
+        if (v2VizIntroActive) {
+          v2RenderVizIntro();
+        } else {
+          const ph = document.createElement('div');
+          ph.className = 'v2-viz-empty';
+          ph.setAttribute('data-i18n', 'v2.vizEmpty');
+          ph.textContent = t('v2.vizEmpty');
+          vizBody.appendChild(ph);
+        }
       }
 
       const recsHead = document.createElement('div');
@@ -10311,7 +10398,9 @@ function showToast(msg) {
   }
 
   // Update the viz section's title to match the type of card that just
-  // appeared. Called from relocateLatest with the kindLabel hint.
+  // appeared. Called from relocateLatest with the kindLabel hint. The first
+  // real visualization also ends the intro state — from here the dock belongs
+  // to the conversation, and the intro fuel primer never comes back.
   window.v2UpdateVizTitle = function(kindLabel) {
     const titleEl = document.querySelector('.v2-viz-wrap .v2-dock-section-title');
     if (!titleEl) return;
@@ -10322,7 +10411,17 @@ function showToast(msg) {
       'Recommended models': 'v2.vizTitle.recs',
     };
     const key = map[kindLabel];
-    titleEl.textContent = key ? t(key) : t('v2.viz.title');
+    if (key) { v2VizIntroActive = false; v2VizTitleKey = key; }
+    else if (v2VizIntroActive) v2VizTitleKey = 'v2.viz.title.intro';
+    else v2VizTitleKey = 'v2.viz.title';
+    titleEl.textContent = t(v2VizTitleKey);
+  };
+
+  // Re-apply the viz dock copy after a language switch: the current title key
+  // (intro or topic), and the intro cards if we're still in intro state.
+  window.v2RefreshVizTitle = function() {
+    v2ApplyVizTitle();
+    if (v2VizIntroActive) v2RenderVizIntro();
   };
 })();
 
