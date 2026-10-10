@@ -11,6 +11,14 @@
 @font-face { font-family: "Moller"; src: url("../fonts/Moller-BookItalic.otf") format("opentype"); font-weight: 450; font-style: italic; }
 @font-face { font-family: "Moller"; src: url("../fonts/Moller-Medium.otf") format("opentype"); font-weight: 500; font-style: normal; }
 @font-face { font-family: "Moller"; src: url("../fonts/Moller-MediumItalic.otf") format("opentype"); font-weight: 500; font-style: italic; }
+
+.vehicle-context-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px 0; }
+.vehicle-context-row[hidden] { display: none; }
+.vehicle-context-row .token { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.vehicle-context-row .token button { flex-shrink: 0; min-width: 24px; min-height: 24px; }
+.v2-card-actions.with-save .vehicle-add { grid-column: 1 / -1; }
+.vehicle-add:focus-visible, .vehicle-context-row button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
 </style>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -3628,6 +3636,7 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
           <div class="quick-chips" id="suggestionsBar"></div>
         </div>
         <div class="cbox">
+          <div class="vehicle-context-row" id="vehicleContextRow" aria-live="polite" hidden></div>
           <div class="tokens-row" id="tokensRow"></div>
           <textarea class="input-field" id="inputField" rows="1"
             placeholder="Tell the assistant what you need…" data-i18n-ph="input.placeholder"
@@ -3758,6 +3767,16 @@ const I18N = {
     'cta.eyebrow.learn': 'Just curious',
     'cta.label.learn':   'I just want to learn about cars',
     'quickReply':        'Quick reply',
+    'vehicle.add': '＋ Add to chat',
+    'vehicle.added': '✓ Added to chat',
+    'vehicle.remove': 'Remove {name} from chat',
+    'vehicle.followups': 'Quick follow-up',
+    'vehicle.fit': 'How well does it fit my needs?',
+    'vehicle.cost': 'What are the running costs?',
+    'vehicle.check': 'What should I look out for?',
+    'vehicle.compare': 'Compare these vehicles',
+    'vehicle.details': 'Tell me more about it',
+    'vehicle.about': 'About: {names}',
     'input.placeholder': 'Type your message…',
     'btn.send':          'Send',
     'hero.popularNear':  'Popular near you',
@@ -3967,6 +3986,16 @@ const I18N = {
     'cta.eyebrow.learn': '只是好奇',
     'cta.label.learn':   '我只是想了解汽车',
     'quickReply':        '快捷回复',
+    'vehicle.add': '＋ 加入对话',
+    'vehicle.added': '✓ 已加入对话',
+    'vehicle.remove': '从对话中移除 {name}',
+    'vehicle.followups': '快捷追问',
+    'vehicle.fit': '适合我的需求吗？',
+    'vehicle.cost': '日常用车成本如何？',
+    'vehicle.check': '购买时需要注意什么？',
+    'vehicle.compare': '对比这些车辆',
+    'vehicle.details': '详细介绍一下',
+    'vehicle.about': '追问车辆：{names}',
     'input.placeholder': '输入你的消息…',
     'btn.send':          '发送',
     'hero.popularNear':  '你附近的热门车',
@@ -4261,6 +4290,8 @@ function setLang(lang) {
       messages[idx].content = pickAIVersion(el._aiText);
     }
   });
+  renderVehicleContext();
+  if (selectedVehicles.length && !isStreaming) restoreQuickReplies();
   // If the tour overlay is currently showing, re-render the visible step so
   // its title/body reflect the new locale.
   if (document.querySelector('.ob-overlay') && typeof renderOnboardingStep === 'function') {
@@ -7229,6 +7260,107 @@ function resetFilters() {
   }
 }
 
+// Vehicle context is separate from preference tokens: selecting a listing must
+// not silently turn its price, fuel or seat count into shopping filters.
+let selectedVehicles = [];
+let vehicleFollowupTokens = new Set();
+
+function vehicleReference(it, modelName, modelOnly) {
+  const details = modelOnly ? { model: modelName } : {
+    model: modelName, listingId: it._raw?.id || null,
+    year: it.year, trim: it.trim, price: it.price, mileage: it.mileage,
+    fuel: it.fuel, range: it.range, seats: it.seats, location: it.location,
+  };
+  return {
+    key: modelOnly ? 'model:' + modelName : 'listing:' + (it._raw?.id || JSON.stringify(details)),
+    name: modelOnly ? modelName : [it.year, modelName, it.trim, it.price].filter(Boolean).join(' · '),
+    details,
+  };
+}
+
+function clearVehicleFollowupTokens() {
+  activeTokens = activeTokens.filter(label => !vehicleFollowupTokens.has(label));
+  vehicleFollowupTokens.forEach(label => delete activeTokenPayloads[label]);
+  vehicleFollowupTokens.clear();
+  renderTokens();
+}
+
+function addVehicleToChat(vehicle) {
+  if (!selectedVehicles.some(v => v.key === vehicle.key)) {
+    clearVehicleFollowupTokens();
+    selectedVehicles.push(vehicle);
+  }
+  renderVehicleContext();
+  restoreQuickReplies();
+  document.getElementById('inputField').focus();
+}
+
+function renderVehicleContext() {
+  const row = document.getElementById('vehicleContextRow');
+  row.replaceChildren();
+  row.hidden = !selectedVehicles.length;
+  selectedVehicles.forEach(vehicle => {
+    const tag = document.createElement('span');
+    tag.className = 'token';
+    tag.append(document.createTextNode(vehicle.name));
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = '×';
+    remove.setAttribute('aria-label', t('vehicle.remove', { name: vehicle.name }));
+    remove.onclick = () => {
+      clearVehicleFollowupTokens();
+      selectedVehicles = selectedVehicles.filter(v => v.key !== vehicle.key);
+      renderVehicleContext();
+      restoreQuickReplies();
+      document.getElementById('inputField').focus();
+    };
+    tag.appendChild(remove);
+    row.appendChild(tag);
+  });
+  document.querySelectorAll('[data-vehicle-key]').forEach(btn => {
+    const added = selectedVehicles.some(v => v.key === btn.dataset.vehicleKey);
+    btn.textContent = t(added ? 'vehicle.added' : 'vehicle.add');
+    btn.setAttribute('aria-pressed', String(added));
+  });
+  updateSend();
+}
+
+function renderVehicleFollowups() {
+  const wrap = document.getElementById('suggestionsWrap');
+  const bar = document.getElementById('suggestionsBar');
+  const label = wrap.querySelector('.quick-reply-label');
+  wrap.classList.remove('empty');
+  delete wrap.dataset.topic;
+  bar.classList.remove('quick-chips-diff');
+  bar.replaceChildren();
+  label.textContent = t('vehicle.followups');
+  label.classList.remove('is-loading', 'is-update');
+  const keys = ['vehicle.fit', 'vehicle.cost', 'vehicle.check',
+    selectedVehicles.length > 1 ? 'vehicle.compare' : 'vehicle.details'];
+  keys.forEach(key => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip';
+    const text = t(key);
+    btn.textContent = text;
+    btn.classList.toggle('on', activeTokens.includes(text));
+    btn.onclick = () => {
+      if (activeTokens.includes(text)) {
+        activeTokens = activeTokens.filter(token => token !== text);
+        delete activeTokenPayloads[text];
+        vehicleFollowupTokens.delete(text);
+        renderTokens();
+        updateSend();
+      } else {
+        addToken(text);
+        vehicleFollowupTokens.add(text);
+      }
+      renderVehicleFollowups();
+    };
+    bar.appendChild(btn);
+  });
+}
+
 // ── tokens ────────────────────────────────────────────────────────────────
 function addToken(label, payload) {
   if (!activeTokens.includes(label)) {
@@ -7461,6 +7593,7 @@ function renderQuickChips(suggestions, msgEl) {
   lastSuggestions = Array.isArray(suggestions) ? suggestions.slice() : [];
   // If sidebar is currently mid-edit, show the update diff instead of fresh chips
   if (pendingManualChange) { showUpdateDiff(); return; }
+  if (selectedVehicles.length) { renderVehicleFollowups(); return; }
   const bar = document.getElementById('suggestionsBar');
   const wrap = document.getElementById('suggestionsWrap');
   const label = wrap ? wrap.querySelector('.quick-reply-label') : null;
@@ -7611,6 +7744,9 @@ function showUpdateDiff() {
 
 // Put the original quick-reply chips back when dirty state clears
 function restoreQuickReplies() {
+  if (isStreaming) return;
+  if (pendingManualChange) { showUpdateDiff(); return; }
+  if (selectedVehicles.length) { renderVehicleFollowups(); return; }
   const bar  = document.getElementById('suggestionsBar');
   const wrap = document.getElementById('suggestionsWrap');
   if (!bar || !wrap) return;
@@ -8908,18 +9044,26 @@ async function sendMessage() {
   const input = document.getElementById('inputField');
   const text = input.value.trim();
   const tokens = [...activeTokens];
-  if (!text && tokens.length === 0) return;
+  const vehicles = selectedVehicles.map(v => ({ ...v }));
+  if (!text && tokens.length === 0 && !vehicles.length) return;
   const tokenPayloads = tokens.map(t => activeTokenPayloads[t] || t);
 
-  const combined = tokenPayloads.length > 0
+  const question = tokenPayloads.length > 0
     ? (tokenPayloads.join(', ') + (text ? '. ' + text : ''))
     : text;
+  const combined = vehicles.length
+    ? (question || t('vehicle.details')) + '\n\nSelected vehicles (reference data, not new shopping preferences):\n' +
+      JSON.stringify(vehicles.map(v => v.details)) +
+      '\nAnswer about these vehicles. Use only known listing facts; say when information is unavailable.'
+    : question;
   const isExplanationRequest = tokenPayloads.some(t => /I am not sure yet about/i.test(t));
 
-  appendUserMessage(text, tokens);
-  detectMode(combined);
+  appendUserMessage(vehicles.length
+    ? t('vehicle.about', { names: vehicles.map(v => v.name).join('; ') }) + '\n' + (text || (!tokens.length ? t('vehicle.details') : ''))
+    : text, tokens);
+  detectMode(question);
   if (conversationMode === 'shopping' && !isExplanationRequest) {
-    syncFiltersFromText(combined);
+    if (!vehicles.length) syncFiltersFromText(question);
   }
   // The message just shipped — clear any "un-sent edit" highlight and snapshot before the rebuild
   setDirty(false);
@@ -9404,11 +9548,14 @@ document.addEventListener('keydown', (e) => {
 function updateSend() {
   const input = document.getElementById('inputField');
   const btn = document.getElementById('btnSend');
-  const hasContent = input.value.trim().length > 0 || activeTokens.length > 0;
+  const hasContent = input.value.trim().length > 0 || activeTokens.length > 0 || selectedVehicles.length > 0;
   btn.disabled = !hasContent || isStreaming;
 }
 
 function resetAll() {
+  selectedVehicles = [];
+  clearVehicleFollowupTokens();
+  renderVehicleContext();
   messages = [];
   activeTokens = [];
   activeTokenPayloads = {};
@@ -10245,15 +10392,27 @@ function showToast(msg) {
         <div class="v2-card-price">${escapeHtml(it.price || '')}</div>
         ${subText ? `<div class="v2-card-sub">${escapeHtml(subText)}</div>` : ''}
         ${it.edge ? `<div class="v2-card-reason"><span class="v2-card-reason-label">${escapeHtml(t('inv.whyThisOne'))}</span> ${escapeHtml(it.edge)}</div>` : ''}
-        <div class="v2-card-actions${showSave ? '' : ' single'}">
+        <div class="v2-card-actions${showSave ? ' with-save' : ''}">
+          <button class="v2-card-save vehicle-add" type="button"></button>
           ${showSave ? `<button class="v2-card-save" type="button">${escapeHtml(t('inv.save'))}</button>` : ''}
           <button class="v2-card-cta" type="button">${escapeHtml(ctaLabel)}</button>
         </div>
       </div>
     `;
 
+    const vehicle = vehicleReference(it, modelName, !!opts.hideSave);
+    const addBtn = card.querySelector('.vehicle-add');
+    addBtn.dataset.vehicleKey = vehicle.key;
+    const added = selectedVehicles.some(v => v.key === vehicle.key);
+    addBtn.textContent = t(added ? 'vehicle.added' : 'vehicle.add');
+    addBtn.setAttribute('aria-pressed', String(added));
+    addBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addVehicleToChat(vehicle);
+    });
+
     const id = `${modelName} · ${it.year || ''} ${it.trim || ''}`.trim();
-    const saveBtn = card.querySelector('.v2-card-save');
+    const saveBtn = card.querySelector('.v2-card-save:not(.vehicle-add)');
     if (showSave && saveBtn) {
       if (typeof pinnedCars !== 'undefined' && pinnedCars.some(c => c.model === id)) {
         card.classList.add('pinned');
