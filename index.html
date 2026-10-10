@@ -3735,7 +3735,13 @@ const ACTIVE_BACKEND  = 'deepseek';     // 'deepseek' | 'gemini'
 
 // ── i18n (EN / 中文) ────────────────────────────────────────────────────
 // Current UI + chat language. Persisted to localStorage so a reload keeps it.
-let currentLang = (localStorage.getItem('mollerLang') || 'en');
+// The deployed build is English-only: the header language toggle is not part
+// of the product surface. Flip this to true to bring the toggle back (it also
+// re-enables localStorage persistence of the choice). Keeping the flag rather
+// than deleting the code means the bilingual work stays intact and revertible.
+const ENABLE_LANG_SWITCH = false;
+
+let currentLang = ENABLE_LANG_SWITCH ? (localStorage.getItem('mollerLang') || 'en') : 'en';
 if (currentLang !== 'zh') currentLang = 'en';
 
 // Translation dictionary. `en` is the source of truth; missing `zh` keys fall
@@ -4180,8 +4186,9 @@ function applyI18n() {
 
 // Switch language, persist, re-translate chrome, and refresh dynamic surfaces.
 function setLang(lang) {
-  currentLang = (lang === 'zh') ? 'zh' : 'en';
-  localStorage.setItem('mollerLang', currentLang);
+  if (!ENABLE_LANG_SWITCH) { currentLang = 'en'; }  // English-only build
+  else currentLang = (lang === 'zh') ? 'zh' : 'en';
+  if (ENABLE_LANG_SWITCH) localStorage.setItem('mollerLang', currentLang);
   applyI18n();
   // Tour steps + v2 dock strings are built dynamically — refresh them so a
   // mid-session switch picks the new language.
@@ -5348,6 +5355,15 @@ function tokenLabel(key, opt) {
 
 // ── init ─────────────────────────────────────────────────────────────────
 function init() {
+  // English-only build: drop the header language toggle entirely (no visible
+  // control = no switching surface) and forget any choice stored from an
+  // earlier bilingual build so a returning visitor can't land in Chinese.
+  if (!ENABLE_LANG_SWITCH) {
+    localStorage.removeItem('mollerLang');
+    const langBtn = document.getElementById('btnLang');
+    if (langBtn) langBtn.remove();
+    currentLang = 'en';
+  }
   applyI18n();
   buildSidebar();
   renderCollection();
