@@ -11,14 +11,6 @@
 @font-face { font-family: "Moller"; src: url("../fonts/Moller-BookItalic.otf") format("opentype"); font-weight: 450; font-style: italic; }
 @font-face { font-family: "Moller"; src: url("../fonts/Moller-Medium.otf") format("opentype"); font-weight: 500; font-style: normal; }
 @font-face { font-family: "Moller"; src: url("../fonts/Moller-MediumItalic.otf") format("opentype"); font-weight: 500; font-style: italic; }
-
-.vehicle-context-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px 0; }
-.vehicle-context-row[hidden] { display: none; }
-.vehicle-context-row .token { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
-.vehicle-context-row .token button { flex-shrink: 0; min-width: 24px; min-height: 24px; }
-.v2-card-actions.with-save .vehicle-add { grid-column: 1 / -1; }
-.vehicle-add:focus-visible, .vehicle-context-row button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-
 </style>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -3636,7 +3628,6 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
           <div class="quick-chips" id="suggestionsBar"></div>
         </div>
         <div class="cbox">
-          <div class="vehicle-context-row" id="vehicleContextRow" aria-live="polite" hidden></div>
           <div class="tokens-row" id="tokensRow"></div>
           <textarea class="input-field" id="inputField" rows="1"
             placeholder="Tell the assistant what you need…" data-i18n-ph="input.placeholder"
@@ -3767,16 +3758,6 @@ const I18N = {
     'cta.eyebrow.learn': 'Just curious',
     'cta.label.learn':   'I just want to learn about cars',
     'quickReply':        'Quick reply',
-    'vehicle.add': '＋ Add to chat',
-    'vehicle.added': '✓ Added to chat',
-    'vehicle.remove': 'Remove {name} from chat',
-    'vehicle.followups': 'Quick follow-up',
-    'vehicle.fit': 'How well does it fit my needs?',
-    'vehicle.cost': 'What are the running costs?',
-    'vehicle.check': 'What should I look out for?',
-    'vehicle.compare': 'Compare these vehicles',
-    'vehicle.details': 'Tell me more about it',
-    'vehicle.about': 'About: {names}',
     'input.placeholder': 'Type your message…',
     'btn.send':          'Send',
     'hero.popularNear':  'Popular near you',
@@ -3986,16 +3967,6 @@ const I18N = {
     'cta.eyebrow.learn': '只是好奇',
     'cta.label.learn':   '我只是想了解汽车',
     'quickReply':        '快捷回复',
-    'vehicle.add': '＋ 加入对话',
-    'vehicle.added': '✓ 已加入对话',
-    'vehicle.remove': '从对话中移除 {name}',
-    'vehicle.followups': '快捷追问',
-    'vehicle.fit': '适合我的需求吗？',
-    'vehicle.cost': '日常用车成本如何？',
-    'vehicle.check': '购买时需要注意什么？',
-    'vehicle.compare': '对比这些车辆',
-    'vehicle.details': '详细介绍一下',
-    'vehicle.about': '追问车辆：{names}',
     'input.placeholder': '输入你的消息…',
     'btn.send':          '发送',
     'hero.popularNear':  '你附近的热门车',
@@ -4290,8 +4261,6 @@ function setLang(lang) {
       messages[idx].content = pickAIVersion(el._aiText);
     }
   });
-  renderVehicleContext();
-  if (selectedVehicles.length && !isStreaming) restoreQuickReplies();
   // If the tour overlay is currently showing, re-render the visible step so
   // its title/body reflect the new locale.
   if (document.querySelector('.ob-overlay') && typeof renderOnboardingStep === 'function') {
@@ -4912,66 +4881,91 @@ If the user is now asking for "different models", "other options", "show me more
 // (fuel / seats / size / brand) and the current budget slider. Mirrors the
 // logic in getLiveRecommendations() so the "View inventory" cards reflect what
 // the user has actually asked for — not just every car of a model.
-function applyConversationFilters(pool) {
-  if (typeof getConfirmedOptionsForGroup !== 'function') return pool;
+// ── Shared inventory filters ─────────────────────────────────────────────
+// One definition of "does this car match what the user said", used by both
+// the live-recommendations rail and the in-stock lists, so the two surfaces
+// can never disagree (they used to carry two separate, drifting mappings).
 
-  const fuels  = getConfirmedOptionsForGroup('fuel');
-  const seats  = getConfirmedOptionsForGroup('seats');
-  const sizes  = getConfirmedOptionsForGroup('size');
-  const brands = getConfirmedOptionsForGroup('brand');
+// The feed returns compound strings such as "DieselAndElectricityPluginHybrid".
+// A plain substring test on "electric" would file diesel hybrids under
+// Electric, so each raw value is reduced to exactly one class first.
+function fuelClassOf(raw) {
+  const f = String(raw || '').toLowerCase();
+  if (!f) return '';
+  const hasElec = /electric/.test(f);
+  const hasGas  = /gasolin|petrol|bensin/.test(f);
+  const hasDies = /diesel/.test(f);
+  const hasHyb  = /hybrid/.test(f) || (hasElec && (hasGas || hasDies));
+  if (hasElec && !hasGas && !hasDies) return 'electric';
+  if (hasHyb)  return 'hybrid';
+  if (hasGas)  return 'petrol';
+  if (hasDies) return 'diesel';
+  return '';
+}
 
-  const fuelMap = {
-    'Electric':  ['electricity', 'electric'],
-    'Hybrid':    ['hybrid'],
-    'Petrol':    ['gasolin', 'petrol'],
-    'Diesel':    ['diesel'],
-  };
-  const sizeMap = {
-    'SUV':      ['sportutilityvehicle', 'suv'],
-    'Van':      ['van'],
-    'Compact':  ['combicoupe', 'hatchback', 'compact'],
-    'Family':   ['stationwagon', 'sedan', 'family'],
-    'Mid-size': ['sedan', 'midsize'],
-    'City':     ['hatchback', 'city', 'minicar'],
-  };
+// carBody values actually present in the feed:
+// SportUtilityVehicle, Box, StationWagon, Pickup, CombiCoupe, MultiPurpose,
+// Coupe, Sedan, PanelVan, CA
+const BODY_MAP = {
+  'SUV':      ['sportutilityvehicle'],
+  'Van':      ['panelvan', 'box', 'multipurpose'],
+  'Compact':  ['combicoupe'],
+  'Family':   ['stationwagon', 'multipurpose'],
+  'Mid-size': ['sedan'],
+  'City':     ['combicoupe', 'coupe'],
+};
+const seatOk = (c, s) => {
+  const n = parseInt(c.seats || 0, 10);
+  if (!n) return false;
+  return s === '7+' ? n >= 7 : String(n) === s;
+};
+const bodyOk = (c, s) => {
+  const b = String(c.carBody || '').toLowerCase();
+  return (BODY_MAP[s] || [s.toLowerCase()]).some(k => b.includes(k));
+};
 
-  let out = pool;
-  if (fuels.length) {
-    out = out.filter(c => {
-      const f = String(c.fuel || '').toLowerCase();
-      return fuels.some(uf => (fuelMap[uf] || [uf.toLowerCase()]).some(k => f.includes(k)));
-    });
-  }
-  if (seats.length) {
-    out = out.filter(c => seats.some(s => {
-      const n = parseInt(c.seats || 0, 10);
-      if (s === '7+') return n >= 7;
-      return String(n) === s;
-    }));
-  }
-  if (sizes.length) {
-    out = out.filter(c => {
-      const b = String(c.carBody || '').toLowerCase();
-      return sizes.some(s => (sizeMap[s] || [s.toLowerCase()]).some(k => b.includes(k)));
-    });
-  }
-  if (brands.length) {
-    out = out.filter(c => brands.some(b => String(c.brand || '').toLowerCase() === b.toLowerCase()));
-  }
+// Predicates in priority order — the LAST one is the first we give up when a
+// combination turns out to be too narrow.
+function buildInvPredicates() {
+  const g = (k) => (typeof getConfirmedOptionsForGroup === 'function') ? getConfirmedOptionsForGroup(k) : [];
+  const fuels = g('fuel'), seats = g('seats'), sizes = g('size'), brands = g('brand');
 
-  // Budget — only apply when the slider has been narrowed off its defaults
   const sMin = document.getElementById('budgetMin');
   const sMax = document.getElementById('budgetMax');
+  let lo = null, hi = null;
   if (sMin && sMax) {
-    const lo = parseInt(sMin.value, 10), hi = parseInt(sMax.value, 10);
-    if (!(lo === 50000 && hi === 1500000)) {
-      out = out.filter(c => typeof c.price === 'number' && c.price >= lo && c.price <= hi);
-    }
+    const a = parseInt(sMin.value, 10), b = parseInt(sMax.value, 10);
+    if (!(a === 50000 && b === 1500000)) { lo = a; hi = b; }
   }
 
-  // If the filters wiped out the whole model, fall back to the unfiltered
-  // model results so we never show an empty grid for an in-stock model.
-  return out.length ? out : pool;
+  const preds = [];
+  if (brands.length) preds.push({ key: 'brand',  test: c => brands.some(b => String(c.brand || '').toLowerCase() === b.toLowerCase()) });
+  if (fuels.length)  preds.push({ key: 'fuel',   test: c => fuels.some(f => fuelClassOf(c.fuel) === f.toLowerCase()) });
+  if (sizes.length)  preds.push({ key: 'size',   test: c => sizes.some(s => bodyOk(c, s)) });
+  if (seats.length)  preds.push({ key: 'seats',  test: c => seats.some(s => seatOk(c, s)) });
+  if (lo !== null)   preds.push({ key: 'budget', test: c => typeof c.price === 'number' && c.price >= lo && c.price <= hi });
+
+  return { fuels, seats, sizes, brands, lo, hi, preds };
+}
+
+const filterByPreds = (list, preds, n) => list.filter(c => {
+  for (let i = 0; i < n; i++) if (!preds[i].test(c)) return false;
+  return true;
+});
+
+function applyConversationFilters(pool) {
+  if (typeof getConfirmedOptionsForGroup !== 'function') return pool;
+  const { preds } = buildInvPredicates();
+  if (!preds.length) return pool;
+
+  // Relax the softest constraint first, exactly like the rail does — but
+  // never return an empty grid for a model we know is in stock, since that
+  // reads as a bug rather than as "nothing matches".
+  for (let n = preds.length; n >= 1; n--) {
+    const out = filterByPreds(pool, preds, n);
+    if (out.length) return out;
+  }
+  return pool;
 }
 
 function matchInventory(modelStr) {
@@ -5090,61 +5084,41 @@ function getLiveRecommendations() {
   const sizes  = (typeof getConfirmedOptionsForGroup === 'function') ? getConfirmedOptionsForGroup('size')  : [];
   const brands = (typeof getConfirmedOptionsForGroup === 'function') ? getConfirmedOptionsForGroup('brand') : [];
 
-  // Map UI fuel names to API fuel values
-  const fuelMap = {
-    'Electric':  ['electricity', 'electric'],
-    'Hybrid':    ['hybrid'],
-    'Petrol':    ['gasolin', 'petrol'],
-    'Diesel':    ['diesel'],
-  };
-  const sizeMap = {
-    'SUV':      ['sportutilityvehicle', 'suv'],
-    'Van':      ['van'],
-    'Compact':  ['combicoupe', 'hatchback', 'compact'],
-    'Family':   ['stationwagon', 'sedan', 'family'],
-    'Mid-size': ['sedan', 'midsize'],
-    'City':     ['hatchback', 'city', 'minicar'],
+  // ── Fuel classification ────────────────────────────────────────────────
+  const { preds, lo, hi } = buildInvPredicates();
+
+  const applyPreds = (n) => filterByPreds(allInventory, preds, n);
+  const distinctModels = (list) => {
+    const s = new Set();
+    list.forEach(c => { if (c.brand && c.model) s.add(`${c.brand} ${c.model}`); });
+    return s.size;
   };
 
-  let pool = allInventory.slice();
+  // Progressive relaxation. The old code fell straight back to the
+  // unfiltered pool whenever a combination came up empty — which meant the
+  // rail showed the same three best-selling cars while the headline still
+  // claimed "Top Electric picks". Drop the softest constraint instead, and
+  // remember what was dropped so the copy can stay honest.
+  let n = preds.length;
+  let pool = applyPreds(n);
+  while (n > 0 && distinctModels(pool) < 3) { n--; pool = applyPreds(n); }
 
-  if (fuels.length) {
-    pool = pool.filter(c => {
-      const f = String(c.fuel || '').toLowerCase();
-      return fuels.some(uf => (fuelMap[uf] || [uf.toLowerCase()]).some(k => f.includes(k)));
-    });
-  }
-  if (seats.length) {
-    pool = pool.filter(c => seats.some(s => {
-      const n = parseInt(c.seats || 0, 10);
-      if (s === '7+') return n >= 7;
-      return String(n) === s;
-    }));
-  }
-  if (sizes.length) {
-    pool = pool.filter(c => {
-      const b = String(c.carBody || '').toLowerCase();
-      return sizes.some(s => (sizeMap[s] || [s.toLowerCase()]).some(k => b.includes(k)));
-    });
-  }
-  if (brands.length) {
-    pool = pool.filter(c => brands.some(b => String(c.brand || '').toLowerCase() === b.toLowerCase()));
-  }
+  const appliedKeys = preds.slice(0, n).map(p => p.key);
+  const relaxedKeys = preds.slice(n).map(p => p.key);
+  const hasBudget = appliedKeys.includes('budget');
 
-  // Budget — if the slider isn't at its full default range
-  const sMin = document.getElementById('budgetMin');
-  const sMax = document.getElementById('budgetMax');
-  if (sMin && sMax) {
-    const lo = parseInt(sMin.value, 10), hi = parseInt(sMax.value, 10);
-    if (!(lo === 50000 && hi === 1500000)) {
-      pool = pool.filter(c => typeof c.price === 'number' && c.price >= lo && c.price <= hi);
-    }
-  }
+  // Publish what actually produced these picks so the section headline and
+  // the per-card reason can never claim a preference that got relaxed away.
+  lastRecApplied = {
+    fuel:  appliedKeys.includes('fuel')  ? fuels  : [],
+    seats: appliedKeys.includes('seats') ? seats  : [],
+    size:  appliedKeys.includes('size')  ? sizes  : [],
+    brand: appliedKeys.includes('brand') ? brands : [],
+    budget: hasBudget ? [lo, hi] : null,
+    relaxed: relaxedKeys,
+  };
 
-  // If filters wiped out everything, fall back to the full pool
-  if (pool.length === 0) pool = allInventory.slice();
-
-  // Group by brand+model, sort by stock count desc
+  // Group by brand + model
   const groups = new Map();
   pool.forEach(c => {
     if (!c.brand || !c.model) return;
@@ -5153,29 +5127,85 @@ function getLiveRecommendations() {
     groups.get(key).cars.push(c);
   });
 
-  const top = [...groups.values()]
-    .sort((a, b) => b.cars.length - a.cars.length)
-    .slice(0, 3)
-    .map(g => {
-      const prices = g.cars.map(c => c.price).filter(p => typeof p === 'number' && p > 0);
-      const minPrice = prices.length ? Math.min(...prices) : null;
-      const imgCar = g.cars.find(c => c.carImages && c.carImages.length) || g.cars[0];
-      const hero = imgCar?.carImages?.[0]?.normalUrl || null;
-      return { name: g.name, count: g.cars.length, minPrice, image: hero };
-    });
+  const mid  = hasBudget ? (lo + hi) / 2 : null;
+  const span = hasBudget ? Math.max(1, (hi - lo) / 2) : 1;
 
-  // Build a human-readable reason eyebrow
-  const parts = [];
-  if (fuels.length) parts.push(fuels[0].toLowerCase());
-  if (seats.length) parts.push(seats[0] === '7+' ? '7-seater' : `${seats[0]}-seat`);
-  if (sizes.length) parts.push(sizes[0].toLowerCase());
-  if (brands.length) parts.push(brands[0]);
+  // How well one physical car fits what the user said.
+  const listingScore = (c) => {
+    let s = 0;
+    if (fuels.length  && fuels.some(f => fuelClassOf(c.fuel) === f.toLowerCase())) s += 10;
+    if (sizes.length  && sizes.some(x => bodyOk(c, x)))  s += 8;
+    if (seats.length  && seats.some(x => seatOk(c, x)))  s += 8;
+    if (mid !== null) {
+      const p = typeof c.price === 'number' ? c.price : mid;
+      s += 12 * (1 - Math.min(1, Math.abs(p - mid) / span));
+    }
+    const yr = parseInt(c.modelYear, 10);
+    if (!isNaN(yr)) s += Math.min(6, Math.max(0, yr - 2014) * 0.8);
+    const km = parseInt(c.mileage, 10);
+    // Listings with no mileage at all must not win on "lowest mileage".
+    if (!isNaN(km) && km > 0) s -= Math.min(8, km / 30000);
+    else s -= 3;
+    return s;
+  };
 
-  let reason;
-  if (parts.length === 0)      reason = t('live.popularOslo');
-  else                          reason = t('live.curated');
+  const pickBest = (g) => {
+    const withImg = g.cars.filter(c => c.carImages && c.carImages.length);
+    const src = withImg.length ? withImg : g.cars;
+    // 16 listings in the feed carry no price (0 / null) — they must never be
+    // picked, or the card renders "0 kr".
+    const priced = src.filter(c => typeof c.price === 'number' && c.price > 0);
+    // Same for mileage: a card reading "0 km" looks broken, so prefer units
+    // that actually report one.
+    const withKm = priced.filter(c => parseInt(c.mileage, 10) > 0);
+    const list = withKm.length ? withKm : (priced.length ? priced : src);
+    // Entry state (nothing captured yet): show the cheapest unit so the
+    // card reads as a "from" price.
+    if (n === 0) {
+      return list.reduce((a, b) =>
+        (typeof b.price === 'number' && (typeof a.price !== 'number' || b.price < a.price)) ? b : a, list[0]);
+    }
+    let best = list[0], bestScore = -Infinity;
+    list.forEach(c => { const sc = listingScore(c); if (sc > bestScore) { bestScore = sc; best = c; } });
+    return best;
+  };
 
-  return { reason, cars: top };
+  let ranked;
+  if (n === 0) {
+    // Nothing captured yet — "popular" genuinely means most units in stock.
+    ranked = [...groups.values()]
+      .sort((a, b) => b.cars.length - a.cars.length)
+      .slice(0, 3)
+      .map(g => ({ g, best: pickBest(g) }));
+  } else {
+    // Once preferences exist, rank each model by its best-fitting single car
+    // rather than by how many units happen to sit in stock — otherwise the
+    // deepest-stocked model wins under every filter and the rail looks frozen.
+    ranked = [...groups.values()]
+      .map(g => { const best = pickBest(g); return { g, best, score: listingScore(best) }; })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+  }
+
+  const top = ranked.map(({ g, best }) => {
+    const prices = g.cars.map(c => c.price).filter(p => typeof p === 'number' && p > 0);
+    const hero = best?.carImages?.[0]?.normalUrl || null;
+    return { name: g.name, count: g.cars.length, minPrice: prices.length ? Math.min(...prices) : null, image: hero, car: best };
+  });
+
+  const reason = n === 0 ? t('live.popularOslo') : t('live.curated');
+
+  return { reason, cars: top, applied: lastRecApplied };
+}
+
+// The filter set that actually produced the current recommendations. Set by
+// getLiveRecommendations(); falls back to the raw chips before the first run
+// so the headline still renders on entry.
+let lastRecApplied = null;
+function getRecApplied() {
+  if (lastRecApplied) return lastRecApplied;
+  const g = (k) => (typeof getConfirmedOptionsForGroup === 'function') ? getConfirmedOptionsForGroup(k) : [];
+  return { fuel: g('fuel'), seats: g('seats'), size: g('size'), brand: g('brand'), budget: null, relaxed: [] };
 }
 
 // Tracks the most recent re-render request so we can cancel a pending flash
@@ -7048,14 +7078,29 @@ function syncFiltersFromText(text) {
   const lower = text.toLowerCase();
   let changed = false;
 
+  // A car has exactly one fuel type and one brand, so a new answer replaces
+  // the previous one. Without this, saying "electric" then "diesel" leaves
+  // both chips live — they OR together, match the whole stock, and the
+  // recommendations stop meaning anything.
+  const EXCLUSIVE_GROUPS = ['fuel', 'brand'];
+  const addChip = (chipKey) => {
+    const gi = chipKey.indexOf(':');
+    const groupKey = gi > -1 ? chipKey.slice(0, gi) : '';
+    let did = false;
+    if (EXCLUSIVE_GROUPS.indexOf(groupKey) > -1) {
+      Object.keys(activeChips).forEach(k => {
+        if (k.startsWith(groupKey + ':') && k !== chipKey) { delete activeChips[k]; did = true; }
+      });
+    }
+    if (!activeChips[chipKey]) { activeChips[chipKey] = true; did = true; }
+    if (did) changed = true;
+  };
+
   Object.entries(lookup).forEach(([word, { groupKey, opt }]) => {
     const matched = word.includes(' ')
       ? lower.includes(word)
       : new RegExp(`\\b${word}\\b`).test(lower);
-    if (matched) {
-      const key = `${groupKey}:${opt}`;
-      if (!activeChips[key]) { activeChips[key] = true; changed = true; }
-    }
+    if (matched) addChip(`${groupKey}:${opt}`);
   });
 
   const aliases = {
@@ -7083,7 +7128,7 @@ function syncFiltersFromText(text) {
     const matched = alias.includes(' ')
       ? lower.includes(alias)
       : new RegExp(`\\b${alias}\\b`, 'i').test(lower);
-    if (matched && !activeChips[chipKey]) { activeChips[chipKey] = true; changed = true; }
+    if (matched) addChip(chipKey);
   });
 
   // Short/colloquial fuel shortenings the AI and users actually type. These
@@ -7095,7 +7140,7 @@ function syncFiltersFromText(text) {
     { re: /\b(?:gasoline|gas)\b/i,                                                            chip: 'fuel:Petrol' },
   ];
   FUEL_SHORT.forEach(({ re, chip }) => {
-    if (re.test(lower) && !activeChips[chip]) { activeChips[chip] = true; changed = true; }
+    if (re.test(lower)) addChip(chip);
   });
 
   const seatChip = inferSeatsFromText(lower);
@@ -7127,7 +7172,14 @@ function syncFiltersFromText(text) {
     newGroups.forEach(g => { topicAnchors[g] = userAnchorId; });
   }
 
-  if (changed) { buildSidebar(); bumpToldBadge(); }
+  if (changed) {
+    buildSidebar();
+    bumpToldBadge();
+    // Leave a model drill-down before re-ranking: while it's open the rail's
+    // container isn't in the DOM, so the refresh below would do nothing.
+    if (typeof v2EnsureRecsDock === 'function') v2EnsureRecsDock();
+    buildLiveRecs();
+  }
 }
 
 let pendingBudget = null;
@@ -7258,107 +7310,6 @@ function resetFilters() {
     input.value = '';
     updateSend();
   }
-}
-
-// Vehicle context is separate from preference tokens: selecting a listing must
-// not silently turn its price, fuel or seat count into shopping filters.
-let selectedVehicles = [];
-let vehicleFollowupTokens = new Set();
-
-function vehicleReference(it, modelName, modelOnly) {
-  const details = modelOnly ? { model: modelName } : {
-    model: modelName, listingId: it._raw?.id || null,
-    year: it.year, trim: it.trim, price: it.price, mileage: it.mileage,
-    fuel: it.fuel, range: it.range, seats: it.seats, location: it.location,
-  };
-  return {
-    key: modelOnly ? 'model:' + modelName : 'listing:' + (it._raw?.id || JSON.stringify(details)),
-    name: modelOnly ? modelName : [it.year, modelName, it.trim, it.price].filter(Boolean).join(' · '),
-    details,
-  };
-}
-
-function clearVehicleFollowupTokens() {
-  activeTokens = activeTokens.filter(label => !vehicleFollowupTokens.has(label));
-  vehicleFollowupTokens.forEach(label => delete activeTokenPayloads[label]);
-  vehicleFollowupTokens.clear();
-  renderTokens();
-}
-
-function addVehicleToChat(vehicle) {
-  if (!selectedVehicles.some(v => v.key === vehicle.key)) {
-    clearVehicleFollowupTokens();
-    selectedVehicles.push(vehicle);
-  }
-  renderVehicleContext();
-  restoreQuickReplies();
-  document.getElementById('inputField').focus();
-}
-
-function renderVehicleContext() {
-  const row = document.getElementById('vehicleContextRow');
-  row.replaceChildren();
-  row.hidden = !selectedVehicles.length;
-  selectedVehicles.forEach(vehicle => {
-    const tag = document.createElement('span');
-    tag.className = 'token';
-    tag.append(document.createTextNode(vehicle.name));
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.textContent = '×';
-    remove.setAttribute('aria-label', t('vehicle.remove', { name: vehicle.name }));
-    remove.onclick = () => {
-      clearVehicleFollowupTokens();
-      selectedVehicles = selectedVehicles.filter(v => v.key !== vehicle.key);
-      renderVehicleContext();
-      restoreQuickReplies();
-      document.getElementById('inputField').focus();
-    };
-    tag.appendChild(remove);
-    row.appendChild(tag);
-  });
-  document.querySelectorAll('[data-vehicle-key]').forEach(btn => {
-    const added = selectedVehicles.some(v => v.key === btn.dataset.vehicleKey);
-    btn.textContent = t(added ? 'vehicle.added' : 'vehicle.add');
-    btn.setAttribute('aria-pressed', String(added));
-  });
-  updateSend();
-}
-
-function renderVehicleFollowups() {
-  const wrap = document.getElementById('suggestionsWrap');
-  const bar = document.getElementById('suggestionsBar');
-  const label = wrap.querySelector('.quick-reply-label');
-  wrap.classList.remove('empty');
-  delete wrap.dataset.topic;
-  bar.classList.remove('quick-chips-diff');
-  bar.replaceChildren();
-  label.textContent = t('vehicle.followups');
-  label.classList.remove('is-loading', 'is-update');
-  const keys = ['vehicle.fit', 'vehicle.cost', 'vehicle.check',
-    selectedVehicles.length > 1 ? 'vehicle.compare' : 'vehicle.details'];
-  keys.forEach(key => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'chip';
-    const text = t(key);
-    btn.textContent = text;
-    btn.classList.toggle('on', activeTokens.includes(text));
-    btn.onclick = () => {
-      if (activeTokens.includes(text)) {
-        activeTokens = activeTokens.filter(token => token !== text);
-        delete activeTokenPayloads[text];
-        vehicleFollowupTokens.delete(text);
-        renderTokens();
-        updateSend();
-      } else {
-        addToken(text);
-        vehicleFollowupTokens.add(text);
-      }
-      renderVehicleFollowups();
-    };
-    bar.appendChild(btn);
-  });
 }
 
 // ── tokens ────────────────────────────────────────────────────────────────
@@ -7593,7 +7544,6 @@ function renderQuickChips(suggestions, msgEl) {
   lastSuggestions = Array.isArray(suggestions) ? suggestions.slice() : [];
   // If sidebar is currently mid-edit, show the update diff instead of fresh chips
   if (pendingManualChange) { showUpdateDiff(); return; }
-  if (selectedVehicles.length) { renderVehicleFollowups(); return; }
   const bar = document.getElementById('suggestionsBar');
   const wrap = document.getElementById('suggestionsWrap');
   const label = wrap ? wrap.querySelector('.quick-reply-label') : null;
@@ -7744,9 +7694,6 @@ function showUpdateDiff() {
 
 // Put the original quick-reply chips back when dirty state clears
 function restoreQuickReplies() {
-  if (isStreaming) return;
-  if (pendingManualChange) { showUpdateDiff(); return; }
-  if (selectedVehicles.length) { renderVehicleFollowups(); return; }
   const bar  = document.getElementById('suggestionsBar');
   const wrap = document.getElementById('suggestionsWrap');
   if (!bar || !wrap) return;
@@ -9044,26 +8991,18 @@ async function sendMessage() {
   const input = document.getElementById('inputField');
   const text = input.value.trim();
   const tokens = [...activeTokens];
-  const vehicles = selectedVehicles.map(v => ({ ...v }));
-  if (!text && tokens.length === 0 && !vehicles.length) return;
+  if (!text && tokens.length === 0) return;
   const tokenPayloads = tokens.map(t => activeTokenPayloads[t] || t);
 
-  const question = tokenPayloads.length > 0
+  const combined = tokenPayloads.length > 0
     ? (tokenPayloads.join(', ') + (text ? '. ' + text : ''))
     : text;
-  const combined = vehicles.length
-    ? (question || t('vehicle.details')) + '\n\nSelected vehicles (reference data, not new shopping preferences):\n' +
-      JSON.stringify(vehicles.map(v => v.details)) +
-      '\nAnswer about these vehicles. Use only known listing facts; say when information is unavailable.'
-    : question;
   const isExplanationRequest = tokenPayloads.some(t => /I am not sure yet about/i.test(t));
 
-  appendUserMessage(vehicles.length
-    ? t('vehicle.about', { names: vehicles.map(v => v.name).join('; ') }) + '\n' + (text || (!tokens.length ? t('vehicle.details') : ''))
-    : text, tokens);
-  detectMode(question);
+  appendUserMessage(text, tokens);
+  detectMode(combined);
   if (conversationMode === 'shopping' && !isExplanationRequest) {
-    if (!vehicles.length) syncFiltersFromText(question);
+    syncFiltersFromText(combined);
   }
   // The message just shipped — clear any "un-sent edit" highlight and snapshot before the rebuild
   setDirty(false);
@@ -9548,14 +9487,11 @@ document.addEventListener('keydown', (e) => {
 function updateSend() {
   const input = document.getElementById('inputField');
   const btn = document.getElementById('btnSend');
-  const hasContent = input.value.trim().length > 0 || activeTokens.length > 0 || selectedVehicles.length > 0;
+  const hasContent = input.value.trim().length > 0 || activeTokens.length > 0;
   btn.disabled = !hasContent || isStreaming;
 }
 
 function resetAll() {
-  selectedVehicles = [];
-  clearVehicleFollowupTokens();
-  renderVehicleContext();
   messages = [];
   activeTokens = [];
   activeTokenPayloads = {};
@@ -10286,8 +10222,10 @@ function showToast(msg) {
     const hasFilters = baseReasons.length > 0;
     cars.forEach(rec => {
       const matches = (typeof matchInventory === 'function') ? matchInventory(rec.name) : [];
-      if (!matches.length) return;
-      const top = matches[0];     // matchInventory sorts cheapest first
+      // rec.car is the exact best-fitting unit chosen by getLiveRecommendations();
+      // fall back to matchInventory if it's missing for any reason.
+      const top = rec.car || matches[0];
+      if (!top) return;
       const it  = apiCarToItem(top);
       // Edge text — filter-based reason only. Stock count is NOT a reason
       // ("224 in stock" doesn't tell the user why this car suits them).
@@ -10305,9 +10243,10 @@ function showToast(msg) {
   // Derive per-card reasons from confirmed user filters.
   function v2DeriveRecReasons() {
     const parts = [];
-    const get = (k) => (typeof getConfirmedOptionsForGroup === 'function')
-      ? getConfirmedOptionsForGroup(k)
-      : [];
+    // Use the filters that actually produced the current picks, not the raw
+    // chips — a relaxed filter must not be advertised as a reason.
+    const A = (typeof getRecApplied === 'function') ? getRecApplied() : null;
+    const get = (k) => (A && A[k]) ? A[k] : [];
     const fuels = get('fuel');
     const seats = get('seats');
     const sizes = get('size');
@@ -10318,12 +10257,7 @@ function showToast(msg) {
       : t('v2.reason.seats', { seats: seats[0] }));
     if (sizes.length) parts.push(t('v2.reason.size', { size: sizes[0] }));
     if (brands.length) parts.push(brands[0]);
-    const sMin = document.getElementById('budgetMin');
-    const sMax = document.getElementById('budgetMax');
-    if (sMin && sMax) {
-      const lo = parseInt(sMin.value, 10), hi = parseInt(sMax.value, 10);
-      if (!(lo === 50000 && hi === 1500000)) parts.push(t('v2.reason.budget'));
-    }
+    if (A && A.budget) parts.push(t('v2.reason.budget'));
     return parts;
   }
 
@@ -10344,9 +10278,8 @@ function showToast(msg) {
   // Falls back to the generic "Popular in the Oslo area" before any filters
   // are confirmed.
   function v2DeriveRecsTitle() {
-    const get = (k) => (typeof getConfirmedOptionsForGroup === 'function')
-      ? getConfirmedOptionsForGroup(k)
-      : [];
+    const A = (typeof getRecApplied === 'function') ? getRecApplied() : null;
+    const get = (k) => (A && A[k]) ? A[k] : [];
     const brands = get('brand');
     if (brands.length) return t('v2.recs.title.brand', { brand: brands[0] });
     const fuels = get('fuel');
@@ -10355,12 +10288,7 @@ function showToast(msg) {
     if (seats.length) return t('v2.recs.title.seats', { seats: seats[0] });
     const sizes = get('size');
     if (sizes.length) return t('v2.recs.title.size', { size: sizes[0] });
-    const sMin = document.getElementById('budgetMin');
-    const sMax = document.getElementById('budgetMax');
-    if (sMin && sMax) {
-      const lo = parseInt(sMin.value, 10), hi = parseInt(sMax.value, 10);
-      if (!(lo === 50000 && hi === 1500000)) return t('v2.recs.title.budget');
-    }
+    if (A && A.budget) return t('v2.recs.title.budget');
     return t('v2.recs.sub');   // "Popular in the Oslo area"
   }
 
@@ -10392,27 +10320,15 @@ function showToast(msg) {
         <div class="v2-card-price">${escapeHtml(it.price || '')}</div>
         ${subText ? `<div class="v2-card-sub">${escapeHtml(subText)}</div>` : ''}
         ${it.edge ? `<div class="v2-card-reason"><span class="v2-card-reason-label">${escapeHtml(t('inv.whyThisOne'))}</span> ${escapeHtml(it.edge)}</div>` : ''}
-        <div class="v2-card-actions${showSave ? ' with-save' : ''}">
-          <button class="v2-card-save vehicle-add" type="button"></button>
+        <div class="v2-card-actions${showSave ? '' : ' single'}">
           ${showSave ? `<button class="v2-card-save" type="button">${escapeHtml(t('inv.save'))}</button>` : ''}
           <button class="v2-card-cta" type="button">${escapeHtml(ctaLabel)}</button>
         </div>
       </div>
     `;
 
-    const vehicle = vehicleReference(it, modelName, !!opts.hideSave);
-    const addBtn = card.querySelector('.vehicle-add');
-    addBtn.dataset.vehicleKey = vehicle.key;
-    const added = selectedVehicles.some(v => v.key === vehicle.key);
-    addBtn.textContent = t(added ? 'vehicle.added' : 'vehicle.add');
-    addBtn.setAttribute('aria-pressed', String(added));
-    addBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      addVehicleToChat(vehicle);
-    });
-
     const id = `${modelName} · ${it.year || ''} ${it.trim || ''}`.trim();
-    const saveBtn = card.querySelector('.v2-card-save:not(.vehicle-add)');
+    const saveBtn = card.querySelector('.v2-card-save');
     if (showSave && saveBtn) {
       if (typeof pinnedCars !== 'undefined' && pinnedCars.some(c => c.model === id)) {
         card.classList.add('pinned');
@@ -10527,6 +10443,21 @@ function showToast(msg) {
     });
     heroBottom.appendChild(grid);
   }
+
+  // If the dock is currently drilled into one model's full stock, put the
+  // recommendations rail back. Called when new preferences arrive: while the
+  // drill-down is open #heroRecsBody doesn't exist, so every live-recs
+  // re-render silently no-ops and the rail looks frozen.
+  window.v2EnsureRecsDock = function() {
+    const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
+    if (!heroBottom || !heroBottom.querySelector('.v2-inv-head')) return false;
+    if (_v2RecsSnapshot != null) {
+      heroBottom.innerHTML = _v2RecsSnapshot;
+      _v2RecsSnapshot = null;
+      return true;
+    }
+    return false;
+  };
 
   window.v2CloseInventoryInDock = function() {
     const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
