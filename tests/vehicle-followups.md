@@ -13,3 +13,10 @@ Run `node tests/vehicle-followups.cjs` and `node tests/inventory-flow.cjs`.
 - Vehicle context never changes shopping filters. Ordinary chat still updates them.
 
 Browser preview uses `127.0.0.1:8766` with the system proxy unchanged.
+
+## Dock alignment and comparison refinement
+
+- Verify a single visible Side-by-side comparison heading, larger uncropped photos, three metrics, and complete content within the shared 344px visualization card.
+- At 1536×1100, compare recommendation and inventory card heights and bottom bounds against the chat composer before and after See all in stock; verify the return arrow and pagination.
+- Check welcome content stays separated from the image cluster at 1280×720, and hybrid plus remains spaced from both icons.
+- Local preview forwards API requests through Windows networking so an active system proxy is respected.

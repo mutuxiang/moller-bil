@@ -3690,6 +3690,58 @@ body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero:has(#v2VizBody > .
 .v2-inv-head .v2-inv-back.v2-inv-eyebrow:hover { background: transparent; text-decoration: underline; text-underline-offset: 4px; }
 .vehicle-context-row.has-multiple .vehicle-reference-copy { gap: 4px; }
 .vehicle-context-row.has-multiple .vehicle-reference-subtitle { font-size: 13px; line-height: 1.35; }
+/* Shared single-row card slot: switching inventory preserves the bottom edge. */
+body.v2-layout .hero-bottom .v2-dock-section-head,
+body.v2-layout .hero-bottom .v2-inv-head {
+  box-sizing: border-box; flex: 0 0 94px; height: 94px;
+  margin: 0; padding: 4px 0 16px;
+}
+body.v2-layout .hero-bottom #heroRecsBody,
+body.v2-layout .hero-bottom .v2-inv-grid {
+  flex: 1 1 0; grid-template-rows: minmax(360px, 1fr);
+  grid-auto-rows: minmax(360px, 1fr); align-content: stretch;
+}
+body.v2-layout .hero-bottom #heroRecsBody > .v2-card,
+body.v2-layout .hero-bottom .v2-inv-grid > .v2-card { height: 100%; min-height: 0; }
+body.v2-layout .hero-bottom .v2-card-body {
+  box-sizing: border-box; flex: 0 0 232px; min-height: 232px;
+}
+body.v2-layout .hero-bottom .v2-card-img {
+  flex: 1 1 0; height: 0; min-height: 0; object-fit: cover;
+}
+.v2-inv-head .v2-inv-back.v2-inv-eyebrow { display: inline-flex; align-items: center; gap: 8px; }
+.v2-inv-back svg { flex-shrink: 0; }
+/* The section title is the only visible comparison title. */
+.vehicle-comparison { padding: 16px 20px; }
+.comparison-heading { justify-content: flex-end; margin-bottom: 6px; }
+.comparison-scroll { flex: 1; }
+.vehicle-comparison table { height: 100%; font-size: 15px; }
+.vehicle-comparison th, .vehicle-comparison td { padding: 7px 12px; }
+.vehicle-comparison thead th { padding-top: 0; padding-bottom: 8px; }
+.vehicle-comparison th:first-child { width: 18%; }
+.vehicle-comparison thead img {
+  float: none; width: 100%; height: 120px; margin: 0 0 8px;
+  object-fit: contain; border-radius: 4px;
+}
+.vehicle-comparison strong { font-size: 18px; }
+.vehicle-comparison small { font-size: 14px; padding-top: 6px; }
+/* Bring the welcome composition inward without overlapping the image cluster. */
+body.v2-layout .app.is-onboarding .col-spacer.left {
+  padding: clamp(32px, 6vh, 72px) 8vw !important;
+}
+.app.is-onboarding .hero-top { margin-bottom: 12px; }
+.app.is-onboarding .hero-headline {
+  max-width: 44vw; font-size: clamp(32px, 3.2vw, 48px);
+  min-height: 4.2em; margin-bottom: 24px;
+}
+.app.is-onboarding .hero-cta { max-width: 38vw; margin-top: 16px; gap: 16px; }
+.app.is-onboarding .hero-cta-btn { padding: 18px 24px; }
+.app.is-onboarding .hero-cluster { right: 8vw; bottom: 6vh; width: min(640px, 40vw); }
+@media (max-width: 900px) {
+  .app.is-onboarding .hero-headline { max-width: 100%; }
+  .app.is-onboarding .hero-cta { max-width: 480px; }
+}
+
 </style>
 </head>
 <body class="v2-layout">
@@ -7502,8 +7554,7 @@ function renderVehicleComparison(vehicles) {
   const card = document.createElement('section');
   card.className = 'vehicle-comparison';
   card.setAttribute('aria-label', t('compare.title'));
-  card.innerHTML = `<div class="comparison-heading"><span>${escapeHtml(t('compare.title'))}</span><span class="comparison-vs">${vehicles.length} ${escapeHtml(t('compare.vehicles'))}</span></div>
-    <div class="comparison-scroll"><table style="min-width:${vehicles.length > 2 ? 180 + vehicles.length * 180 : 0}px"><thead><tr><th scope="col"><span class="sr-only">${escapeHtml(t('compare.title'))}</span></th>${vehicles.map((v, i) => {
+  card.innerHTML = `<div class="comparison-scroll"><table style="min-width:${vehicles.length > 2 ? 180 + vehicles.length * 180 : 0}px"><thead><tr><th scope="col"><span class="comparison-vs">${vehicles.length} ${escapeHtml(t('compare.vehicles'))}</span></th>${vehicles.map((v, i) => {
       const advantages = allRows.filter(r => r.winners[i]).map(r => t('compare.adv.' + r.key));
       return `<th scope="col">${v.image ? `<img src="${escapeHtml(v.image)}" alt="">` : ''}<strong>${escapeHtml(v.title || v.name)}</strong><small>${escapeHtml(advantages.slice(0, 2).join(' · ') || t('compare.adv.none'))}</small></th>`;
     }).join('')}</tr></thead>
@@ -8284,7 +8335,7 @@ function fuelGlyphSvg(kind, accent) {
     <rect x="6" y="14" width="28" height="56" rx="3" stroke="${c}" stroke-width="1.6"/>
     <rect x="10" y="20" width="20" height="14" rx="1" stroke="${c}" stroke-width="1.2"/>
     <line x1="6" y1="70" x2="34" y2="70" stroke="${c}" stroke-width="2"/>
-    <path d="M47 42h18m-9-9v18" stroke="${c}" stroke-width="2.8" stroke-linecap="round"/>
+    <path d="M49 42h14m-7-7v14" stroke="${c}" stroke-width="2.2" stroke-linecap="round"/>
     <g transform="translate(68 0)">
       <path d="M 8 20 L 8 36 Q 8 48 20 48 Q 32 48 32 36 L 32 20" stroke="${c}" stroke-width="1.6"/>
       <line x1="13" y1="14" x2="13" y2="22" stroke="${c}" stroke-width="2" stroke-linecap="round"/>
@@ -10755,7 +10806,7 @@ function showToast(msg) {
     heroBottom.innerHTML = `
       <div class="v2-inv-head">
         <div class="v2-inv-head-text">
-          <button class="v2-inv-back v2-inv-eyebrow" type="button" onclick="v2CloseInventoryInDock()">${escapeHtml(t('v2.back'))}</button>
+          <button class="v2-inv-back v2-inv-eyebrow" type="button" onclick="v2CloseInventoryInDock()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14 6-6 6 6 6M8 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>${escapeHtml(t('v2.back'))}</button>
           <h3 class="v2-inv-title">${escapeHtml(modelName)}</h3>
         </div>
         <div class="v2-inv-controls"></div>
