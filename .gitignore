@@ -19,3 +19,7 @@ _server.js
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local preview logs
+preview-output.log
+preview-error.log

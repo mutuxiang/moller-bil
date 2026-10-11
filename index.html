@@ -13,6 +13,7 @@
 @font-face { font-family: "Moller"; src: url("../fonts/Moller-MediumItalic.otf") format("opentype"); font-weight: 500; font-style: italic; }
 
 
+
 </style>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -3587,6 +3588,49 @@ body.v2-layout .hero-bottom .inventory-page { grid-template-rows: auto; grid-aut
 .vehicle-comparison small { color: var(--muted); font-weight: 400; margin-top: 4px; }
 .vehicle-comparison tr.is-different { background: var(--bg-surface); }
 .comparison-note { font-size: 11px; color: var(--muted); margin-top: 10px; }
+/* Møller Bil: flat cream cards, 4px corners, sans type and pill actions. */
+.quick-reply-wrap.has-vehicles > .quick-reply-label,
+.quick-reply-wrap.has-vehicles > .quick-chips,
+.quick-reply-wrap.has-vehicles > .v2-pending-banners { display: none; }
+.vehicle-context-row { padding: 0 0 8px; width: 100%; }
+.vehicle-reference { flex-basis: 100%; grid-template-columns: 76px minmax(0,1fr) 24px; grid-template-rows: auto auto; padding: 12px; gap: 4px 12px; border-radius: 4px; border: 0; align-content: center; }
+.vehicle-reference-image { width: 76px; grid-row: 1 / 3; align-self: center; }
+.vehicle-reference-copy strong { font-size: 16px; line-height: 1.25; }
+.vehicle-reference-copy > span { font-size: 14px; line-height: 1.35; }
+.vehicle-reference-price { font-size: 15px; }
+.vehicle-reference-remove { display: flex; align-items: center; justify-content: center; color: var(--ink); border-radius: 999px; }
+.vehicle-context-row.has-multiple .vehicle-reference { grid-template-columns: 64px minmax(0,1fr); padding: 12px; align-content: center; }
+.vehicle-context-row.has-multiple .vehicle-reference-image { width: 64px; grid-row: 1 / 3; }
+.vehicle-context-row.has-multiple .vehicle-reference-copy strong { font-size: 16px; }
+.vehicle-context-row.has-multiple .vehicle-reference-price { grid-column: 2; }
+.vehicle-context-row.has-multiple .vehicle-reference-remove { top: 4px; right: 4px; }
+.vehicle-add, .coll-card-actions .coll-card-details { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(0,25,70,.18); background: var(--cream-200); color: var(--ink); border-radius: 999px; padding: 8px 16px; min-height: 40px; font: 500 15px/1.2 "Moller",sans-serif; transition: background-color 220ms ease-out,color 220ms ease-out; }
+.v2-card-heading .vehicle-add { padding: 6px 12px; min-height: 32px; font-size: 14px; }
+.vehicle-add:hover, .coll-card-actions .coll-card-details:hover { background: var(--cream-300); color: var(--ink); border-color: rgba(0,25,70,.18); }
+.vehicle-add[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: white; }
+.vehicle-add:focus-visible, .vehicle-reference-remove:focus-visible, .inventory-pagination button:focus-visible, .v2-inv-back:focus-visible, .coll-card-details:focus-visible { outline: 2px solid #0000FF; outline-offset: 2px; }
+.inventory-pagination button { display: inline-flex; justify-content: center; align-items: center; width: 40px; height: 40px; border: 1px solid rgba(0,25,70,.18); border-radius: 999px; background: var(--cream-200); }
+.inventory-pagination button:hover:not(:disabled) { background: var(--cream-300); }
+.v2-inv-back { height: 40px; padding: 8px 20px; border: 1px solid rgba(0,25,70,.18); border-radius: 999px; background: var(--cream-200); color: var(--ink); font: 500 15px/1.2 "Moller",sans-serif; }
+.v2-inv-back:hover { background: var(--cream-300); color: var(--ink); }
+.vehicle-comparison { display: flex; flex-shrink: 1; flex-direction: column; border-radius: 4px; padding: 12px 16px; overflow: hidden; }
+.comparison-heading { font-size: 18px; margin-bottom: 8px; flex-shrink: 0; }
+.comparison-vs { font: 400 14px "Moller",sans-serif; background: transparent; padding: 0; }
+.comparison-scroll { min-height: 0; overflow: auto; }
+.vehicle-comparison table { font-size: 14px; }
+.vehicle-comparison th, .vehicle-comparison td { padding: 5px 8px; line-height: 1.25; vertical-align: middle; font-weight: 400; }
+.vehicle-comparison th:first-child { width: 24%; }
+.vehicle-comparison thead img { float: left; width: 56px; height: 42px; margin: 0 8px 4px 0; }
+.vehicle-comparison strong { font-size: 16px; font-weight: 500; line-height: 1.2; }
+.vehicle-comparison small { clear: both; font-size: 14px; line-height: 1.25; padding-top: 4px; margin-top: 0; }
+.comparison-winner { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #E1644B; margin-left: 6px; vertical-align: middle; }
+.comparison-note { flex-shrink: 0; font-size: 12px; line-height: 1.3; margin-top: 6px; }
+@media(max-width: 600px) {
+  .vehicle-context-row.has-multiple .vehicle-reference { grid-template-columns: 44px minmax(0,1fr); gap: 4px 8px; padding: 10px; }
+  .vehicle-context-row.has-multiple .vehicle-reference-image { width: 44px; }
+  .vehicle-context-row.has-multiple .vehicle-reference-copy strong { font-size: 15px; }
+}
+
 </style>
 </head>
 <body class="v2-layout">
@@ -3677,11 +3721,11 @@ body.v2-layout .hero-bottom .inventory-page { grid-template-rows: auto; grid-aut
 
       <div class="composer">
         <div class="quick-reply-wrap empty" id="suggestionsWrap">
+          <div class="vehicle-context-row" id="vehicleContextRow" aria-live="polite" hidden></div>
           <span class="quick-reply-label" data-i18n="quickReply">Quick reply</span>
           <div class="quick-chips" id="suggestionsBar"></div>
         </div>
         <div class="cbox">
-          <div class="vehicle-context-row" id="vehicleContextRow" aria-live="polite" hidden></div>
           <div class="tokens-row" id="tokensRow"></div>
           <textarea class="input-field" id="inputField" rows="1"
             placeholder="Tell the assistant what you need…" data-i18n-ph="input.placeholder"
@@ -3812,6 +3856,14 @@ const I18N = {
     'cta.eyebrow.learn': 'Just curious',
     'cta.label.learn':   'I just want to learn about cars',
     'quickReply':        'Quick reply',
+    'vehicle.singlePrompt': 'What should I know about {name}?',
+    'vehicle.comparePrompt': 'Help me compare them',
+    'compare.adv.price': 'Lower price', 'compare.adv.year': 'Newer model year',
+    'compare.adv.mileage': 'Lower mileage', 'compare.adv.range': 'Longer electric range',
+    'compare.adv.none': 'No clear advantage in the available figures',
+    'compare.vehicles': 'vehicles',
+    'compare.winner': 'Favourable figure',
+    'compare.summary': 'I compared the selected vehicles using the available inventory figures. See the comparison card on the right for the details and each vehicle’s advantages.',
     'vehicle.add': '+ Ask about',
     'vehicle.added': 'Added',
     'vehicle.remove': 'Remove {name} from chat',
@@ -4041,13 +4093,21 @@ const I18N = {
     'cta.eyebrow.learn': '只是好奇',
     'cta.label.learn':   '我只是想了解汽车',
     'quickReply':        '快捷回复',
+    'vehicle.singlePrompt': '{name}有哪些值得了解的地方？',
+    'vehicle.comparePrompt': 'Help me compare them',
+    'compare.adv.price': '价格更低', 'compare.adv.year': '年份更新',
+    'compare.adv.mileage': '里程更少', 'compare.adv.range': '纯电续航更长',
+    'compare.adv.none': '已知数据暂无明显优势',
+    'compare.vehicles': '辆车',
+    'compare.winner': '优势数据',
+    'compare.summary': '已根据库存数据对比所选车辆。详细数据和各车优势请查看右侧对比卡片。',
     'vehicle.add': '+ 追问',
     'vehicle.added': '已添加',
     'vehicle.remove': '从对话中移除 {name}',
     'vehicle.followups': '快捷追问',
     'vehicle.from': '{price} 起',
     'vehicle.model': '车型 · 示例库存车辆',
-    'compare.title': '两车对比',
+    'compare.title': '车辆对比',
     'compare.note': '车型卡片采用示例库存信息，具体配置请与经销商确认。',
     'compare.missing': '暂未提供',
     'compare.price': '价格', 'compare.year': '年份', 'compare.mileage': '里程',
@@ -7358,24 +7418,39 @@ function setVehicleButtonContent(button, added) {
 
 function vehicleComparisonData(vehicles) {
   const fields = ['price', 'year', 'mileage', 'fuel', 'range', 'seats', 'location'];
-  return fields.map(key => ({ key, values: vehicles.map(v => {
-    if (key === 'price') return v.price ? (v.modelOnly ? t('vehicle.from', {price:v.price}) : v.price) : t('compare.missing');
-    const value = (v.modelOnly ? v.displayDetails : v.details)?.[key];
-    return value === undefined || value === null || value === '' ? t('compare.missing') : String(value);
-  }) }));
+  return fields.map(key => {
+    const raw = vehicles.map(v => key === 'price' ? v.price : (v.modelOnly ? v.displayDetails : v.details)?.[key]);
+    const values = raw.map((value, i) => value === undefined || value === null || value === ''
+      ? t('compare.missing') : key === 'price' && vehicles[i].modelOnly ? t('vehicle.from', {price:value}) : String(value));
+    // Rank only comparable, complete figures. Powertrain, seats and location are preferences.
+    const numbers = raw.map(value => {
+      const digits = String(value ?? '').replace(/[\s,\u00a0]/g, '').match(/\d+(?:\.\d+)?/);
+      return digits ? Number(digits[0]) : NaN;
+    });
+    const ranked = ['price', 'year', 'mileage', 'range'].includes(key) && numbers.every(Number.isFinite)
+      && new Set(numbers).size > 1 && (key !== 'price' || vehicles.every(v => v.modelOnly === vehicles[0].modelOnly));
+    const best = ranked ? (['price', 'mileage'].includes(key) ? Math.min(...numbers) : Math.max(...numbers)) : NaN;
+    return { key, values, winners: numbers.map(n => ranked && n === best) };
+  });
 }
 
 function renderVehicleComparison(vehicles) {
-  if (vehicles.length !== 2) return;
+  if (vehicles.length < 2) return;
   const host = document.getElementById('v2VizBody');
   if (!host) return;
+  const fuelHeight = host.querySelector('.fuel-card')?.getBoundingClientRect().height;
+  if (fuelHeight > 0) host.dataset.comparisonMaxHeight = String(fuelHeight);
   const rows = vehicleComparisonData(vehicles);
   const card = document.createElement('section');
   card.className = 'vehicle-comparison';
+  card.style.maxHeight = Math.min(360, Number(host.dataset.comparisonMaxHeight) || 360, host.clientHeight || 360) + 'px';
   card.setAttribute('aria-label', t('compare.title'));
-  card.innerHTML = `<div class="comparison-heading"><span>${escapeHtml(t('compare.title'))}</span><span class="comparison-vs">VS</span></div>
-    <table><thead><tr><th scope="col"><span class="sr-only">${escapeHtml(t('compare.title'))}</span></th>${vehicles.map(v => `<th scope="col">${v.image ? `<img src="${escapeHtml(v.image)}" alt="">` : ''}<strong>${escapeHtml(v.title || v.name)}</strong><small>${escapeHtml(t(v.modelOnly ? 'vehicle.model' : 'compare.listing'))}</small></th>`).join('')}</tr></thead>
-    <tbody>${rows.map(row => `<tr class="${row.values[0] !== row.values[1] ? 'is-different' : ''}"><th scope="row">${escapeHtml(t('compare.' + row.key))}</th>${row.values.map(value => `<td>${escapeHtml(value)}</td>`).join('')}</tr>`).join('')}</tbody></table>
+  card.innerHTML = `<div class="comparison-heading"><span>${escapeHtml(t('compare.title'))}</span><span class="comparison-vs">${vehicles.length} ${escapeHtml(t('compare.vehicles'))}</span></div>
+    <div class="comparison-scroll"><table style="min-width:${vehicles.length > 2 ? 180 + vehicles.length * 180 : 0}px"><thead><tr><th scope="col"><span class="sr-only">${escapeHtml(t('compare.title'))}</span></th>${vehicles.map((v, i) => {
+      const advantages = rows.filter(r => r.winners[i]).map(r => t('compare.adv.' + r.key));
+      return `<th scope="col">${v.image ? `<img src="${escapeHtml(v.image)}" alt="">` : ''}<strong>${escapeHtml(v.title || v.name)}</strong><small>${escapeHtml(advantages.slice(0, 2).join(' · ') || t('compare.adv.none'))}</small></th>`;
+    }).join('')}</tr></thead>
+    <tbody>${rows.map(row => `<tr class="${new Set(row.values).size > 1 ? 'is-different' : ''}"><th scope="row">${escapeHtml(t('compare.' + row.key))}</th>${row.values.map((value, i) => `<td>${escapeHtml(value)}${row.winners[i] ? `<span class="comparison-winner" role="img" aria-label="${escapeHtml(t('compare.winner'))}"></span>` : ''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
     ${vehicles.some(v => v.modelOnly) ? `<p class="comparison-note">${escapeHtml(t('compare.note'))}</p>` : ''}`;
   host.replaceChildren(card);
   if (typeof v2VizIntroActive !== 'undefined') v2VizIntroActive = false;
@@ -7393,6 +7468,7 @@ function clearVehicleFollowupTokens() {
 
 function captureVehicleImageRatio(vehicle, card) {
   const image = card.querySelector('.v2-card-img, .inv-img');
+  if (image?.src) vehicle.image = image.src;
   const rect = image?.getBoundingClientRect();
   if (rect && rect.width > 0 && rect.height > 0) vehicle.imageRatio = rect.width / rect.height;
 }
@@ -7426,6 +7502,10 @@ function renderVehicleContext() {
   const row = document.getElementById('vehicleContextRow');
   row.replaceChildren();
   row.hidden = !selectedVehicles.length;
+  const wrap = document.getElementById('suggestionsWrap');
+  wrap.classList.toggle('has-vehicles', !!selectedVehicles.length);
+  document.getElementById('inputField').placeholder = selectedVehicles.length ? vehicleQuestion() : t('input.placeholder');
+  if (selectedVehicles.length) wrap.classList.remove('empty');
   row.classList.toggle('has-multiple', selectedVehicles.length > 1);
   selectedVehicles.forEach(vehicle => {
     const tag = document.createElement('div');
@@ -7455,7 +7535,7 @@ function renderVehicleContext() {
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'vehicle-reference-remove';
-    remove.textContent = '×';
+    remove.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
     remove.setAttribute('aria-label', t('vehicle.remove', { name: vehicle.name }));
     remove.onclick = () => removeVehicleFromChat(vehicle.key);
     tag.appendChild(remove);
@@ -7469,41 +7549,16 @@ function renderVehicleContext() {
   updateSend();
 }
 
+function vehicleQuestion() {
+  return selectedVehicles.length > 1 ? t('vehicle.comparePrompt') : t('vehicle.singlePrompt', { name: selectedVehicles[0]?.title || '' });
+}
+
 function renderVehicleFollowups() {
   const wrap = document.getElementById('suggestionsWrap');
-  const bar = document.getElementById('suggestionsBar');
-  const label = wrap.querySelector('.quick-reply-label');
   wrap.classList.remove('empty');
-  delete wrap.dataset.topic;
-  bar.classList.remove('quick-chips-diff');
-  bar.replaceChildren();
-  label.textContent = t('vehicle.followups');
-  label.classList.remove('is-loading', 'is-update');
-  const keys = ['vehicle.fit', 'vehicle.cost', 'vehicle.check',
-    selectedVehicles.length > 1 ? 'vehicle.compare' : 'vehicle.details'];
-  keys.forEach(key => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'chip';
-    const text = t(key);
-    btn.textContent = text;
-    btn.classList.toggle('on', activeTokens.includes(text));
-    btn.onclick = () => {
-      if (activeTokens.includes(text)) {
-        activeTokens = activeTokens.filter(token => token !== text);
-        delete activeTokenPayloads[text];
-        vehicleFollowupTokens.delete(text);
-        renderTokens();
-        updateSend();
-      } else {
-        addToken(text);
-        vehicleFollowupTokens.add(text);
-        if (key === 'vehicle.compare' && selectedVehicles.length === 2) renderVehicleComparison(selectedVehicles);
-      }
-      renderVehicleFollowups();
-    };
-    bar.appendChild(btn);
-  });
+  wrap.classList.add('has-vehicles');
+  document.getElementById('suggestionsBar').replaceChildren();
+  document.getElementById('inputField').placeholder = vehicleQuestion();
 }
 
 // ── tokens ────────────────────────────────────────────────────────────────
@@ -7737,8 +7792,8 @@ let lastSuggestions = [];
 function renderQuickChips(suggestions, msgEl) {
   lastSuggestions = Array.isArray(suggestions) ? suggestions.slice() : [];
   // If sidebar is currently mid-edit, show the update diff instead of fresh chips
-  if (pendingManualChange) { showUpdateDiff(); return; }
   if (selectedVehicles.length) { renderVehicleFollowups(); return; }
+  if (pendingManualChange) { showUpdateDiff(); return; }
   const bar = document.getElementById('suggestionsBar');
   const wrap = document.getElementById('suggestionsWrap');
   const label = wrap ? wrap.querySelector('.quick-reply-label') : null;
@@ -7827,6 +7882,7 @@ function computeDiffStructure() {
 
 // Render the dirty-edit diff in the quick-reply slot
 function showUpdateDiff() {
+  if (selectedVehicles.length) { renderVehicleFollowups(); return; }
   const bar  = document.getElementById('suggestionsBar');
   const wrap = document.getElementById('suggestionsWrap');
   if (!bar || !wrap) return;
@@ -7890,8 +7946,8 @@ function showUpdateDiff() {
 // Put the original quick-reply chips back when dirty state clears
 function restoreQuickReplies() {
   if (isStreaming) return;
-  if (pendingManualChange) { showUpdateDiff(); return; }
   if (selectedVehicles.length) { renderVehicleFollowups(); return; }
+  if (pendingManualChange) { showUpdateDiff(); return; }
   const bar  = document.getElementById('suggestionsBar');
   const wrap = document.getElementById('suggestionsWrap');
   if (!bar || !wrap) return;
@@ -7922,6 +7978,7 @@ function restoreQuickReplies() {
 
 // Replace the quick-reply chips with a shimmer skeleton while the AI is generating
 function showChipsLoading() {
+  if (selectedVehicles.length) { renderVehicleFollowups(); return; }
   const bar  = document.getElementById('suggestionsBar');
   const wrap = document.getElementById('suggestionsWrap');
   if (!bar || !wrap) return;
@@ -9210,8 +9267,8 @@ async function sendMessage() {
 
   const question = tokenPayloads.length > 0
     ? (tokenPayloads.join(', ') + (text ? '. ' + text : ''))
-    : text;
-  const isVehicleComparison = vehicles.length === 2 && /compar|versus|\bvs\b|对比|比较/i.test(question);
+    : (text || (vehicles.length ? vehicleQuestion() : ''));
+  const isVehicleComparison = vehicles.length >= 2 && /compar|versus|\bvs\b|对比|比较/i.test(question);
   const combined = vehicles.length
     ? (question || t('vehicle.details')) + '\n\nSelected vehicles (reference data, not new shopping preferences):\n' +
       JSON.stringify(vehicles.map(v => v.details)) +
@@ -9220,7 +9277,7 @@ async function sendMessage() {
   const isExplanationRequest = tokenPayloads.some(t => /I am not sure yet about/i.test(t));
 
   appendUserMessage(vehicles.length
-    ? t('vehicle.about', { names: vehicles.map(v => v.name).join('; ') }) + '\n' + (text || (!tokens.length ? t('vehicle.details') : ''))
+    ? t('vehicle.about', { names: vehicles.map(v => v.name).join('; ') }) + '\n' + (text || (!tokens.length ? question : ''))
     : text, tokens);
   if (isVehicleComparison) renderVehicleComparison(vehicles);
   detectMode(question);
@@ -9240,6 +9297,15 @@ async function sendMessage() {
   maybeShowFilterTour();
 
   messages.push({ role: 'user', content: combined });
+  if (isVehicleComparison) {
+    const summary = { en: I18N.en['compare.summary'], zh: I18N.zh['compare.summary'] };
+    const entry = { role: 'assistant', content: summary, __id: null };
+    messages.push(entry);
+    const msg = appendAIMessage(summary, () => { renderVehicleComparison(vehicles); restoreQuickReplies(); });
+    entry.__id = msg?.id || null;
+    restoreQuickReplies();
+    return;
+  }
   isStreaming = true;
   document.getElementById('btnSend').disabled = true;
   appendTypingIndicator();
@@ -10703,13 +10769,13 @@ function showToast(msg) {
     controls.className = 'inventory-pagination';
     controls.setAttribute('aria-label', t('v2.inventory'));
     const previous = document.createElement('button');
-    previous.type = 'button'; previous.textContent = '←';
+    previous.type = 'button'; previous.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     previous.setAttribute('aria-label', t('inventory.previous'));
     previous.setAttribute('aria-controls', grid.id);
     const status = document.createElement('span');
     status.setAttribute('aria-live', 'polite');
     const next = document.createElement('button');
-    next.type = 'button'; next.textContent = '→';
+    next.type = 'button'; next.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     next.setAttribute('aria-label', t('inventory.next'));
     next.setAttribute('aria-controls', grid.id);
     controls.appendChild(previous); controls.appendChild(status); controls.appendChild(next);

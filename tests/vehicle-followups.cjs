@@ -12,7 +12,7 @@ function element() {
 const label = element();
 const els = Object.fromEntries(['vehicleContextRow','inputField','suggestionsWrap','suggestionsBar','btnSend'].map(k=>[k,element()]));
 const ctx = vm.createContext({ console, document: {getElementById: id=>els[id],createElement:element,createTextNode:x=>x,querySelectorAll:()=>[]},
-  t:(key,vars)=>vars ? key+JSON.stringify(vars) : key,
+  t:(key,vars)=>key==='vehicle.comparePrompt' ? 'Help me compare them' : vars ? key+JSON.stringify(vars) : key,
   renderTokens(){},updateSend(){},restoreQuickReplies(){},
   addToken(text){vm.runInContext('activeTokens.push('+JSON.stringify(text)+')',ctx)},
 });
@@ -32,20 +32,31 @@ assert.equal(run('model.imageRatio'),270/240,'composer thumbnail follows source 
 assert.equal(run('selectedVehicles[0].details.price'),undefined,'model does not inherit representative listing price');
 run(`addVehicleToChat(vehicleReference({_raw:{id:'123'},year:'2024',price:'NOK 350,000'}, 'VW ID.4', false)); renderVehicleFollowups();`);
 assert.equal(run('selectedVehicles.length'),2);
-assert.equal(els.suggestionsBar.children.at(-1).textContent,'vehicle.compare');
-els.suggestionsBar.children.at(-1).onclick();
-assert.equal(run('activeTokens[0]'),'vehicle.compare');
+assert.equal(els.suggestionsBar.children.length,0,'references replace quick chips');
+assert.equal(els.inputField.placeholder,'Help me compare them');
 els.vehicleContextRow.children[1].children.at(-1).onclick();
 assert.equal(run('selectedVehicles.length'),1);
 assert.equal(run('activeTokens.length'),0,'removing vehicle clears stale comparison question');
 run('renderVehicleFollowups()');
-assert.equal(els.suggestionsBar.children.at(-1).textContent,'vehicle.details');
+assert.match(els.inputField.placeholder,/vehicle.singlePrompt/);
+const metrics = run(`vehicleComparisonData([
+  {price:'329 900 kr',details:{year:2026,mileage:'14 257 km',range:'430 km'}},
+  {price:'299,900 kr',details:{year:2022,mileage:'83 365 km',range:'472 km'}}])`);
+assert.deepEqual(Array.from(metrics.find(r=>r.key==='price').winners),[false,true]);
+assert.deepEqual(Array.from(metrics.find(r=>r.key==='year').winners),[true,false]);
+assert.deepEqual(Array.from(metrics.find(r=>r.key==='mileage').winners),[true,false]);
+assert.deepEqual(Array.from(metrics.find(r=>r.key==='range').winners),[false,true]);
+assert.ok(metrics.find(r=>r.key==='fuel').winners.every(x=>!x));
+assert.ok(run(`vehicleComparisonData([{details:{range:400}},{details:{range:400}}]).find(r=>r.key==='range').winners.every(x=>!x)`));
+assert.ok(run(`vehicleComparisonData([{details:{range:400}},{details:{}}]).find(r=>r.key==='range').winners.every(x=>!x)`));
 // Exercise the actual send function with a stubbed assistant, capturing API input.
 Object.assign(ctx, {
   appendUserMessage:(text,tokens)=>{ctx.visible={text,tokens}},detectMode(){},syncFiltersFromText(){ctx.filterSync=true},
   setDirty(){},autoGrow(){},buildSidebar(){},maybeShowFilterTour(){},appendTypingIndicator(){},showChipsLoading(){},
   getAvailableModelsHint:()=>'',langDirective:()=>'',toApiMessages:x=>x,
   callAssistant:async input=>{ctx.apiInput=input;return {en:'SHOW_INVENTORY: VW ID.4'}},
+  I18N:{en:{'compare.summary':'See the comparison card on the right.'},zh:{'compare.summary':'查看右侧对比卡片。'}},
+  appendAIMessage:(text,done)=>{ctx.reply=text;return {id:'comparison'}},
   pickAIVersion:x=>x.en,parseToolSteps:()=>[],stripToolsBlock:x=>x,removeTypingIndicator(){},loadInventory:async()=>{},
 });
 vm.runInContext(`let isStreaming=false, conversationMode='shopping', messages=[]; const SYSTEM_PROMPT='test';`,ctx);
@@ -58,6 +69,10 @@ vm.runInContext(html.slice(html.indexOf('async function sendMessage()'),html.ind
   assert.match(ctx.visible.text,/VW ID.4/);
   assert.equal(ctx.filterSync,undefined,'vehicle context never changes shopping filters');
   assert.equal(run('selectedVehicles.length'),1,'context retained for continued followups');
+  run(`addVehicleToChat(vehicleReference({_raw:{id:'456'},price:'300 000 kr'},'Audi Q4',false)); document.getElementById('inputField').value='';`);
+  await run('sendMessage()');
+  assert.match(ctx.reply.en,/on the right/);
+  assert.equal(run('messages.at(-1).role'),'assistant');
   run(`selectedVehicles=[]; activeTokens=[]; document.getElementById('inputField').value='My budget is 400000';`);
   await run('sendMessage()');
   assert.equal(ctx.apiInput.at(-1).content,'My budget is 400000');
