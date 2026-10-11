@@ -3589,6 +3589,9 @@ body.v2-layout .hero-bottom .inventory-page { grid-template-rows: auto; grid-aut
 .vehicle-comparison tr.is-different { background: var(--bg-surface); }
 .comparison-note { font-size: 11px; color: var(--muted); margin-top: 10px; }
 /* Møller Bil: flat cream cards, 4px corners, sans type and pill actions. */
+body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero:has(.vehicle-comparison) {
+  grid-template-rows: minmax(240px, 1fr) minmax(0, 1fr) !important;
+}
 .quick-reply-wrap.has-vehicles > .quick-reply-label,
 .quick-reply-wrap.has-vehicles > .quick-chips,
 .quick-reply-wrap.has-vehicles > .v2-pending-banners { display: none; }
