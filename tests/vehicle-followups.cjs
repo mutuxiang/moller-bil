@@ -19,6 +19,8 @@ const ctx = vm.createContext({ console, document: {getElementById: id=>els[id],c
 vm.runInContext('let activeTokens=[]; let activeTokenPayloads={};',ctx);
 vm.runInContext(html.slice(html.indexOf('let selectedVehicles ='), html.indexOf('// ── tokens ─')),ctx);
 const run = code=>vm.runInContext(code,ctx);
+assert.equal(run(`vehicleComparisonData([{modelOnly:false, details:{seats:5}, price:'239 000 kr'},{modelOnly:false, details:{}, price:''}]).find(r=>r.key==='seats').values[1]`), 'compare.missing');
+assert.equal(run(`vehicleComparisonData([{modelOnly:true, displayDetails:{year:'2021'}, details:{model:'VW'}},{modelOnly:false, details:{year:'2022'}}]).find(r=>r.key==='year').values[0]`), '2021');
 run(`const model = vehicleReference({}, 'VW ID.4', true); addVehicleToChat(model); addVehicleToChat(model);`);
 assert.equal(run('selectedVehicles.length'),1,'duplicate model is ignored');
 assert.equal(run('selectedVehicles[0].details.price'),undefined,'model does not inherit representative listing price');

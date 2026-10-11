@@ -3540,29 +3540,48 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
 }
 
 
-/* Vehicle follow-up references: compact product cards inside the composer. */
-.vehicle-context-row { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px 0; max-height: 224px; overflow-y: auto; }
+/* Two fixed-width references share a row; extra selections scroll horizontally. */
+.vehicle-context-row { display: flex; gap: 8px; padding: 12px 14px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; }
 .vehicle-context-row[hidden] { display: none; }
-.vehicle-reference { display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); min-width: 0; flex-shrink: 0; }
-.vehicle-reference-image { width: 64px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
-.vehicle-reference-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.vehicle-reference-copy strong { font-size: 14px; font-weight: 500; color: var(--ink); overflow-wrap: anywhere; }
-.vehicle-reference-copy > span { font-size: 12px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.vehicle-reference-price { font-size: 13px; font-weight: 500; color: var(--ink); max-width: 100px; text-align: right; }
-.vehicle-reference-remove { border: 0; background: transparent; color: var(--muted); font-size: 22px; width: 28px; height: 32px; flex-shrink: 0; cursor: pointer; }
-.v2-card-followup { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 4px; }
-.v2-card-followup .v2-card-reason { flex: 1; min-width: 0; margin: 0; padding: 0; background: transparent; white-space: normal; font-size: 12px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.v2-card-followup .v2-card-reason-label { display: none; }
-.vehicle-add { flex-shrink: 0; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--bg); color: var(--ink); font: 500 13px/1.2 "Moller", sans-serif; cursor: pointer; min-height: 34px; }
+.vehicle-reference { position: relative; display: grid; grid-template-columns: 56px minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 10px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); min-width: 0; flex: 0 0 100%; scroll-snap-align: start; }
+.vehicle-reference-image { width: 56px; height: 52px; border-radius: var(--radius-card); object-fit: cover; grid-row: span 2; }
+.vehicle-reference-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.vehicle-reference-copy strong { font-size: 13px; font-weight: 500; color: var(--ink); overflow-wrap: anywhere; }
+.vehicle-reference-copy > span { font-size: 11px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.vehicle-reference-price { grid-column: 2; font-size: 12px; font-weight: 500; color: var(--ink); }
+.vehicle-reference-remove { grid-column: 3; grid-row: 1 / 3; border: 0; background: transparent; color: var(--muted); font: 22px/1 system-ui,sans-serif; width: 24px; height: 32px; cursor: pointer; }
+.vehicle-context-row.has-multiple .vehicle-reference { flex-basis: calc((100% - 8px) / 2); grid-template-columns: 42px minmax(0,1fr); padding: 8px; align-content: start; }
+.vehicle-context-row.has-multiple .vehicle-reference-image { width: 42px; height: 42px; grid-row: 1; }
+.vehicle-context-row.has-multiple .vehicle-reference-copy { padding-right: 14px; }
+.vehicle-context-row.has-multiple .vehicle-reference-copy strong { font-size: 12px; }
+.vehicle-context-row.has-multiple .vehicle-reference-copy > span { display: none; }
+.vehicle-context-row.has-multiple .vehicle-reference-price { grid-column: 1 / -1; }
+.vehicle-context-row.has-multiple .vehicle-reference-remove { position: absolute; right: 2px; top: 2px; width: 22px; height: 24px; }
+.v2-card-followup { display: flex; justify-content: flex-end; margin-top: auto; padding-top: 4px; }
+.vehicle-add { display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex-shrink: 0; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-lg); background: var(--bg); color: var(--ink); font: 500 13px/1.2 "Moller",sans-serif; cursor: pointer; min-height: 34px; }
+.vehicle-add svg { flex-shrink: 0; }
 .vehicle-add:hover { border-color: var(--salmon); }
 .vehicle-add[aria-pressed="true"] { background: var(--salmon); border-color: var(--salmon); color: var(--ink); }
-.vehicle-add:focus-visible, .vehicle-reference-remove:focus-visible { outline: 2px solid var(--salmon); outline-offset: 3px; }
+.vehicle-add:focus-visible, .vehicle-reference-remove:focus-visible, .inventory-pagination button:focus-visible { outline: 2px solid var(--salmon); outline-offset: 3px; }
 .v2-card-actions { margin-top: 0; }
-@media (max-width: 1100px) {
-  .vehicle-reference { flex-wrap: wrap; gap: 8px; }
-  .vehicle-reference-copy { flex-basis: calc(100% - 80px); }
-  .vehicle-reference-price { max-width: none; margin-left: auto; }
-}
+.coll-card-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.coll-card-actions .coll-card-details { margin: 0; }
+.inventory-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 0 0 10px; color: var(--cream-100); font-size: 13px; }
+.inventory-pagination button { width: 34px; height: 34px; border: 1px solid var(--muted); border-radius: var(--radius-lg); background: var(--cream-100); color: var(--ink); font: 20px system-ui,sans-serif; cursor: pointer; }
+.inventory-pagination button:disabled { opacity: .35; cursor: default; }
+body.v2-layout .hero-bottom .inventory-page { grid-template-rows: auto; grid-auto-flow: column; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.vehicle-comparison { flex-shrink: 0; background: var(--bg); color: var(--ink); border-radius: var(--radius-lg); padding: 16px; min-width: 0; grid-column: 1 / -1; }
+.vehicle-comparison .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.comparison-heading { display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 500; margin-bottom: 12px; }
+.comparison-vs { font: 600 12px system-ui,sans-serif; padding: 6px 8px; border-radius: var(--radius-lg); background: var(--bg-surface-2); }
+.vehicle-comparison table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; }
+.vehicle-comparison th, .vehicle-comparison td { padding: 9px 10px; text-align: left; vertical-align: top; overflow-wrap: anywhere; border-bottom: 1px solid var(--border-strong); }
+.vehicle-comparison th:first-child { width: 22%; font-weight: 400; color: var(--muted); }
+.vehicle-comparison thead img { width: 100%; height: 88px; object-fit: cover; border-radius: var(--radius-card); margin-bottom: 8px; }
+.vehicle-comparison strong, .vehicle-comparison small { display: block; }
+.vehicle-comparison small { color: var(--muted); font-weight: 400; margin-top: 4px; }
+.vehicle-comparison tr.is-different { background: var(--bg-surface); }
+.comparison-note { font-size: 11px; color: var(--muted); margin-top: 10px; }
 </style>
 </head>
 <body class="v2-layout">
@@ -3789,11 +3808,19 @@ const I18N = {
     'cta.label.learn':   'I just want to learn about cars',
     'quickReply':        'Quick reply',
     'vehicle.add': '+ Ask about',
-    'vehicle.added': '✓ Added',
+    'vehicle.added': 'Added',
     'vehicle.remove': 'Remove {name} from chat',
     'vehicle.followups': 'Quick follow-up',
     'vehicle.from': 'From {price}',
     'vehicle.model': 'Model · representative listing',
+    'compare.title': 'Side-by-side comparison',
+    'compare.note': 'Model cards use representative listings. Confirm specifications with the dealer.',
+    'compare.missing': 'Not provided',
+    'compare.price': 'Price', 'compare.year': 'Year', 'compare.mileage': 'Mileage',
+    'compare.fuel': 'Powertrain', 'compare.range': 'Electric range', 'compare.seats': 'Seats',
+    'compare.location': 'Location', 'compare.listing': 'Selected listing',
+    'inventory.previous': 'Previous vehicles', 'inventory.next': 'Next vehicles',
+    'inventory.page': '{start}–{end} of {total} vehicles',
     'vehicle.fit': 'How well does it fit my needs?',
     'vehicle.cost': 'What are the running costs?',
     'vehicle.check': 'What should I look out for?',
@@ -4010,11 +4037,19 @@ const I18N = {
     'cta.label.learn':   '我只是想了解汽车',
     'quickReply':        '快捷回复',
     'vehicle.add': '+ 追问',
-    'vehicle.added': '✓ 已添加',
+    'vehicle.added': '已添加',
     'vehicle.remove': '从对话中移除 {name}',
     'vehicle.followups': '快捷追问',
     'vehicle.from': '{price} 起',
     'vehicle.model': '车型 · 示例库存车辆',
+    'compare.title': '两车对比',
+    'compare.note': '车型卡片采用示例库存信息，具体配置请与经销商确认。',
+    'compare.missing': '暂未提供',
+    'compare.price': '价格', 'compare.year': '年份', 'compare.mileage': '里程',
+    'compare.fuel': '动力', 'compare.range': '纯电续航', 'compare.seats': '座位',
+    'compare.location': '所在地', 'compare.listing': '所选库存车辆',
+    'inventory.previous': '上一页车辆', 'inventory.next': '下一页车辆',
+    'inventory.page': '第 {start}–{end} 辆，共 {total} 辆',
     'vehicle.fit': '适合我的需求吗？',
     'vehicle.cost': '日常用车成本如何？',
     'vehicle.check': '购买时需要注意什么？',
@@ -7304,8 +7339,44 @@ function vehicleReference(it, modelName, modelOnly) {
     subtitle: modelOnly ? '' : [it.trim, it.mileage, it.fuel].filter(Boolean).join(' · '),
     price: it.price || '',
     modelOnly,
+    displayDetails: { year: it.year, mileage: it.mileage, fuel: it.fuel, range: it.range, seats: it.seats, location: it.location },
     details,
   };
+}
+
+function setVehicleButtonContent(button, added) {
+  // Stroke-drawn checkmark avoids font-dependent serif glyphs.
+  button.innerHTML = added
+    ? '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="m3 8 3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>' + escapeHtml(t('vehicle.added')) + '</span>'
+    : escapeHtml(t('vehicle.add'));
+}
+
+function vehicleComparisonData(vehicles) {
+  const fields = ['price', 'year', 'mileage', 'fuel', 'range', 'seats', 'location'];
+  return fields.map(key => ({ key, values: vehicles.map(v => {
+    if (key === 'price') return v.price ? (v.modelOnly ? t('vehicle.from', {price:v.price}) : v.price) : t('compare.missing');
+    const value = (v.modelOnly ? v.displayDetails : v.details)?.[key];
+    return value === undefined || value === null || value === '' ? t('compare.missing') : String(value);
+  }) }));
+}
+
+function renderVehicleComparison(vehicles) {
+  if (vehicles.length !== 2) return;
+  const host = document.getElementById('v2VizBody');
+  if (!host) return;
+  const rows = vehicleComparisonData(vehicles);
+  const card = document.createElement('section');
+  card.className = 'vehicle-comparison';
+  card.setAttribute('aria-label', t('compare.title'));
+  card.innerHTML = `<div class="comparison-heading"><span>${escapeHtml(t('compare.title'))}</span><span class="comparison-vs">VS</span></div>
+    <table><thead><tr><th scope="col"><span class="sr-only">${escapeHtml(t('compare.title'))}</span></th>${vehicles.map(v => `<th scope="col">${v.image ? `<img src="${escapeHtml(v.image)}" alt="">` : ''}<strong>${escapeHtml(v.title || v.name)}</strong><small>${escapeHtml(t(v.modelOnly ? 'vehicle.model' : 'compare.listing'))}</small></th>`).join('')}</tr></thead>
+    <tbody>${rows.map(row => `<tr class="${row.values[0] !== row.values[1] ? 'is-different' : ''}"><th scope="row">${escapeHtml(t('compare.' + row.key))}</th>${row.values.map(value => `<td>${escapeHtml(value)}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    ${vehicles.some(v => v.modelOnly) ? `<p class="comparison-note">${escapeHtml(t('compare.note'))}</p>` : ''}`;
+  host.replaceChildren(card);
+  if (typeof v2VizIntroActive !== 'undefined') v2VizIntroActive = false;
+  if (typeof v2VizTitleKey !== 'undefined') v2VizTitleKey = 'compare.title';
+  const title = document.querySelector('.v2-viz-wrap .v2-dock-section-title');
+  if (title) title.textContent = t('compare.title');
 }
 
 function clearVehicleFollowupTokens() {
@@ -7321,6 +7392,8 @@ function addVehicleToChat(vehicle) {
     selectedVehicles.push(vehicle);
   }
   renderVehicleContext();
+  const rail = document.getElementById('vehicleContextRow');
+  if (rail.scrollTo) rail.scrollTo({ left: rail.scrollWidth, behavior: 'auto' });
   restoreQuickReplies();
   document.getElementById('inputField').focus();
 }
@@ -7329,6 +7402,7 @@ function renderVehicleContext() {
   const row = document.getElementById('vehicleContextRow');
   row.replaceChildren();
   row.hidden = !selectedVehicles.length;
+  row.classList.toggle('has-multiple', selectedVehicles.length > 1);
   selectedVehicles.forEach(vehicle => {
     const tag = document.createElement('div');
     tag.className = 'vehicle-reference';
@@ -7370,7 +7444,7 @@ function renderVehicleContext() {
   });
   document.querySelectorAll('[data-vehicle-key]').forEach(btn => {
     const added = selectedVehicles.some(v => v.key === btn.dataset.vehicleKey);
-    btn.textContent = t(added ? 'vehicle.added' : 'vehicle.add');
+    setVehicleButtonContent(btn, added);
     btn.setAttribute('aria-pressed', String(added));
   });
   updateSend();
@@ -7405,6 +7479,7 @@ function renderVehicleFollowups() {
       } else {
         addToken(text);
         vehicleFollowupTokens.add(text);
+        if (key === 'vehicle.compare' && selectedVehicles.length === 2) renderVehicleComparison(selectedVehicles);
       }
       renderVehicleFollowups();
     };
@@ -8935,7 +9010,7 @@ function renderInventory(items, model, msgEl, realData = false) {
       saveBtn.classList.toggle('on', wasPinned);
       saveBtn.textContent = wasPinned ? t('inv.saved') : t('inv.save');
       if (wasPinned) {
-        pinCar({ model: id, year: it.year, badge: it.price, image: it.image });
+        pinCar({ model: id, year: it.year, badge: it.price, image: it.image, vehicle: vehicleReference(it, model, false) });
       } else {
         unpinCar(id);
       }
@@ -8963,7 +9038,7 @@ function renderInventory(items, model, msgEl, realData = false) {
 function pinCar(rec) {
   const model = cleanField(rec.model);
   if (pinnedCars.some(c => c.model === model)) return;
-  pinnedCars.push({ model, year: cleanField(rec.year), badge: cleanField(rec.badge), image: rec.image || null });
+  pinnedCars.push({ model, year: cleanField(rec.year), badge: cleanField(rec.badge), image: rec.image || null, vehicle: rec.vehicle || null });
   renderCollection();
   flashCollectionButton();
   showToast(t('collection.saved'));
@@ -9029,7 +9104,10 @@ function renderCollection() {
       <div class="coll-card-info">
         <div class="coll-card-name">${escapeHtml(c.model)}</div>
         <div class="coll-card-match">${escapeHtml(matchLabel)}</div>
-        <button class="coll-card-details" onclick="showToast(t('collection.detailSoon'))">${escapeHtml(t('collection.viewDetails'))}</button>
+        <div class="coll-card-actions">
+          <button class="coll-card-details" type="button">${escapeHtml(t('collection.viewDetails'))}</button>
+          <button class="vehicle-add coll-card-ask" type="button"></button>
+        </div>
       </div>
       <button class="coll-card-remove" aria-label="Remove">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -9037,6 +9115,18 @@ function renderCollection() {
         </svg>
       </button>
     `;
+    const reference = c.vehicle || vehicleReference({ image: c.image }, c.model.split(' · ')[0], true);
+    const ask = card.querySelector('.coll-card-ask');
+    ask.dataset.vehicleKey = reference.key;
+    const added = selectedVehicles.some(v => v.key === reference.key);
+    setVehicleButtonContent(ask, added);
+    ask.setAttribute('aria-pressed', String(added));
+    ask.onclick = () => { closeCollection(); addVehicleToChat(reference); };
+    card.querySelector('.coll-card-details').onclick = () => {
+      const listingId = reference.details.listingId;
+      if (listingId) window.open('https://www.bruktbil.no/bil/' + encodeURIComponent(listingId), '_blank', 'noopener');
+      else showToast(t('collection.detailSoon'));
+    };
     card.querySelector('.coll-card-remove').addEventListener('click', () => { unpinCar(c.model); });
     body.appendChild(card);
   });
@@ -9102,6 +9192,7 @@ async function sendMessage() {
   const question = tokenPayloads.length > 0
     ? (tokenPayloads.join(', ') + (text ? '. ' + text : ''))
     : text;
+  const isVehicleComparison = vehicles.length === 2 && /compar|versus|\bvs\b|对比|比较/i.test(question);
   const combined = vehicles.length
     ? (question || t('vehicle.details')) + '\n\nSelected vehicles (reference data, not new shopping preferences):\n' +
       JSON.stringify(vehicles.map(v => v.details)) +
@@ -9112,6 +9203,7 @@ async function sendMessage() {
   appendUserMessage(vehicles.length
     ? t('vehicle.about', { names: vehicles.map(v => v.name).join('; ') }) + '\n' + (text || (!tokens.length ? t('vehicle.details') : ''))
     : text, tokens);
+  if (isVehicleComparison) renderVehicleComparison(vehicles);
   detectMode(question);
   if (conversationMode === 'shopping' && !isExplanationRequest) {
     if (!vehicles.length) syncFiltersFromText(question);
@@ -9200,6 +9292,7 @@ async function sendMessage() {
           t('chip.maintenance'),
           t('chip.diffOther'),
         ], el);
+        if (isVehicleComparison) renderVehicleComparison(vehicles);
       });
       if (msgEl) pushedEntry.__id = msgEl.id;
       msgEl.classList.add('has-recs');
@@ -9234,6 +9327,7 @@ async function sendMessage() {
         // Map disabled for now
         // if (aiTopic === 'range')  renderNorwayMap(el);
         renderQuickChips(suggestions, el);
+        if (isVehicleComparison) renderVehicleComparison(vehicles);
       });
       if (msgEl) pushedEntry.__id = msgEl.id;
       attachStripTo(msgEl);
@@ -10442,10 +10536,8 @@ function showToast(msg) {
         <div class="v2-card-name">${escapeHtml(it.year || '')} ${escapeHtml(modelName)}</div>
         <div class="v2-card-price">${escapeHtml(it.price || '')}</div>
         ${subText ? `<div class="v2-card-sub">${escapeHtml(subText)}</div>` : ''}
-        <div class="v2-card-followup">
-          ${it.edge ? `<div class="v2-card-reason"><span class="v2-card-reason-label">${escapeHtml(t('inv.whyThisOne'))}</span> ${escapeHtml(it.edge)}</div>` : '<span></span>'}
-          <button class="vehicle-add" type="button"></button>
-        </div>
+        ${it.edge ? `<div class="v2-card-reason"><span class="v2-card-reason-label">${escapeHtml(t('inv.whyThisOne'))}</span> ${escapeHtml(it.edge)}</div>` : ''}
+        <div class="v2-card-followup"><button class="vehicle-add" type="button"></button></div>
         <div class="v2-card-actions${showSave ? '' : ' single'}">
           ${showSave ? `<button class="v2-card-save" type="button">${escapeHtml(t('inv.save'))}</button>` : ''}
           <button class="v2-card-cta" type="button">${escapeHtml(ctaLabel)}</button>
@@ -10457,7 +10549,7 @@ function showToast(msg) {
     const addBtn = card.querySelector('.vehicle-add');
     addBtn.dataset.vehicleKey = vehicle.key;
     const added = selectedVehicles.some(v => v.key === vehicle.key);
-    addBtn.textContent = t(added ? 'vehicle.added' : 'vehicle.add');
+    setVehicleButtonContent(addBtn, added);
     addBtn.setAttribute('aria-pressed', String(added));
     addBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -10478,7 +10570,7 @@ function showToast(msg) {
         saveBtn.classList.toggle('on', wasPinned);
         saveBtn.textContent = wasPinned ? t('inv.saved') : t('inv.save');
         if (wasPinned && typeof pinCar === 'function') {
-          pinCar({ model: id, year: it.year, badge: it.price, image: it.image });
+          pinCar({ model: id, year: it.year, badge: it.price, image: it.image, vehicle });
         } else if (typeof unpinCar === 'function') {
           unpinCar(id);
         }
@@ -10579,15 +10671,40 @@ function showToast(msg) {
     if (!heroBottom) return;
     const loading = heroBottom.querySelector('.v2-inv-loading');
 
-    // Same shared inv-card layout as live recs — including the Save button
     const grid = document.createElement('div');
-    grid.className = 'v2-inv-grid';
-    items.forEach((it) => {
-      grid.appendChild(v2BuildInvCard(it, modelName));   // default View → bruktbil link
-    });
+    grid.className = 'v2-inv-grid inventory-page';
+    grid.id = 'inventoryPage';
+    const controls = document.createElement('nav');
+    controls.className = 'inventory-pagination';
+    controls.setAttribute('aria-label', t('v2.inventory'));
+    const previous = document.createElement('button');
+    previous.type = 'button'; previous.textContent = '←';
+    previous.setAttribute('aria-label', t('inventory.previous'));
+    previous.setAttribute('aria-controls', grid.id);
+    const status = document.createElement('span');
+    status.setAttribute('aria-live', 'polite');
+    const next = document.createElement('button');
+    next.type = 'button'; next.textContent = '→';
+    next.setAttribute('aria-label', t('inventory.next'));
+    next.setAttribute('aria-controls', grid.id);
+    controls.appendChild(previous); controls.appendChild(status); controls.appendChild(next);
+    let page = 0;
+    const pageSize = 3;
+    const draw = () => {
+      grid.replaceChildren();
+      const start = page * pageSize;
+      items.slice(start, start + pageSize).forEach(it => grid.appendChild(v2BuildInvCard(it, modelName)));
+      previous.disabled = page === 0;
+      next.disabled = start + pageSize >= items.length;
+      status.textContent = t('inventory.page', { start: start + 1, end: Math.min(start + pageSize, items.length), total: items.length });
+      grid.scrollTop = 0;
+    };
+    previous.onclick = () => { if (page > 0) { page--; draw(); } };
+    next.onclick = () => { if ((page + 1) * pageSize < items.length) { page++; draw(); } };
+    draw();
     if (loading) loading.remove();
+    heroBottom.appendChild(controls);
     heroBottom.appendChild(grid);
-    grid.scrollTop = 0;
   }
 
   window.v2CloseInventoryInDock = function() {

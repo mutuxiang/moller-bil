@@ -12,8 +12,8 @@ function harness() {
     set innerHTML(value){this.value=value; children.length=0; loading=value.includes('v2-inv-loading')?{remove(){loading=null},setAttribute(){}}:null},
     querySelector(){return loading},appendChild(el){children.push(el)},
   };
-  const context=vm.createContext({window:{},document:{querySelector:()=>panel,createElement:()=>({children:[],appendChild(el){this.children.push(el)},setAttribute(){}})},
-    inventoryLoaded:true, inventoryLoadPromise:null, matchInventory:()=>[{id:1},{id:2}],
+  const context=vm.createContext({window:{},document:{querySelector:()=>panel,createElement:()=>({children:[],appendChild(el){this.children.push(el)},replaceChildren(){this.children=[]},setAttribute(){}})},
+    inventoryLoaded:true, inventoryLoadPromise:null, matchInventory:()=>Array.from({length:7},(_,id)=>({id})),
     apiCarToItem:car=>car,generateEdge:()=>'',v2BuildInvCard:it=>({it}),
     t:key=>key,escapeHtml:x=>x,v2RenderLiveRecsAsInv(){panel.innerHTML='recommendations'},
     // Unresolved timeout: races are settled explicitly by the test's deferred promise.
@@ -25,12 +25,18 @@ function harness() {
 (async()=>{
   const h=harness();
   await h.context.window.v2OpenInventoryInDock('VW ID.4');
-  assert.equal(h.children[0].children.length,2);
+  assert.equal(h.children[1].children.length,3);
+  const [prev,status,next]=h.children[0].children;
+  assert.equal(prev.disabled,true);
+  next.onclick(); assert.equal(h.children[1].children[0].it.id,3);
+  next.onclick(); assert.equal(h.children[1].children.length,1);
+  assert.equal(next.disabled,true);
+  prev.onclick(); assert.equal(h.children[1].children.length,3);
   assert.equal(h.loading,null);
   h.context.window.v2CloseInventoryInDock();
   assert.equal(h.panel.innerHTML,'recommendations');
   await h.context.window.v2OpenInventoryInDock('Audi Q4 e-tron');
-  assert.equal(h.children[0].children.length,2,'reopening builds fresh cards');
+  assert.equal(h.children[1].children.length,3,'reopening builds fresh cards');
   const bad=harness();
   bad.context.v2BuildInvCard=()=>{throw new Error('render failure')};
   await bad.context.window.v2OpenInventoryInDock('VW ID.4');
@@ -49,9 +55,9 @@ function harness() {
   switched.context.inventoryLoaded=false;
   switched.context.inventoryLoadPromise=new Promise(resolve=>{finish=resolve});
   const old=switched.context.window.v2OpenInventoryInDock('VW ID.4');
-  const next=switched.context.window.v2OpenInventoryInDock('Audi Q4 e-tron');
-  finish();await Promise.all([old,next]);
-  assert.equal(switched.children.length,1,'only the newest request renders');
+  const latest=switched.context.window.v2OpenInventoryInDock('Audi Q4 e-tron');
+  finish();await Promise.all([old,latest]);
+  assert.equal(switched.children.length,2,'only the newest request renders navigation and grid');
   assert.match(switched.panel.innerHTML,/Audi Q4 e-tron/);
   switched.context.window.v2CloseInventoryInDock();
   assert.equal(switched.panel.innerHTML,'recommendations','snapshot is never overwritten by loading UI');

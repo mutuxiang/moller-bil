@@ -29,3 +29,21 @@ See `scripts/README.md` for the persistent local preview command.
 Initial feature: `codex/vehicle-chat-followups`, commit `4173a86`.
 Inventory/reference UI fix: `codex/inventory-followup-layout`.
 Each change is isolated in Git and can be reverted independently.
+
+## Comparison and carousel update
+
+Branch: `codex/vehicle-comparison-carousel`.
+
+- Two composer references share one row; additional references keep the same
+  width and scroll horizontally. Browser measured 228.4px for both two and three
+  selections at the test viewport; the third extends the scrollable rail.
+- Two-car comparison displays a two-column specification table in the visualization
+  area when the comparison quick follow-up is selected or a comparison is sent.
+  Listing facts and model representative-listing facts are clearly distinguished;
+  unknown values show Not provided. Difference rows use the existing surface color.
+- Original Why this one reason styling is restored. Added uses a stroked SVG check.
+- Saved cars retain listing reference data and offer Ask about alongside View details.
+  Browser verified closing the drawer, restoring composer focus and adding the listing.
+- Inventory renders one page of up to three cars in a single row, with previous/next
+  controls and an item range. Browser verified 1–3 → 4–6 → 1–3 and saving a listing.
+  Automated tests cover first/last page boundaries and reopening at page one.
