@@ -24,3 +24,6 @@ Browser preview uses `127.0.0.1:8766` with the system proxy unchanged.
 - Welcome polish: enlarged typewriter text, shorter and lower CTAs, hero images flush with viewport bottom.
 - Comparison gallery: two wide 120px-high photos left-aligned with names; no visible vehicle count or representative-listing note; mileage row has the card background. Verify gallery plus three metrics fit the existing 344px card.
 - Inventory pagination and model title bottom edges must match, without changing vehicle-card height.
+
+- Shopping-only entry: welcome and chat Just learning controls are disabled; direct entry requests and learning phrases cannot switch the application mode. Run `node tests/shopping-entry.cjs`.
+- Comparison images, titles, advantage callouts and corresponding vehicle values share a left edge; metric labels occupy the separate first column. Return and pagination arrow SVGs must all measure 18×18px.

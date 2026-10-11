@@ -3130,7 +3130,7 @@ body.v2-layout .chat { max-width: 100% !important; }
   transition: background 180ms, color 180ms;
 }
 .v2-inv-back:hover { background: var(--salmon); color: var(--cream-100); }
-.v2-inv-back svg { width: 14px; height: 14px; }
+.v2-inv-back svg, .inventory-pagination button svg { width: 18px; height: 18px; }
 .v2-inv-head-text {
   display: flex; flex-direction: column;
   gap: 4px;
@@ -3716,8 +3716,9 @@ body.v2-layout .hero-bottom .v2-card-img {
 .vehicle-comparison { padding: 16px 20px; }
 .comparison-heading { justify-content: flex-end; margin-bottom: 6px; }
 .comparison-scroll { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-.comparison-vehicles { display: grid; gap: 24px; flex-shrink: 0; }
-.comparison-vehicle { min-width: 0; }
+.comparison-vehicles { display: grid; gap: 0; flex-shrink: 0; }
+.comparison-vehicle { min-width: 0; padding: 0 12px; }
+.vehicle-comparison .comparison-vehicle small { margin-top: 6px; padding: 4px 8px; font-weight: 500; color: var(--ink); background: var(--cream-200); border-left: 2px solid var(--salmon); border-radius: 0 4px 4px 0; }
 .comparison-vehicle img { display: block; width: 100%; height: 120px; object-fit: cover; object-position: left center; border-radius: 4px; margin-bottom: 8px; }
 .vehicle-comparison table { flex: 1; height: auto; font-size: 15px; }
 .vehicle-comparison th, .vehicle-comparison td { padding: 7px 12px; }
@@ -3738,8 +3739,12 @@ body.v2-layout .app.is-onboarding .col-spacer.left {
   max-width: 44vw; font-size: clamp(38px, 3.8vw, 56px);
   min-height: 4.2em; margin-bottom: 24px;
 }
-.app.is-onboarding .hero-cta { max-width: min(420px, 34vw); margin-top: 48px; gap: 16px; }
-.app.is-onboarding .hero-cta-btn { padding: 18px 24px; }
+.app.is-onboarding .hero-cta { max-width: min(480px, 38vw); margin-top: 48px; gap: 16px; }
+.app.is-onboarding .hero-cta-btn { padding: 22px 28px; min-height: 90px; }
+.app.is-onboarding .hero-cta-label { font-size: 22px; }
+.app.is-onboarding .hero-cta-eyebrow { font-size: 12px; }
+.app.is-onboarding .hero-cta-btn:disabled { cursor: not-allowed; opacity: .55; background: transparent; border-color: rgba(255,255,255,.28); transform: none; border-radius: 4px; }
+.app.is-onboarding .hero-cta-btn:disabled .hero-cta-arrow { transform: none; }
 .app.is-onboarding .hero-cluster { right: 8vw; bottom: 0; width: min(640px, 40vw); }
 @media (max-width: 900px) {
   .app.is-onboarding .hero-headline { max-width: 100%; }
@@ -3788,7 +3793,7 @@ body.v2-layout .app.is-onboarding .col-spacer.left {
             <path d="M5 11h12M12 6l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
-        <button class="hero-cta-btn ghost" type="button" onclick="onboardingChoose('learning')">
+        <button class="hero-cta-btn ghost" type="button" disabled aria-disabled="true">
           <span class="hero-cta-eyebrow" data-i18n="cta.eyebrow.learn">Just curious</span>
           <span class="hero-cta-label" data-i18n="cta.label.learn">I just want to learn about cars</span>
           <svg class="hero-cta-arrow" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
@@ -3828,7 +3833,7 @@ body.v2-layout .app.is-onboarding .col-spacer.left {
       <div class="chat-mode-bar">
         <div class="mode-toggle" id="modeToggle" role="tablist">
           <button data-mode="shopping" class="on" onclick="setConversationMode('shopping')" data-i18n="mode.shopping">Find a car</button>
-          <button data-mode="learning" class="locked" onclick="showLearningLocked()" data-i18n="mode.learning">Just learning</button>
+          <button data-mode="learning" class="locked" disabled aria-disabled="true" onclick="showLearningLocked()" data-i18n="mode.learning">Just learning</button>
         </div>
       </div>
 
@@ -4947,23 +4952,9 @@ function nextMsgId() { return 'msg-' + (++msgCounter); }
 // 'learning' = just curious → sidebar stays blank, AI acts as a tutor
 let conversationMode = 'shopping';
 
-function detectMode(userText) {
-  const t = userText.toLowerCase();
-  const userMsgCount = messages.filter(m => m.role === 'user').length;
-  const isFirst = userMsgCount === 0; // about to be appended
-
-  if (isFirst) {
-    if (/\b(just\s+learning|learning\s+for\s+now|just\s+exploring|just\s+browsing|just\s+looking|just\s+curious|research|tutor|teach\s+me|learn\s+(more|about)|how\s+(buying|car-buying|cars))\b/.test(t)) {
-      conversationMode = 'learning';
-    } else {
-      conversationMode = 'shopping';
-    }
-  } else if (conversationMode === 'learning') {
-    // Allow switching back to shopping when intent is clear
-    if (/\b(find\s+(me|a|my|the)|help\s+me\s+find|let'?s\s+find|let'?s\s+start\s+looking|show\s+me\s+(cars|some\s+matches|matches)|now\s+find|help\s+me\s+(shop|buy|choose)|i\s+want\s+to\s+buy|i('m|am)\s+ready|ready\s+to\s+(buy|shop|find)|i\s+need\s+a\s+car)\b/.test(t)) {
-      conversationMode = 'shopping';
-    }
-  }
+function detectMode() {
+  // Just learning is not available; ordinary car questions stay in shopping.
+  conversationMode = 'shopping';
   applyConversationMode();
 }
 
@@ -4981,6 +4972,7 @@ function showLearningLocked() {
 
 // User-initiated mode switch (via the topbar segmented control)
 function setConversationMode(mode) {
+  if (mode === 'learning') { showLearningLocked(); return; }
   if (conversationMode === mode) return;
   const wasLearning = conversationMode === 'learning';
   conversationMode = mode;
@@ -5902,6 +5894,7 @@ function stopHeroTypewriter() {
 // User chose a mode from the onboarding CTA → slide the chat in and start
 // the AI conversation in the requested mode.
 function onboardingChoose(mode) {
+  if (mode === 'learning') { showLearningLocked(); return; }
   const app = document.querySelector('.app');
   if (!app.classList.contains('is-onboarding')) return; // double-click guard
   stopHeroTypewriter();
@@ -7559,11 +7552,11 @@ function renderVehicleComparison(vehicles) {
   card.className = 'vehicle-comparison';
   card.setAttribute('aria-label', t('compare.title'));
   card.innerHTML = `<div class="comparison-scroll">
-    <div class="comparison-vehicles" style="grid-template-columns:repeat(${vehicles.length},minmax(0,1fr));min-width:${vehicles.length > 2 ? vehicles.length * 280 : 0}px">${vehicles.map((v, i) => {
+    <div class="comparison-vehicles" style="grid-template-columns:18% repeat(${vehicles.length},minmax(0,1fr));min-width:${vehicles.length > 2 ? 180 + vehicles.length * 280 : 0}px"><div aria-hidden="true"></div>${vehicles.map((v, i) => {
       const advantages = allRows.filter(r => r.winners[i]).map(r => t('compare.adv.' + r.key));
       return `<div class="comparison-vehicle">${v.image ? `<img src="${escapeHtml(v.image)}" alt="">` : ''}<strong>${escapeHtml(v.title || v.name)}</strong><small>${escapeHtml(advantages.slice(0, 2).join(' · ') || t('compare.adv.none'))}</small></div>`;
     }).join('')}</div>
-    <table style="min-width:${vehicles.length > 2 ? 180 + vehicles.length * 280 : 0}px"><thead class="sr-only"><tr><th scope="col">${escapeHtml(t('compare.title'))}</th>${vehicles.map(v => `<th scope="col">${escapeHtml(v.title || v.name)}</th>`).join('')}</tr></thead>
+    <table style="min-width:${vehicles.length > 2 ? 180 + vehicles.length * 280 : 0}px"><colgroup><col style="width:18%">${vehicles.map(() => '<col>').join('')}</colgroup><thead class="sr-only"><tr><th scope="col">${escapeHtml(t('compare.title'))}</th>${vehicles.map(v => `<th scope="col">${escapeHtml(v.title || v.name)}</th>`).join('')}</tr></thead>
     <tbody>${rows.map(row => `<tr class="${row.key !== 'mileage' && new Set(row.values).size > 1 ? 'is-different' : ''}"><th scope="row">${escapeHtml(t('compare.' + row.key))}</th>${row.values.map((value, i) => `<td>${escapeHtml(value)}${row.winners[i] ? `<span class="comparison-winner" role="img" aria-label="${escapeHtml(t('compare.winner'))}"></span>` : ''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   host.replaceChildren(card);
   if (typeof v2VizIntroActive !== 'undefined') v2VizIntroActive = false;
@@ -9984,6 +9977,7 @@ function showToast(msg) {
   const _origOnboardingChoose = window.onboardingChoose;
   if (typeof _origOnboardingChoose === 'function') {
     window.onboardingChoose = function(mode) {
+      if (mode === 'learning') return _origOnboardingChoose.apply(this, arguments);
       _origOnboardingChoose.apply(this, arguments);
       // Original transition is ~650ms — schedule v2 layout setup just after
       setTimeout(v2BuildLayout, 700);
@@ -10811,7 +10805,7 @@ function showToast(msg) {
     heroBottom.innerHTML = `
       <div class="v2-inv-head">
         <div class="v2-inv-head-text">
-          <button class="v2-inv-back v2-inv-eyebrow" type="button" onclick="v2CloseInventoryInDock()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14 6-6 6 6 6M8 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>${escapeHtml(t('v2.back'))}</button>
+          <button class="v2-inv-back v2-inv-eyebrow" type="button" onclick="v2CloseInventoryInDock()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>${escapeHtml(t('v2.back'))}</button>
           <h3 class="v2-inv-title">${escapeHtml(modelName)}</h3>
         </div>
         <div class="v2-inv-controls"></div>
