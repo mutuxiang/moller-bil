@@ -2859,13 +2859,10 @@ body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero {
   padding: 24px 36px 24px !important;
   border-left: 1px solid rgba(255,255,255,0.08) !important;
   border-right: 0 !important;
-  /* CSS GRID — row 2 (live-recs) is AUTO-SIZED to its content (header +
-     cards exactly), so there's no internal gap. Row 1 (viz) takes ALL the
-     remaining space (1fr). Since row 2 sits flush at the dock bottom and
-     is exactly content-tall, the cards' BOTTOM edge = dock content bottom
-     = (viewport bottom - 24px padding) = chat composer bottom. */
+  /* Fixed proportions keep inventory at the same position when the
+     visualization changes. Each region scrolls within its own row. */
   display: grid !important;
-  grid-template-rows: minmax(0, 1fr) auto !important;
+  grid-template-rows: minmax(0, .85fr) minmax(0, 1.15fr) !important;
   grid-template-columns: 1fr !important;
   gap: 10px !important;
   overflow: hidden !important;
@@ -3548,14 +3545,14 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
 .vehicle-reference-image { width: 56px; height: auto; aspect-ratio: 4 / 3; border-radius: var(--radius-card); object-fit: cover; grid-row: span 2; }
 .vehicle-reference-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .vehicle-reference-copy strong { font-size: 13px; font-weight: 500; color: var(--ink); overflow-wrap: anywhere; }
-.vehicle-reference-copy > span { font-size: 11px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.vehicle-reference-subtitle { font-size: 11px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .vehicle-reference-price { grid-column: 2; font-size: 12px; font-weight: 500; color: var(--ink); }
 .vehicle-reference-remove { grid-column: 3; grid-row: 1 / 3; border: 0; background: transparent; color: var(--muted); font: 22px/1 system-ui,sans-serif; width: 24px; height: 32px; cursor: pointer; }
 .vehicle-context-row.has-multiple .vehicle-reference { flex-basis: calc((100% - 8px) / 2); grid-template-columns: 42px minmax(0,1fr); padding: 8px; align-content: start; }
 .vehicle-context-row.has-multiple .vehicle-reference-image { width: 42px; height: auto; grid-row: 1; }
 .vehicle-context-row.has-multiple .vehicle-reference-copy { padding-right: 14px; }
 .vehicle-context-row.has-multiple .vehicle-reference-copy strong { font-size: 12px; }
-.vehicle-context-row.has-multiple .vehicle-reference-copy > span { display: none; }
+.vehicle-context-row.has-multiple .vehicle-reference-subtitle { display: none; }
 .vehicle-context-row.has-multiple .vehicle-reference-price { grid-column: 1 / -1; }
 .vehicle-context-row.has-multiple .vehicle-reference-remove { position: absolute; right: 2px; top: 2px; width: 22px; height: 24px; }
 .v2-card-heading { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 40px; }
@@ -3589,21 +3586,20 @@ body.v2-layout .hero-bottom .inventory-page { grid-template-rows: auto; grid-aut
 .vehicle-comparison tr.is-different { background: var(--bg-surface); }
 .comparison-note { font-size: 11px; color: var(--muted); margin-top: 10px; }
 /* Møller Bil: flat cream cards, 4px corners, sans type and pill actions. */
-body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero:has(.vehicle-comparison) {
-  grid-template-rows: minmax(240px, 1fr) minmax(0, 1fr) !important;
-}
 .quick-reply-wrap.has-vehicles > .quick-reply-label,
 .quick-reply-wrap.has-vehicles > .quick-chips,
 .quick-reply-wrap.has-vehicles > .v2-pending-banners { display: none; }
 .vehicle-context-row { padding: 0 0 8px; width: 100%; }
-.vehicle-reference { flex-basis: 100%; grid-template-columns: 76px minmax(0,1fr) 24px; grid-template-rows: auto auto; padding: 12px; gap: 4px 12px; border-radius: 4px; border: 0; align-content: center; }
-.vehicle-reference-image { width: 76px; grid-row: 1 / 3; align-self: center; }
+.vehicle-reference { flex-basis: 100%; grid-template-columns: 112px minmax(0,1fr) 24px; grid-template-rows: auto; padding: 12px; gap: 4px 12px; border-radius: 4px; border: 0; align-content: center; }
+.vehicle-reference-image { width: 112px; grid-row: 1; align-self: center; }
+.vehicle-reference-copy { align-self: stretch; justify-content: space-between; gap: 8px; }
 .vehicle-reference-copy strong { font-size: 16px; line-height: 1.25; }
-.vehicle-reference-copy > span { font-size: 14px; line-height: 1.35; }
+.vehicle-reference-subtitle { font-size: 14px; line-height: 1.35; }
 .vehicle-reference-price { font-size: 15px; }
+.vehicle-reference-remove { grid-row: 1; }
 .vehicle-reference-remove { display: flex; align-items: center; justify-content: center; color: var(--ink); border-radius: 999px; }
-.vehicle-context-row.has-multiple .vehicle-reference { grid-template-columns: 64px minmax(0,1fr); padding: 12px; align-content: center; }
-.vehicle-context-row.has-multiple .vehicle-reference-image { width: 64px; grid-row: 1 / 3; }
+.vehicle-context-row.has-multiple .vehicle-reference { grid-template-columns: 96px minmax(0,1fr); padding: 12px; align-content: center; }
+.vehicle-context-row.has-multiple .vehicle-reference-image { width: 96px; grid-row: 1; }
 .vehicle-context-row.has-multiple .vehicle-reference-copy strong { font-size: 16px; }
 .vehicle-context-row.has-multiple .vehicle-reference-price { grid-column: 2; }
 .vehicle-context-row.has-multiple .vehicle-reference-remove { top: 4px; right: 4px; }
@@ -3623,17 +3619,35 @@ body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero:has(.vehicle-compa
 .vehicle-comparison table { font-size: 14px; }
 .vehicle-comparison th, .vehicle-comparison td { padding: 5px 8px; line-height: 1.25; vertical-align: middle; font-weight: 400; }
 .vehicle-comparison th:first-child { width: 24%; }
-.vehicle-comparison thead img { float: left; width: 56px; height: 42px; margin: 0 8px 4px 0; }
+.vehicle-comparison thead img { float: left; width: 104px; height: 78px; margin: 0 12px 0 0; object-fit: cover; }
 .vehicle-comparison strong { font-size: 16px; font-weight: 500; line-height: 1.2; }
-.vehicle-comparison small { clear: both; font-size: 14px; line-height: 1.25; padding-top: 4px; margin-top: 0; }
+.vehicle-comparison small { clear: none; font-size: 14px; line-height: 1.25; padding-top: 4px; margin-top: 0; }
 .comparison-winner { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #E1644B; margin-left: 6px; vertical-align: middle; }
 .comparison-note { flex-shrink: 0; font-size: 12px; line-height: 1.3; margin-top: 6px; }
 @media(max-width: 600px) {
-  .vehicle-context-row.has-multiple .vehicle-reference { grid-template-columns: 44px minmax(0,1fr); gap: 4px 8px; padding: 10px; }
-  .vehicle-context-row.has-multiple .vehicle-reference-image { width: 44px; }
+  .vehicle-context-row.has-multiple .vehicle-reference { grid-template-columns: 72px minmax(0,1fr); gap: 4px 8px; padding: 10px; }
+  .vehicle-context-row.has-multiple .vehicle-reference-image { width: 72px; }
   .vehicle-context-row.has-multiple .vehicle-reference-copy strong { font-size: 15px; }
 }
 
+
+/* Keep the dock rows stable when switching from fuel to comparison. */
+.v2-inv-heading-row { display: flex; align-items: center; gap: 20px; }
+.v2-inv-controls { margin-left: auto; align-self: flex-start; }
+.v2-inv-head { gap: 32px; }
+.collection-drawer { width: 560px; }
+.coll-card { align-items: center; gap: 16px; }
+.coll-card-img { width: 144px; height: auto; align-self: center; object-fit: contain; }
+.coll-card-ph { width: 144px; min-height: 96px; align-self: center; }
+.coll-card-actions { flex-wrap: nowrap; }
+.coll-card-actions button { white-space: nowrap; }
+@media(max-width:600px) {
+  .coll-card-img, .coll-card-ph { width: 100%; max-height: 180px; }
+  .coll-card { flex-direction: column; align-items: stretch; gap: 10px; padding: 10px; }
+  .coll-card-actions { gap: 6px; }
+  .coll-card-actions button { font-size: 14px; padding: 8px 10px; }
+  .v2-inv-heading-row { gap: 12px; }
+}
 </style>
 </head>
 <body class="v2-layout">
@@ -7443,14 +7457,15 @@ function renderVehicleComparison(vehicles) {
   if (!host) return;
   const fuelHeight = host.querySelector('.fuel-card')?.getBoundingClientRect().height;
   if (fuelHeight > 0) host.dataset.comparisonMaxHeight = String(fuelHeight);
-  const rows = vehicleComparisonData(vehicles);
+  const allRows = vehicleComparisonData(vehicles);
+  const rows = allRows.filter(row => ['price', 'mileage', 'range'].includes(row.key));
   const card = document.createElement('section');
   card.className = 'vehicle-comparison';
   card.style.maxHeight = Math.min(360, Number(host.dataset.comparisonMaxHeight) || 360, host.clientHeight || 360) + 'px';
   card.setAttribute('aria-label', t('compare.title'));
   card.innerHTML = `<div class="comparison-heading"><span>${escapeHtml(t('compare.title'))}</span><span class="comparison-vs">${vehicles.length} ${escapeHtml(t('compare.vehicles'))}</span></div>
     <div class="comparison-scroll"><table style="min-width:${vehicles.length > 2 ? 180 + vehicles.length * 180 : 0}px"><thead><tr><th scope="col"><span class="sr-only">${escapeHtml(t('compare.title'))}</span></th>${vehicles.map((v, i) => {
-      const advantages = rows.filter(r => r.winners[i]).map(r => t('compare.adv.' + r.key));
+      const advantages = allRows.filter(r => r.winners[i]).map(r => t('compare.adv.' + r.key));
       return `<th scope="col">${v.image ? `<img src="${escapeHtml(v.image)}" alt="">` : ''}<strong>${escapeHtml(v.title || v.name)}</strong><small>${escapeHtml(advantages.slice(0, 2).join(' · ') || t('compare.adv.none'))}</small></th>`;
     }).join('')}</tr></thead>
     <tbody>${rows.map(row => `<tr class="${new Set(row.values).size > 1 ? 'is-different' : ''}"><th scope="row">${escapeHtml(t('compare.' + row.key))}</th>${row.values.map((value, i) => `<td>${escapeHtml(value)}${row.winners[i] ? `<span class="comparison-winner" role="img" aria-label="${escapeHtml(t('compare.winner'))}"></span>` : ''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
@@ -7526,6 +7541,7 @@ function renderVehicleContext() {
     const title = document.createElement('strong');
     title.textContent = vehicle.title || vehicle.name;
     const subtitle = document.createElement('span');
+    subtitle.className = 'vehicle-reference-subtitle';
     subtitle.textContent = vehicle.modelOnly ? t('vehicle.model') : vehicle.subtitle;
     copy.appendChild(title);
     copy.appendChild(subtitle);
@@ -7534,7 +7550,7 @@ function renderVehicleContext() {
     price.className = 'vehicle-reference-price';
     price.textContent = vehicle.price
       ? (vehicle.modelOnly ? t('vehicle.from', { price: vehicle.price }) : vehicle.price) : '';
-    tag.appendChild(price);
+    copy.appendChild(price);
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'vehicle-reference-remove';
@@ -8229,7 +8245,7 @@ function fuelGlyphSvg(kind, accent) {
     <rect x="6" y="14" width="28" height="56" rx="3" stroke="${c}" stroke-width="1.6"/>
     <rect x="10" y="20" width="20" height="14" rx="1" stroke="${c}" stroke-width="1.2"/>
     <line x1="6" y1="70" x2="34" y2="70" stroke="${c}" stroke-width="2"/>
-    <text x="40" y="46" font-size="12" fill="${c}" font-weight="500">+</text>
+    <path d="M37 42h18m-9-9v18" stroke="${c}" stroke-width="2.8" stroke-linecap="round"/>
     <g transform="translate(50 0)">
       <path d="M 8 20 L 8 36 Q 8 48 20 48 Q 32 48 32 36 L 32 20" stroke="${c}" stroke-width="1.6"/>
       <line x1="13" y1="14" x2="13" y2="22" stroke="${c}" stroke-width="2" stroke-linecap="round"/>
@@ -10701,17 +10717,16 @@ function showToast(msg) {
     heroBottom.innerHTML = `
       <div class="v2-inv-head">
         <div class="v2-inv-head-text">
-          <span class="v2-inv-eyebrow">${escapeHtml(t('v2.inventory'))}</span>
+          <div class="v2-inv-heading-row">
+            <span class="v2-inv-eyebrow">${escapeHtml(t('v2.inventory'))}</span>
+            <button class="v2-inv-back" type="button" onclick="v2CloseInventoryInDock()">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              ${escapeHtml(t('v2.back'))}
+            </button>
+          </div>
           <h3 class="v2-inv-title">${escapeHtml(modelName)}</h3>
         </div>
-        <div class="v2-inv-controls">
-        <button class="v2-inv-back" type="button" onclick="v2CloseInventoryInDock()">
-          <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" width="14" height="14">
-            <path d="M12 7H2M6 3L2 7l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          ${escapeHtml(t('v2.back'))}
-        </button>
-        </div>
+        <div class="v2-inv-controls"></div>
       </div>
       <div class="v2-inv-loading">${escapeHtml(t('v2.finding'))}</div>
     `;
