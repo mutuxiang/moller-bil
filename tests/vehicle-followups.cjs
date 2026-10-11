@@ -23,6 +23,12 @@ assert.equal(run(`vehicleComparisonData([{modelOnly:false, details:{seats:5}, pr
 assert.equal(run(`vehicleComparisonData([{modelOnly:true, displayDetails:{year:'2021'}, details:{model:'VW'}},{modelOnly:false, details:{year:'2022'}}]).find(r=>r.key==='year').values[0]`), '2021');
 run(`const model = vehicleReference({}, 'VW ID.4', true); addVehicleToChat(model); addVehicleToChat(model);`);
 assert.equal(run('selectedVehicles.length'),1,'duplicate model is ignored');
+run('toggleVehicleInChat(model)');
+assert.equal(run('selectedVehicles.length'),0,'pressing Added removes the vehicle');
+run('toggleVehicleInChat(model)');
+assert.equal(run('selectedVehicles.length'),1,'pressing Ask about adds it again');
+run(`captureVehicleImageRatio(model, {querySelector:()=>({getBoundingClientRect:()=>({width:270,height:240})})})`);
+assert.equal(run('model.imageRatio'),270/240,'composer thumbnail follows source card ratio');
 assert.equal(run('selectedVehicles[0].details.price'),undefined,'model does not inherit representative listing price');
 run(`addVehicleToChat(vehicleReference({_raw:{id:'123'},year:'2024',price:'NOK 350,000'}, 'VW ID.4', false)); renderVehicleFollowups();`);
 assert.equal(run('selectedVehicles.length'),2);

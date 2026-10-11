@@ -47,3 +47,13 @@ Branch: `codex/vehicle-comparison-carousel`.
 - Inventory renders one page of up to three cars in a single row, with previous/next
   controls and an item range. Browser verified 1–3 → 4–6 → 1–3 and saving a listing.
   Automated tests cover first/last page boundaries and reopening at page one.
+
+## Compact control update
+
+Branch: `codex/compact-vehicle-card-controls`.
+Ask about/Added sits beside the vehicle name; pressing it again removes the reference
+and restores ordinary quick replies when the final vehicle is deselected. The extra
+button row is removed. Source image geometry is captured when selecting or saving
+so composer thumbnails share the source card's image ratio (browser checked ~1.14
+for both). Inventory previous/page/next controls share the Back to recommendations
+row, with page numbers only. Tests cover deselection/reselection and page boundaries.

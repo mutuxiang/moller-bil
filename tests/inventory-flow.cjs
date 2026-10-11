@@ -10,12 +10,12 @@ function harness() {
     value:'recommendations',
     get innerHTML(){return this.value},
     set innerHTML(value){this.value=value; children.length=0; loading=value.includes('v2-inv-loading')?{remove(){loading=null},setAttribute(){}}:null},
-    querySelector(){return loading},appendChild(el){children.push(el)},
+    querySelector(selector){return selector === '.v2-inv-loading' ? loading : panel},appendChild(el){children.push(el)},
   };
   const context=vm.createContext({window:{},document:{querySelector:()=>panel,createElement:()=>({children:[],appendChild(el){this.children.push(el)},replaceChildren(){this.children=[]},setAttribute(){}})},
     inventoryLoaded:true, inventoryLoadPromise:null, matchInventory:()=>Array.from({length:7},(_,id)=>({id})),
     apiCarToItem:car=>car,generateEdge:()=>'',v2BuildInvCard:it=>({it}),
-    t:key=>key,escapeHtml:x=>x,v2RenderLiveRecsAsInv(){panel.innerHTML='recommendations'},
+    t:(key,args)=>key === 'inventory.page' ? args.page+' / '+args.pages : key,escapeHtml:x=>x,v2RenderLiveRecsAsInv(){panel.innerHTML='recommendations'},
     // Unresolved timeout: races are settled explicitly by the test's deferred promise.
     setTimeout(){},
   });
@@ -28,9 +28,11 @@ function harness() {
   assert.equal(h.children[1].children.length,3);
   const [prev,status,next]=h.children[0].children;
   assert.equal(prev.disabled,true);
+  assert.equal(status.textContent,'1 / 3');
   next.onclick(); assert.equal(h.children[1].children[0].it.id,3);
   next.onclick(); assert.equal(h.children[1].children.length,1);
   assert.equal(next.disabled,true);
+  assert.equal(status.textContent,'3 / 3');
   prev.onclick(); assert.equal(h.children[1].children.length,3);
   assert.equal(h.loading,null);
   h.context.window.v2CloseInventoryInDock();

@@ -3544,29 +3544,34 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
 .vehicle-context-row { display: flex; gap: 8px; padding: 12px 14px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; }
 .vehicle-context-row[hidden] { display: none; }
 .vehicle-reference { position: relative; display: grid; grid-template-columns: 56px minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 10px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); min-width: 0; flex: 0 0 100%; scroll-snap-align: start; }
-.vehicle-reference-image { width: 56px; height: 52px; border-radius: var(--radius-card); object-fit: cover; grid-row: span 2; }
+.vehicle-reference-image { width: 56px; height: auto; aspect-ratio: 4 / 3; border-radius: var(--radius-card); object-fit: cover; grid-row: span 2; }
 .vehicle-reference-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .vehicle-reference-copy strong { font-size: 13px; font-weight: 500; color: var(--ink); overflow-wrap: anywhere; }
 .vehicle-reference-copy > span { font-size: 11px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .vehicle-reference-price { grid-column: 2; font-size: 12px; font-weight: 500; color: var(--ink); }
 .vehicle-reference-remove { grid-column: 3; grid-row: 1 / 3; border: 0; background: transparent; color: var(--muted); font: 22px/1 system-ui,sans-serif; width: 24px; height: 32px; cursor: pointer; }
 .vehicle-context-row.has-multiple .vehicle-reference { flex-basis: calc((100% - 8px) / 2); grid-template-columns: 42px minmax(0,1fr); padding: 8px; align-content: start; }
-.vehicle-context-row.has-multiple .vehicle-reference-image { width: 42px; height: 42px; grid-row: 1; }
+.vehicle-context-row.has-multiple .vehicle-reference-image { width: 42px; height: auto; grid-row: 1; }
 .vehicle-context-row.has-multiple .vehicle-reference-copy { padding-right: 14px; }
 .vehicle-context-row.has-multiple .vehicle-reference-copy strong { font-size: 12px; }
 .vehicle-context-row.has-multiple .vehicle-reference-copy > span { display: none; }
 .vehicle-context-row.has-multiple .vehicle-reference-price { grid-column: 1 / -1; }
 .vehicle-context-row.has-multiple .vehicle-reference-remove { position: absolute; right: 2px; top: 2px; width: 22px; height: 24px; }
-.v2-card-followup { display: flex; justify-content: flex-end; margin-top: auto; padding-top: 4px; }
+.v2-card-heading { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 40px; }
+.v2-card-heading .v2-card-name { flex: 1; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.v2-card-heading .vehicle-add { padding: 6px 8px; min-height: 30px; font-size: 12px; }
 .vehicle-add { display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex-shrink: 0; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-lg); background: var(--bg); color: var(--ink); font: 500 13px/1.2 "Moller",sans-serif; cursor: pointer; min-height: 34px; }
 .vehicle-add svg { flex-shrink: 0; }
 .vehicle-add:hover { border-color: var(--salmon); }
 .vehicle-add[aria-pressed="true"] { background: var(--salmon); border-color: var(--salmon); color: var(--ink); }
 .vehicle-add:focus-visible, .vehicle-reference-remove:focus-visible, .inventory-pagination button:focus-visible { outline: 2px solid var(--salmon); outline-offset: 3px; }
-.v2-card-actions { margin-top: 0; }
+.v2-card-actions { margin-top: auto; }
 .coll-card-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
 .coll-card-actions .coll-card-details { margin: 0; }
-.inventory-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 0 0 10px; color: var(--cream-100); font-size: 13px; }
+.v2-inv-controls { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+.v2-inv-head-text { min-width: 0; }
+.v2-inv-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inventory-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 0; color: var(--cream-100); font-size: 13px; white-space: nowrap; }
 .inventory-pagination button { width: 34px; height: 34px; border: 1px solid var(--muted); border-radius: var(--radius-lg); background: var(--cream-100); color: var(--ink); font: 20px system-ui,sans-serif; cursor: pointer; }
 .inventory-pagination button:disabled { opacity: .35; cursor: default; }
 body.v2-layout .hero-bottom .inventory-page { grid-template-rows: auto; grid-auto-flow: column; grid-template-columns: repeat(3,minmax(0,1fr)); }
@@ -3820,7 +3825,7 @@ const I18N = {
     'compare.fuel': 'Powertrain', 'compare.range': 'Electric range', 'compare.seats': 'Seats',
     'compare.location': 'Location', 'compare.listing': 'Selected listing',
     'inventory.previous': 'Previous vehicles', 'inventory.next': 'Next vehicles',
-    'inventory.page': '{start}–{end} of {total} vehicles',
+    'inventory.page': '{page} / {pages}',
     'vehicle.fit': 'How well does it fit my needs?',
     'vehicle.cost': 'What are the running costs?',
     'vehicle.check': 'What should I look out for?',
@@ -4049,7 +4054,7 @@ const I18N = {
     'compare.fuel': '动力', 'compare.range': '纯电续航', 'compare.seats': '座位',
     'compare.location': '所在地', 'compare.listing': '所选库存车辆',
     'inventory.previous': '上一页车辆', 'inventory.next': '下一页车辆',
-    'inventory.page': '第 {start}–{end} 辆，共 {total} 辆',
+    'inventory.page': '{page} / {pages}',
     'vehicle.fit': '适合我的需求吗？',
     'vehicle.cost': '日常用车成本如何？',
     'vehicle.check': '购买时需要注意什么？',
@@ -7386,6 +7391,25 @@ function clearVehicleFollowupTokens() {
   renderTokens();
 }
 
+function captureVehicleImageRatio(vehicle, card) {
+  const image = card.querySelector('.v2-card-img, .inv-img');
+  const rect = image?.getBoundingClientRect();
+  if (rect && rect.width > 0 && rect.height > 0) vehicle.imageRatio = rect.width / rect.height;
+}
+
+function removeVehicleFromChat(key) {
+  clearVehicleFollowupTokens();
+  selectedVehicles = selectedVehicles.filter(v => v.key !== key);
+  renderVehicleContext();
+  restoreQuickReplies();
+  document.getElementById('inputField').focus();
+}
+
+function toggleVehicleInChat(vehicle) {
+  if (selectedVehicles.some(v => v.key === vehicle.key)) removeVehicleFromChat(vehicle.key);
+  else addVehicleToChat(vehicle);
+}
+
 function addVehicleToChat(vehicle) {
   if (!selectedVehicles.some(v => v.key === vehicle.key)) {
     clearVehicleFollowupTokens();
@@ -7411,6 +7435,7 @@ function renderVehicleContext() {
       image.className = 'vehicle-reference-image';
       image.src = vehicle.image;
       image.alt = '';
+      image.style.aspectRatio = String(vehicle.imageRatio || 4 / 3);
       tag.appendChild(image);
     }
     const copy = document.createElement('div');
@@ -7432,13 +7457,7 @@ function renderVehicleContext() {
     remove.className = 'vehicle-reference-remove';
     remove.textContent = '×';
     remove.setAttribute('aria-label', t('vehicle.remove', { name: vehicle.name }));
-    remove.onclick = () => {
-      clearVehicleFollowupTokens();
-      selectedVehicles = selectedVehicles.filter(v => v.key !== vehicle.key);
-      renderVehicleContext();
-      restoreQuickReplies();
-      document.getElementById('inputField').focus();
-    };
+    remove.onclick = () => removeVehicleFromChat(vehicle.key);
     tag.appendChild(remove);
     row.appendChild(tag);
   });
@@ -9121,7 +9140,7 @@ function renderCollection() {
     const added = selectedVehicles.some(v => v.key === reference.key);
     setVehicleButtonContent(ask, added);
     ask.setAttribute('aria-pressed', String(added));
-    ask.onclick = () => { closeCollection(); addVehicleToChat(reference); };
+    ask.onclick = () => { closeCollection(); toggleVehicleInChat(reference); };
     card.querySelector('.coll-card-details').onclick = () => {
       const listingId = reference.details.listingId;
       if (listingId) window.open('https://www.bruktbil.no/bil/' + encodeURIComponent(listingId), '_blank', 'noopener');
@@ -10533,11 +10552,13 @@ function showToast(msg) {
     card.innerHTML = `
       ${imageHtml}
       <div class="v2-card-body">
-        <div class="v2-card-name">${escapeHtml(it.year || '')} ${escapeHtml(modelName)}</div>
+        <div class="v2-card-heading">
+          <div class="v2-card-name">${escapeHtml(it.year || '')} ${escapeHtml(modelName)}</div>
+          <button class="vehicle-add" type="button"></button>
+        </div>
         <div class="v2-card-price">${escapeHtml(it.price || '')}</div>
         ${subText ? `<div class="v2-card-sub">${escapeHtml(subText)}</div>` : ''}
         ${it.edge ? `<div class="v2-card-reason"><span class="v2-card-reason-label">${escapeHtml(t('inv.whyThisOne'))}</span> ${escapeHtml(it.edge)}</div>` : ''}
-        <div class="v2-card-followup"><button class="vehicle-add" type="button"></button></div>
         <div class="v2-card-actions${showSave ? '' : ' single'}">
           ${showSave ? `<button class="v2-card-save" type="button">${escapeHtml(t('inv.save'))}</button>` : ''}
           <button class="v2-card-cta" type="button">${escapeHtml(ctaLabel)}</button>
@@ -10553,7 +10574,8 @@ function showToast(msg) {
     addBtn.setAttribute('aria-pressed', String(added));
     addBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      addVehicleToChat(vehicle);
+      captureVehicleImageRatio(vehicle, card);
+      toggleVehicleInChat(vehicle);
     });
 
     const id = `${modelName} · ${it.year || ''} ${it.trim || ''}`.trim();
@@ -10570,6 +10592,7 @@ function showToast(msg) {
         saveBtn.classList.toggle('on', wasPinned);
         saveBtn.textContent = wasPinned ? t('inv.saved') : t('inv.save');
         if (wasPinned && typeof pinCar === 'function') {
+          captureVehicleImageRatio(vehicle, card);
           pinCar({ model: id, year: it.year, badge: it.price, image: it.image, vehicle });
         } else if (typeof unpinCar === 'function') {
           unpinCar(id);
@@ -10612,12 +10635,14 @@ function showToast(msg) {
           <span class="v2-inv-eyebrow">${escapeHtml(t('v2.inventory'))}</span>
           <h3 class="v2-inv-title">${escapeHtml(modelName)}</h3>
         </div>
+        <div class="v2-inv-controls">
         <button class="v2-inv-back" type="button" onclick="v2CloseInventoryInDock()">
           <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" width="14" height="14">
             <path d="M12 7H2M6 3L2 7l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           ${escapeHtml(t('v2.back'))}
         </button>
+        </div>
       </div>
       <div class="v2-inv-loading">${escapeHtml(t('v2.finding'))}</div>
     `;
@@ -10696,14 +10721,14 @@ function showToast(msg) {
       items.slice(start, start + pageSize).forEach(it => grid.appendChild(v2BuildInvCard(it, modelName)));
       previous.disabled = page === 0;
       next.disabled = start + pageSize >= items.length;
-      status.textContent = t('inventory.page', { start: start + 1, end: Math.min(start + pageSize, items.length), total: items.length });
+      status.textContent = t('inventory.page', { page: page + 1, pages: Math.ceil(items.length / pageSize) });
       grid.scrollTop = 0;
     };
     previous.onclick = () => { if (page > 0) { page--; draw(); } };
     next.onclick = () => { if ((page + 1) * pageSize < items.length) { page++; draw(); } };
     draw();
     if (loading) loading.remove();
-    heroBottom.appendChild(controls);
+    heroBottom.querySelector('.v2-inv-controls').appendChild(controls);
     heroBottom.appendChild(grid);
   }
 
