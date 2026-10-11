@@ -29,3 +29,5 @@ Browser preview uses `127.0.0.1:8766` with the system proxy unchanged.
 - Comparison images, titles, advantage callouts and corresponding vehicle values share a left edge; metric labels occupy the separate first column. Return and pagination arrow SVGs must all measure 18×18px.
 
 - Compact spacing: no inherited 36px top padding on recommendations, shared 74px recommendation/inventory header, 220px vehicle body, and 412px shared visualization height. Advantages use the exact Why this one background with no border. Check card bottom alignment and inventory switching still hold.
+
+- Fuel stays at its original 344px height; comparison is independently 412px. With comparison visible, recommendation eyebrow spacing is doubled to 31.2px and both title-to-card gaps measure 16px. Recommendation/inventory cards remain equal-height and aligned to the composer.

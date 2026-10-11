@@ -3650,8 +3650,12 @@ body.v2-layout .hero-bottom .inventory-page { grid-template-rows: auto; grid-aut
   .v2-inv-heading-row { gap: 12px; }
 }
 
-/* Fuel and comparison share one complete card slot; inventory never shifts. */
-body.v2-layout { --dock-card-height: 412px; }
+/* Fuel keeps its original height; comparison has the larger card slot. */
+body.v2-layout { --dock-card-height: 344px; }
+body.v2-layout .col-spacer.left.hero:has(#v2VizBody > .vehicle-comparison) {
+  --dock-card-height: 412px;
+  row-gap: 25.6px !important;
+}
 body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero:has(#v2VizBody > .fuel-cards),
 body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero:has(#v2VizBody > .vehicle-comparison) {
   grid-template-rows: calc(var(--dock-card-height) + 84px) minmax(0, 1fr) !important;
@@ -3694,7 +3698,7 @@ body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero:has(#v2VizBody > .
 /* Shared single-row card slot: switching inventory preserves the bottom edge. */
 body.v2-layout .hero-bottom .v2-dock-section-head,
 body.v2-layout .hero-bottom .v2-inv-head {
-  box-sizing: border-box; flex: 0 0 74px; height: 74px;
+  box-sizing: border-box; flex: 0 0 82.4px; height: 82.4px;
   margin: 0; padding: 4px 0 8px;
 }
 body.v2-layout .hero-bottom #heroRecsBody,
