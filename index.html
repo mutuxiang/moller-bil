@@ -3602,7 +3602,7 @@ body.v2-layout .hero-bottom .inventory-page { grid-template-rows: auto; grid-aut
 .vehicle-context-row.has-multiple .vehicle-reference-image { width: 96px; grid-row: 1; }
 .vehicle-context-row.has-multiple .vehicle-reference-copy strong { font-size: 16px; }
 .vehicle-context-row.has-multiple .vehicle-reference-price { grid-column: 2; }
-.vehicle-context-row.has-multiple .vehicle-reference-remove { top: 4px; right: 4px; }
+.vehicle-context-row.has-multiple .vehicle-reference-remove { grid-area: auto; top: 50%; right: 4px; transform: translateY(-50%); }
 .vehicle-add, .coll-card-actions .coll-card-details { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(0,25,70,.18); background: var(--cream-200); color: var(--ink); border-radius: 999px; padding: 8px 16px; min-height: 40px; font: 500 15px/1.2 "Moller",sans-serif; transition: background-color 220ms ease-out,color 220ms ease-out; }
 .v2-card-heading .vehicle-add { padding: 6px 12px; min-height: 32px; font-size: 14px; }
 .vehicle-add:hover, .coll-card-actions .coll-card-details:hover { background: var(--cream-300); color: var(--ink); border-color: rgba(0,25,70,.18); }
@@ -3651,7 +3651,7 @@ body.v2-layout .hero-bottom .inventory-page { grid-template-rows: auto; grid-aut
 }
 
 /* Fuel keeps its original height; comparison has the larger card slot. */
-body.v2-layout { --dock-card-height: 344px; --vehicle-card-height: 440px; }
+body.v2-layout { --dock-card-height: 344px; --vehicle-card-height: 420px; }
 body.v2-layout .col-spacer.left.hero:has(#v2VizBody > .vehicle-comparison) {
   --dock-card-height: 412px;
   row-gap: max(0px, calc(25.6px - (var(--vehicle-card-height) - 378px))) !important;

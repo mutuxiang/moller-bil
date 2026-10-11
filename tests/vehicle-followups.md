@@ -37,3 +37,5 @@ Browser preview uses `127.0.0.1:8766` with the system proxy unchanged.
 - Vehicle cards are now fixed at 400px. Compare photos are 160×120px (4:3), left-aligned with corresponding values; comparison stays 412px. Price and electric range always use cream-200 row fill, even for identical values; mileage stays plain. Extra car height is taken from the adjustable gap above recommendations.
 
 - Vehicle cards are fixed at 440px in all states. Comparison photos retain 120px height with automatic width matching each image’s original ratio. Advantage text uses regular 400 weight; comparison remains 412px and fuel 344px. Short windows scroll the recommendation section while retaining actual card height.
+
+- Vehicle cards are now fixed at 420px. Check single, two and three selected references: each remove button’s vertical center matches its card center, including horizontally scrolled references. Removing a reference must still update the selection and prompt.
