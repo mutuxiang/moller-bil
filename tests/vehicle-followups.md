@@ -31,3 +31,5 @@ Browser preview uses `127.0.0.1:8766` with the system proxy unchanged.
 - Compact spacing: no inherited 36px top padding on recommendations, shared 74px recommendation/inventory header, 220px vehicle body, and 412px shared visualization height. Advantages use the exact Why this one background with no border. Check card bottom alignment and inventory switching still hold.
 
 - Fuel stays at its original 344px height; comparison is independently 412px. With comparison visible, recommendation eyebrow spacing is doubled to 31.2px and both title-to-card gaps measure 16px. Recommendation/inventory cards remain equal-height and aligned to the composer.
+
+- Vehicle cards always remain 378px in fuel, comparison and inventory states, including after resizing; excess space moves above the recommendation header. Inventory title and pagination use the same 16px gap to cards as the recommendation title. Comparison remains 412px and fuel remains 344px. Verify comparison content fits, images align with data, reasons retain the Why this one background, and no orange vertical border appears.
