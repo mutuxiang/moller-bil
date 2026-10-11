@@ -20,3 +20,7 @@ Browser preview uses `127.0.0.1:8766` with the system proxy unchanged.
 - At 1536×1100, compare recommendation and inventory card heights and bottom bounds against the chat composer before and after See all in stock; verify the return arrow and pagination.
 - Check welcome content stays separated from the image cluster at 1280×720, and hybrid plus remains spaced from both icons.
 - Local preview forwards API requests through Windows networking so an active system proxy is respected.
+
+- Welcome polish: enlarged typewriter text, shorter and lower CTAs, hero images flush with viewport bottom.
+- Comparison gallery: two wide 120px-high photos left-aligned with names; no visible vehicle count or representative-listing note; mileage row has the card background. Verify gallery plus three metrics fit the existing 344px card.
+- Inventory pagination and model title bottom edges must match, without changing vehicle-card height.

@@ -3633,7 +3633,8 @@ body.v2-layout .hero-bottom .inventory-page { grid-template-rows: auto; grid-aut
 
 /* Keep the dock rows stable when switching from fuel to comparison. */
 .v2-inv-heading-row { display: flex; align-items: center; gap: 20px; }
-.v2-inv-controls { margin-left: auto; align-self: flex-start; }
+.v2-inv-controls { margin-left: auto; align-self: flex-end; }
+.v2-inv-head { align-items: flex-end; }
 .v2-inv-head { gap: 32px; }
 .collection-drawer { width: 560px; }
 .coll-card { align-items: center; gap: 16px; }
@@ -3714,14 +3715,17 @@ body.v2-layout .hero-bottom .v2-card-img {
 /* The section title is the only visible comparison title. */
 .vehicle-comparison { padding: 16px 20px; }
 .comparison-heading { justify-content: flex-end; margin-bottom: 6px; }
-.comparison-scroll { flex: 1; }
-.vehicle-comparison table { height: 100%; font-size: 15px; }
+.comparison-scroll { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.comparison-vehicles { display: grid; gap: 24px; flex-shrink: 0; }
+.comparison-vehicle { min-width: 0; }
+.comparison-vehicle img { display: block; width: 100%; height: 120px; object-fit: cover; object-position: left center; border-radius: 4px; margin-bottom: 8px; }
+.vehicle-comparison table { flex: 1; height: auto; font-size: 15px; }
 .vehicle-comparison th, .vehicle-comparison td { padding: 7px 12px; }
 .vehicle-comparison thead th { padding-top: 0; padding-bottom: 8px; }
 .vehicle-comparison th:first-child { width: 18%; }
 .vehicle-comparison thead img {
   float: none; width: 100%; height: 120px; margin: 0 0 8px;
-  object-fit: contain; border-radius: 4px;
+  object-fit: cover; object-position: left center; border-radius: 4px;
 }
 .vehicle-comparison strong { font-size: 18px; }
 .vehicle-comparison small { font-size: 14px; padding-top: 6px; }
@@ -3731,12 +3735,12 @@ body.v2-layout .app.is-onboarding .col-spacer.left {
 }
 .app.is-onboarding .hero-top { margin-bottom: 12px; }
 .app.is-onboarding .hero-headline {
-  max-width: 44vw; font-size: clamp(32px, 3.2vw, 48px);
+  max-width: 44vw; font-size: clamp(38px, 3.8vw, 56px);
   min-height: 4.2em; margin-bottom: 24px;
 }
-.app.is-onboarding .hero-cta { max-width: 38vw; margin-top: 16px; gap: 16px; }
+.app.is-onboarding .hero-cta { max-width: min(420px, 34vw); margin-top: 48px; gap: 16px; }
 .app.is-onboarding .hero-cta-btn { padding: 18px 24px; }
-.app.is-onboarding .hero-cluster { right: 8vw; bottom: 6vh; width: min(640px, 40vw); }
+.app.is-onboarding .hero-cluster { right: 8vw; bottom: 0; width: min(640px, 40vw); }
 @media (max-width: 900px) {
   .app.is-onboarding .hero-headline { max-width: 100%; }
   .app.is-onboarding .hero-cta { max-width: 480px; }
@@ -7554,12 +7558,13 @@ function renderVehicleComparison(vehicles) {
   const card = document.createElement('section');
   card.className = 'vehicle-comparison';
   card.setAttribute('aria-label', t('compare.title'));
-  card.innerHTML = `<div class="comparison-scroll"><table style="min-width:${vehicles.length > 2 ? 180 + vehicles.length * 180 : 0}px"><thead><tr><th scope="col"><span class="comparison-vs">${vehicles.length} ${escapeHtml(t('compare.vehicles'))}</span></th>${vehicles.map((v, i) => {
+  card.innerHTML = `<div class="comparison-scroll">
+    <div class="comparison-vehicles" style="grid-template-columns:repeat(${vehicles.length},minmax(0,1fr));min-width:${vehicles.length > 2 ? vehicles.length * 280 : 0}px">${vehicles.map((v, i) => {
       const advantages = allRows.filter(r => r.winners[i]).map(r => t('compare.adv.' + r.key));
-      return `<th scope="col">${v.image ? `<img src="${escapeHtml(v.image)}" alt="">` : ''}<strong>${escapeHtml(v.title || v.name)}</strong><small>${escapeHtml(advantages.slice(0, 2).join(' · ') || t('compare.adv.none'))}</small></th>`;
-    }).join('')}</tr></thead>
-    <tbody>${rows.map(row => `<tr class="${new Set(row.values).size > 1 ? 'is-different' : ''}"><th scope="row">${escapeHtml(t('compare.' + row.key))}</th>${row.values.map((value, i) => `<td>${escapeHtml(value)}${row.winners[i] ? `<span class="comparison-winner" role="img" aria-label="${escapeHtml(t('compare.winner'))}"></span>` : ''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
-    ${vehicles.some(v => v.modelOnly) ? `<p class="comparison-note">${escapeHtml(t('compare.note'))}</p>` : ''}`;
+      return `<div class="comparison-vehicle">${v.image ? `<img src="${escapeHtml(v.image)}" alt="">` : ''}<strong>${escapeHtml(v.title || v.name)}</strong><small>${escapeHtml(advantages.slice(0, 2).join(' · ') || t('compare.adv.none'))}</small></div>`;
+    }).join('')}</div>
+    <table style="min-width:${vehicles.length > 2 ? 180 + vehicles.length * 280 : 0}px"><thead class="sr-only"><tr><th scope="col">${escapeHtml(t('compare.title'))}</th>${vehicles.map(v => `<th scope="col">${escapeHtml(v.title || v.name)}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(row => `<tr class="${row.key !== 'mileage' && new Set(row.values).size > 1 ? 'is-different' : ''}"><th scope="row">${escapeHtml(t('compare.' + row.key))}</th>${row.values.map((value, i) => `<td>${escapeHtml(value)}${row.winners[i] ? `<span class="comparison-winner" role="img" aria-label="${escapeHtml(t('compare.winner'))}"></span>` : ''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   host.replaceChildren(card);
   if (typeof v2VizIntroActive !== 'undefined') v2VizIntroActive = false;
   if (typeof v2VizTitleKey !== 'undefined') v2VizTitleKey = 'compare.title';
