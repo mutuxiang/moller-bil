@@ -1,0 +1,21 @@
+# 本地备份 / 归档（不进入版本库）
+_backup/
+_local_scratch_*/
+
+# 本地探测 / 诊断产物（不进入版本库）
+_report.log
+_srv*.log
+_dump.txt
+_c3.json
+_cars/
+_diag.html
+_mkdiag.js
+_probe_*.sh
+_probe_*.html
+_probe_*.js
+_server.js
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
