@@ -1,24 +1,31 @@
-# Vehicle follow-ups
+# Vehicle follow-ups and inventory layout
 
-Live recommendation model cards and inventory vehicle cards now support **Add to chat**.
-Selected models/listings appear as removable chips in the composer. Quick reply becomes
-Quick follow-up with suitability, running cost, buying checks, and details/comparison prompts.
-Selections remain available for subsequent questions and are cleared by starting a new chat.
-Model references intentionally omit the representative listing's specifications. Individual
-listing references carry the listing ID and available specifications. Neither modifies shopping filters.
+Live model recommendations and individual inventory cars support **+ Ask about**.
+Selected vehicles appear in the composer as removable references with a thumbnail,
+model/year, specifications and price. Model-level references label the representative
+listing and starting price; only the model identity enters the AI context.
+Quick follow-up offers suitability, running cost, buying checks and details/comparison.
+
+The inventory grid uses content-sized rows and automatic card height. Percentage
+heights previously collapsed hundreds of inventory cards to zero height inside the
+scrolling flex layout. Errors remain visible, and late requests cannot overwrite a
+newer model or the restored recommendations.
 
 ## Validation
 
-Run `node tests/vehicle-followups.cjs` (no dependencies).
-Checks script syntax, duplicate prevention, model/listing distinction, follow-up switching,
-removal, serialized API context, preference-filter isolation, and ordinary chat behavior.
-The assistant is stubbed: this does not verify live model answers or inventory availability.
+- `node tests/vehicle-followups.cjs`: syntax, duplicate prevention, model/listing
+  distinction, follow-ups, removal, API context, filter isolation and ordinary chat.
+- `node tests/inventory-flow.cjs`: open/reopen, visible errors, cancellation and
+  rapid model switching. These tests stub the DOM and assistant; browser layout
+  is verified separately.
+- Local browser with proxy enabled: Volkswagen ID.4 inventory rendered 298 cards
+  at positive heights; Audi Q4 e-tron rendered 205 with no collapsed cards.
+  Inventory references, return to recommendations and reopening were exercised.
 
-Manual acceptance: add a model, open its inventory and add a listing, ask a comparison,
-remove both chips, and start a new chat. Check keyboard operation and narrow screens.
-Browser visual verification was not completed because the local preview connection timed out.
+See `scripts/README.md` for the persistent local preview command.
 
 ## Version management
 
-Feature branch: `codex/vehicle-chat-followups`.
-The change is isolated in a commit; revert that commit to roll it back.
+Initial feature: `codex/vehicle-chat-followups`, commit `4173a86`.
+Inventory/reference UI fix: `codex/inventory-followup-layout`.
+Each change is isolated in Git and can be reverted independently.

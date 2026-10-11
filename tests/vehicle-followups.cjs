@@ -27,7 +27,7 @@ assert.equal(run('selectedVehicles.length'),2);
 assert.equal(els.suggestionsBar.children.at(-1).textContent,'vehicle.compare');
 els.suggestionsBar.children.at(-1).onclick();
 assert.equal(run('activeTokens[0]'),'vehicle.compare');
-els.vehicleContextRow.children[1].children[1].onclick();
+els.vehicleContextRow.children[1].children.at(-1).onclick();
 assert.equal(run('selectedVehicles.length'),1);
 assert.equal(run('activeTokens.length'),0,'removing vehicle clears stale comparison question');
 run('renderVehicleFollowups()');

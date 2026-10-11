@@ -12,12 +12,6 @@
 @font-face { font-family: "Moller"; src: url("../fonts/Moller-Medium.otf") format("opentype"); font-weight: 500; font-style: normal; }
 @font-face { font-family: "Moller"; src: url("../fonts/Moller-MediumItalic.otf") format("opentype"); font-weight: 500; font-style: italic; }
 
-.vehicle-context-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px 0; }
-.vehicle-context-row[hidden] { display: none; }
-.vehicle-context-row .token { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
-.vehicle-context-row .token button { flex-shrink: 0; min-width: 24px; min-height: 24px; }
-.v2-card-actions.with-save .vehicle-add { grid-column: 1 / -1; }
-.vehicle-add:focus-visible, .vehicle-context-row button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
 </style>
 <style>
@@ -3343,7 +3337,10 @@ body.v2-layout .hero-bottom { margin-top: 0; }
   gap: 14px;
   align-items: stretch;
 }
-.v2-inv-grid > * { height: 100%; }
+/* Content-sized rows are essential for a scrollable, multi-row inventory.
+   Percentage card heights collapse implicit grid tracks after flex shrink. */
+.v2-inv-grid { grid-auto-rows: max-content; align-content: start; }
+.v2-inv-grid > * { height: auto; min-height: 0; }
 /* Override the base `#heroRecsBody { display: flex; flex-direction: column }`
    rule — in v2 the live recs are a 3-column grid, same as inventory.
    `align-items: stretch` (default) + matching card heights ensures all 3
@@ -3354,7 +3351,7 @@ body.v2-layout #heroRecsBody {
   gap: 14px !important;
   align-items: stretch !important;
 }
-body.v2-layout #heroRecsBody > * { height: 100%; }
+body.v2-layout #heroRecsBody > * { height: auto; }
 .v2-rec-state-msg {
   font-size: 14px;
   color: rgba(255,255,255,0.55);
@@ -3542,6 +3539,30 @@ body.v2-layout .msg.has-map { max-width: 640px !important; width: auto !importan
   border-radius: 999px;
 }
 
+
+/* Vehicle follow-up references: compact product cards inside the composer. */
+.vehicle-context-row { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px 0; max-height: 224px; overflow-y: auto; }
+.vehicle-context-row[hidden] { display: none; }
+.vehicle-reference { display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); min-width: 0; flex-shrink: 0; }
+.vehicle-reference-image { width: 64px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.vehicle-reference-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.vehicle-reference-copy strong { font-size: 14px; font-weight: 500; color: var(--ink); overflow-wrap: anywhere; }
+.vehicle-reference-copy > span { font-size: 12px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.vehicle-reference-price { font-size: 13px; font-weight: 500; color: var(--ink); max-width: 100px; text-align: right; }
+.vehicle-reference-remove { border: 0; background: transparent; color: var(--muted); font-size: 22px; width: 28px; height: 32px; flex-shrink: 0; cursor: pointer; }
+.v2-card-followup { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 4px; }
+.v2-card-followup .v2-card-reason { flex: 1; min-width: 0; margin: 0; padding: 0; background: transparent; white-space: normal; font-size: 12px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.v2-card-followup .v2-card-reason-label { display: none; }
+.vehicle-add { flex-shrink: 0; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--bg); color: var(--ink); font: 500 13px/1.2 "Moller", sans-serif; cursor: pointer; min-height: 34px; }
+.vehicle-add:hover { border-color: var(--salmon); }
+.vehicle-add[aria-pressed="true"] { background: var(--salmon); border-color: var(--salmon); color: var(--ink); }
+.vehicle-add:focus-visible, .vehicle-reference-remove:focus-visible { outline: 2px solid var(--salmon); outline-offset: 3px; }
+.v2-card-actions { margin-top: 0; }
+@media (max-width: 1100px) {
+  .vehicle-reference { flex-wrap: wrap; gap: 8px; }
+  .vehicle-reference-copy { flex-basis: calc(100% - 80px); }
+  .vehicle-reference-price { max-width: none; margin-left: auto; }
+}
 </style>
 </head>
 <body class="v2-layout">
@@ -3767,10 +3788,12 @@ const I18N = {
     'cta.eyebrow.learn': 'Just curious',
     'cta.label.learn':   'I just want to learn about cars',
     'quickReply':        'Quick reply',
-    'vehicle.add': '＋ Add to chat',
-    'vehicle.added': '✓ Added to chat',
+    'vehicle.add': '+ Ask about',
+    'vehicle.added': '✓ Added',
     'vehicle.remove': 'Remove {name} from chat',
     'vehicle.followups': 'Quick follow-up',
+    'vehicle.from': 'From {price}',
+    'vehicle.model': 'Model · representative listing',
     'vehicle.fit': 'How well does it fit my needs?',
     'vehicle.cost': 'What are the running costs?',
     'vehicle.check': 'What should I look out for?',
@@ -3986,10 +4009,12 @@ const I18N = {
     'cta.eyebrow.learn': '只是好奇',
     'cta.label.learn':   '我只是想了解汽车',
     'quickReply':        '快捷回复',
-    'vehicle.add': '＋ 加入对话',
-    'vehicle.added': '✓ 已加入对话',
+    'vehicle.add': '+ 追问',
+    'vehicle.added': '✓ 已添加',
     'vehicle.remove': '从对话中移除 {name}',
     'vehicle.followups': '快捷追问',
+    'vehicle.from': '{price} 起',
+    'vehicle.model': '车型 · 示例库存车辆',
     'vehicle.fit': '适合我的需求吗？',
     'vehicle.cost': '日常用车成本如何？',
     'vehicle.check': '购买时需要注意什么？',
@@ -7274,6 +7299,11 @@ function vehicleReference(it, modelName, modelOnly) {
   return {
     key: modelOnly ? 'model:' + modelName : 'listing:' + (it._raw?.id || JSON.stringify(details)),
     name: modelOnly ? modelName : [it.year, modelName, it.trim, it.price].filter(Boolean).join(' · '),
+    image: it.image || '',
+    title: modelOnly ? modelName : [it.year, modelName].filter(Boolean).join(' '),
+    subtitle: modelOnly ? '' : [it.trim, it.mileage, it.fuel].filter(Boolean).join(' · '),
+    price: it.price || '',
+    modelOnly,
     details,
   };
 }
@@ -7300,11 +7330,32 @@ function renderVehicleContext() {
   row.replaceChildren();
   row.hidden = !selectedVehicles.length;
   selectedVehicles.forEach(vehicle => {
-    const tag = document.createElement('span');
-    tag.className = 'token';
-    tag.append(document.createTextNode(vehicle.name));
+    const tag = document.createElement('div');
+    tag.className = 'vehicle-reference';
+    if (vehicle.image) {
+      const image = document.createElement('img');
+      image.className = 'vehicle-reference-image';
+      image.src = vehicle.image;
+      image.alt = '';
+      tag.appendChild(image);
+    }
+    const copy = document.createElement('div');
+    copy.className = 'vehicle-reference-copy';
+    const title = document.createElement('strong');
+    title.textContent = vehicle.title || vehicle.name;
+    const subtitle = document.createElement('span');
+    subtitle.textContent = vehicle.modelOnly ? t('vehicle.model') : vehicle.subtitle;
+    copy.appendChild(title);
+    copy.appendChild(subtitle);
+    tag.appendChild(copy);
+    const price = document.createElement('span');
+    price.className = 'vehicle-reference-price';
+    price.textContent = vehicle.price
+      ? (vehicle.modelOnly ? t('vehicle.from', { price: vehicle.price }) : vehicle.price) : '';
+    tag.appendChild(price);
     const remove = document.createElement('button');
     remove.type = 'button';
+    remove.className = 'vehicle-reference-remove';
     remove.textContent = '×';
     remove.setAttribute('aria-label', t('vehicle.remove', { name: vehicle.name }));
     remove.onclick = () => {
@@ -10391,9 +10442,11 @@ function showToast(msg) {
         <div class="v2-card-name">${escapeHtml(it.year || '')} ${escapeHtml(modelName)}</div>
         <div class="v2-card-price">${escapeHtml(it.price || '')}</div>
         ${subText ? `<div class="v2-card-sub">${escapeHtml(subText)}</div>` : ''}
-        ${it.edge ? `<div class="v2-card-reason"><span class="v2-card-reason-label">${escapeHtml(t('inv.whyThisOne'))}</span> ${escapeHtml(it.edge)}</div>` : ''}
-        <div class="v2-card-actions${showSave ? ' with-save' : ''}">
-          <button class="v2-card-save vehicle-add" type="button"></button>
+        <div class="v2-card-followup">
+          ${it.edge ? `<div class="v2-card-reason"><span class="v2-card-reason-label">${escapeHtml(t('inv.whyThisOne'))}</span> ${escapeHtml(it.edge)}</div>` : '<span></span>'}
+          <button class="vehicle-add" type="button"></button>
+        </div>
+        <div class="v2-card-actions${showSave ? '' : ' single'}">
           ${showSave ? `<button class="v2-card-save" type="button">${escapeHtml(t('inv.save'))}</button>` : ''}
           <button class="v2-card-cta" type="button">${escapeHtml(ctaLabel)}</button>
         </div>
@@ -10452,10 +10505,12 @@ function showToast(msg) {
   // layout (photo, title, price box, location, "Why this one" callout,
   // Save/View buttons). Adds a "← Back" header above. Click Back to restore.
   let _v2RecsSnapshot = null;
+  let _v2InventoryRequest = 0;
   window.v2OpenInventoryInDock = async function(modelName) {
     const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
     if (!heroBottom) return;
-    _v2RecsSnapshot = heroBottom.innerHTML;
+    const request = ++_v2InventoryRequest;
+    if (_v2RecsSnapshot === null) _v2RecsSnapshot = heroBottom.innerHTML;
 
     // Title on the left, "Back to recommendations" on the right (right-aligned
     // with the rightmost card)
@@ -10483,6 +10538,7 @@ function showToast(msg) {
           new Promise(r => setTimeout(r, 12000)),
         ]);
       }
+      if (request !== _v2InventoryRequest) return;
       const rawMatches = (typeof matchInventory === 'function') ? matchInventory(modelName) : [];
       if (!rawMatches.length) {
         v2InvShowEmpty(modelName);
@@ -10497,8 +10553,13 @@ function showToast(msg) {
       });
       v2RenderInventoryInRecs(modelName, items);
     } catch (err) {
+      if (request !== _v2InventoryRequest) return;
       const loading = heroBottom.querySelector('.v2-inv-loading');
-      if (loading) loading.textContent = t('v2.loadFail');
+      const error = loading || document.createElement('div');
+      error.className = 'v2-inv-loading';
+      error.setAttribute('role', 'status');
+      error.textContent = t('v2.loadFail');
+      if (!loading) heroBottom.appendChild(error);
     }
   };
 
@@ -10517,7 +10578,6 @@ function showToast(msg) {
     const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
     if (!heroBottom) return;
     const loading = heroBottom.querySelector('.v2-inv-loading');
-    if (loading) loading.remove();
 
     // Same shared inv-card layout as live recs — including the Save button
     const grid = document.createElement('div');
@@ -10525,10 +10585,13 @@ function showToast(msg) {
     items.forEach((it) => {
       grid.appendChild(v2BuildInvCard(it, modelName));   // default View → bruktbil link
     });
+    if (loading) loading.remove();
     heroBottom.appendChild(grid);
+    grid.scrollTop = 0;
   }
 
   window.v2CloseInventoryInDock = function() {
+    ++_v2InventoryRequest; // Ignore in-flight results after the user leaves.
     const heroBottom = document.querySelector('body.v2-layout .hero-bottom');
     if (!heroBottom) return;
     // Restore the section structure from snapshot (rebuilds the header + the
