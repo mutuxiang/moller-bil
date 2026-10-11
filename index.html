@@ -3651,10 +3651,10 @@ body.v2-layout .hero-bottom .inventory-page { grid-template-rows: auto; grid-aut
 }
 
 /* Fuel keeps its original height; comparison has the larger card slot. */
-body.v2-layout { --dock-card-height: 344px; --vehicle-card-height: 378px; }
+body.v2-layout { --dock-card-height: 344px; --vehicle-card-height: 400px; }
 body.v2-layout .col-spacer.left.hero:has(#v2VizBody > .vehicle-comparison) {
   --dock-card-height: 412px;
-  row-gap: 25.6px !important;
+  row-gap: max(0px, calc(25.6px - (var(--vehicle-card-height) - 378px))) !important;
 }
 body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero:has(#v2VizBody > .fuel-cards),
 body.v2-layout .app:not(.is-onboarding) .col-spacer.left.hero:has(#v2VizBody > .vehicle-comparison) {
@@ -3724,7 +3724,7 @@ body.v2-layout .hero-bottom .v2-card-img {
 .comparison-vehicles { display: grid; gap: 0; flex-shrink: 0; }
 .comparison-vehicle { min-width: 0; padding: 0 12px; }
 .vehicle-comparison .comparison-vehicle small { margin-top: 6px; padding: 4px 8px; font-weight: 500; color: var(--ink); background: rgba(225, 100, 75, 0.08); border: 0; border-radius: 4px; }
-.comparison-vehicle img { display: block; width: 100%; height: 120px; object-fit: cover; object-position: left center; border-radius: 4px; margin-bottom: 8px; }
+.comparison-vehicle img { display: block; width: 160px; max-width: none; height: 120px; aspect-ratio: 4 / 3; object-fit: cover; object-position: left center; border-radius: 4px; margin-bottom: 8px; }
 .vehicle-comparison table { flex: 1; height: auto; font-size: 15px; }
 .vehicle-comparison th, .vehicle-comparison td { padding: 7px 12px; }
 .vehicle-comparison thead th { padding-top: 0; padding-bottom: 8px; }
@@ -3771,7 +3771,7 @@ body.v2-layout .hero-bottom .v2-inv-head { padding-bottom: 16px; border-bottom: 
 }
 .vehicle-comparison tbody th { font-size: 14px; color: rgba(0,25,70,.65); }
 .vehicle-comparison tr.is-different { background: transparent; }
-.vehicle-comparison tbody tr:first-child { background: var(--cream-200); }
+.vehicle-comparison tbody tr:first-child, .vehicle-comparison tbody tr:last-child { background: var(--cream-200); }
 .vehicle-comparison tbody tr:first-child td { font-weight: 500; }
 .vehicle-comparison tbody tr:last-child th, .vehicle-comparison tbody tr:last-child td { border-bottom: 0; }
 </style>
