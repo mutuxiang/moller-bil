@@ -6327,7 +6327,7 @@ function detectMessageTopic(text) {
   // The AI's prompt structure is: "2–3 sentences of context\n\n**bold question?**".
   // So we isolate the last sentence ending in "?" and detect topic from THAT.
   // Falls back to the full text only if no "?" is found (e.g. a statement reply).
-  const questionMatch = raw.match(/[^.!?]*\?/g);
+  const questionMatch = raw.match(/[^.!?。！？]*[?？]/g);
   const t = questionMatch ? questionMatch[questionMatch.length - 1] : raw;
 
   // Order matters: specific topics first, generic ones last. When an AI
@@ -6338,12 +6338,20 @@ function detectMessageTopic(text) {
   // the budget regex requires "how much" to be followed by money context.
   if (/\bcabin\b|road trip|long trip|long-distance|long distance|how far|\bkm\/week|km per week|drive to|weekly drive|range coverage|reach .* on (a|one) charge|\boslo\b|\bbergen\b|\btrondheim\b|\blillehammer\b|\btrysil\b|\bkristiansand\b|nationwide|norway-wide|across norway/i.test(t)) return 'range';
   if (/passenger|seat\b|seats\b|family|kids|children|how many people|how many.*(fit|need|carry)|7-seater|7 seater|cargo|luggage|trunk|boot space/i.test(t)) return 'seats';
-  if (/electric|hybrid|petrol|diesel|fuel\b|\bev\b|charging|plug-in|powertrain/i.test(t))                     return 'fuel';
-  if (/budget|\bprice\b|\bcost\b|\bspend(?:ing)?\b|\bkr\b|kroner|\bafford\b|how much.*(?:spend|cost|pay|budget|kr|kroner|afford|willing)|price (?:range|point|tag)/i.test(t)) return 'budget';
-  if (/\bsize\b|compact|\bsuv\b|\bvan\b|hatchback|sedan|station wagon|small car|big car/i.test(t))            return 'size';
+  if (/budget|\bprice\b|\bcost\b|\bspend(?:ing)?\b|\bkr\b|kroner|\bafford\b|how much.*(?:spend|cost|pay|budget|kr|kroner|afford|willing)|price (?:range|point|tag)|预算|价格|多少钱|花费|价位/i.test(t)) return 'budget';
+  if (/electric|hybrid|petrol|diesel|fuel\b|\bev\b|charging|plug-in|powertrain|纯电|电动|混动|汽油|柴油|燃料|动力|充电/i.test(t)) return 'fuel';
+  if (/\bsize\b|compact|\bsuv\b|\bvan\b|hatchback|sedan|station wagon|small car|big car|车身尺寸|车型大小|紧凑型/i.test(t)) return 'size';
   if (/\bbrand\b|brands you|particular brand|brand in mind|brand preference|manufacturer|trust.*brand|prefer.*(audi|bmw|mercedes|toyota|volvo|tesla|kia|hyundai|ford|volkswagen|peugeot|renault)/i.test(t)) return 'brand';
   if (/use it for|drive|commut|trip|city|mountain|leisure|road|daily|weekend/i.test(t))                       return 'usage';
   return null;
+}
+
+function detectVisualizationTopic(userText, aiText) {
+  // A direct budget inquiry owns the visualization even if the assistant
+  // answers it and ends with a question about the next discovery area.
+  const budgetInquiry = /budget|\bprice\b|\bcost\b|\bafford\b|预算|价格|多少钱|花费|价位/i.test(userText) &&
+    /[?？]|how|what|explain|tell me|learn|know|about|多少|怎么|如何|介绍|了解|讲讲|解释/i.test(userText);
+  return budgetInquiry ? 'budget' : detectMessageTopic(aiText);
 }
 
 // Per-topic tooltip text shown by the "?" help icon next to each section title.
@@ -8490,23 +8498,23 @@ function renderBudgetCards(msgEl) {
   // Build the rail first
   const railHtml = buildBudgetRail();
   // Then the 3 tier cards
-  const cardsHtml = BUDGET_TIERS.map((t) => {
-    const accent = !!t.accent;
+  const cardsHtml = BUDGET_TIERS.map((tier) => {
+    const accent = !!tier.accent;
     return `
       <div class="budget-card${accent ? ' accent' : ''}">
         <div class="budget-card-head">
-          <span class="budget-range">${escapeHtml(t.range)}</span>
+          <span class="budget-range">${escapeHtml(tier.range)}</span>
           ${accent ? `<span class="budget-rec-pill">Most chosen</span>` : ''}
         </div>
         <div class="budget-stats">
-          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.age'))}</span><span class="budget-attr-val">${escapeHtml(t_.age)}</span></div>
-          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.mileage'))}</span><span class="budget-attr-val">${escapeHtml(t_.mileage)}</span></div>
-          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.fuel'))}</span><span class="budget-attr-val">${escapeHtml(t_.fuel)}</span></div>
-          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.evRange'))}</span><span class="budget-attr-val">${escapeHtml(t_.evRange)}</span></div>
+          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.age'))}</span><span class="budget-attr-val">${escapeHtml(tier.age)}</span></div>
+          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.mileage'))}</span><span class="budget-attr-val">${escapeHtml(tier.mileage)}</span></div>
+          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.fuel'))}</span><span class="budget-attr-val">${escapeHtml(tier.fuel)}</span></div>
+          <div class="budget-attr"><span class="budget-attr-label">${escapeHtml(t('attr.evRange'))}</span><span class="budget-attr-val">${escapeHtml(tier.evRange)}</span></div>
         </div>
         <hr class="budget-hr">
         <div class="budget-pick">
-          <span class="budget-pick-num">${escapeHtml(t.pick)}</span>
+          <span class="budget-pick-num">${escapeHtml(tier.pick)}</span>
           <span class="budget-pick-label">${escapeHtml(t('budget.tierBuyers'))}</span>
         </div>
       </div>
@@ -9519,6 +9527,7 @@ async function sendMessage() {
       // just said. Otherwise the user saying "SUV" right before the
       // must-have-features question would falsely pop the size cards.
       const aiTopic = detectMessageTopic(rawClean);
+      const vizTopic = detectVisualizationTopic(question, rawClean);
       // Topic-specific text shrinking: when a rich panel is going to render
       // below, drop the AI's verbose explanation paragraph(s) — the cards
       // already convey the same info visually.
@@ -9535,13 +9544,17 @@ async function sendMessage() {
       const zhClean = applyTopicCondense(cleanAssistantText(zhRaw), aiTopic);
       const cleanDual = { en: enClean, zh: zhClean };
       const msgEl = appendAIMessage(cleanDual, (el) => {
-        if (surprises && surprises.length > 0) renderEVSurprises(surprises, el);
-        if (aiTopic === 'fuel')   renderFuelCards(el);
-        if (aiTopic === 'budget') renderBudgetCards(el);
-        if (aiTopic === 'size')   renderSizeCards(el);
-        // Map disabled for now
-        // if (aiTopic === 'range')  renderNorwayMap(el);
-        renderQuickChips(suggestions, el);
+        try {
+          if (surprises && surprises.length > 0) renderEVSurprises(surprises, el);
+          if (vizTopic === 'fuel')   renderFuelCards(el);
+          if (vizTopic === 'budget') renderBudgetCards(el);
+          if (vizTopic === 'size')   renderSizeCards(el);
+        } catch (err) {
+          console.error('Visualization rendering failed:', err);
+        } finally {
+          // Card rendering must never strand the composer in its loading state.
+          renderQuickChips(suggestions, el);
+        }
         if (isVehicleComparison) renderVehicleComparison(vehicles);
       });
       if (msgEl) pushedEntry.__id = msgEl.id;
